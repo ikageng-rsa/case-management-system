@@ -1,12 +1,12 @@
 name: tests
 
+# Runs on every PR/push to main and release/** so the required "tests" check always
+# reports
 on:
   pull_request:
     branches: [main, "release/**"]
-    paths: ["backend/**"]
   push:
     branches: [main, "release/**"]
-    paths: ["backend/**"]
 
 jobs:
   tests:
@@ -37,7 +37,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+
       - name: Set up PHP
+        if: steps.filter.outputs.backend == 'true'
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.4"
@@ -46,24 +54,33 @@ jobs:
           coverage: none
 
       - name: Install Composer dependencies
+        if: steps.filter.outputs.backend == 'true'
         uses: ramsey/composer-install@v3
         with:
           working-directory: backend
 
       - name: Prepare environment
+        if: steps.filter.outputs.backend == 'true'
         working-directory: backend
         run: |
           cp .env.example .env
           php artisan key:generate
 
       - name: Check code style (Pint)
+        if: steps.filter.outputs.backend == 'true'
         working-directory: backend
         run: ./vendor/bin/pint --test
 
       - name: Run migrations
+        if: steps.filter.outputs.backend == 'true'
         working-directory: backend
         run: php artisan migrate --force
 
       - name: Run tests (PHPUnit)
+        if: steps.filter.outputs.backend == 'true'
         working-directory: backend
         run: php artisan test
+
+      - name: No backend changes
+        if: steps.filter.outputs.backend != 'true'
+        run: echo "No backend/** changes in this PR — nothing to test."

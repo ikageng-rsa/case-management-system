@@ -1,5 +1,8 @@
 name: security
 
+# composer-audit always reports (so it can be a required check) but only really runs when
+# backend/** changed or on the weekly schedule. gitleaks always scans the whole repo, since
+# a leaked secret can land in either app folder.
 on:
   pull_request:
     branches: [main, "release/**"]
@@ -9,42 +12,40 @@ on:
     - cron: "0 3 * * 1"
 
 jobs:
-  # Detect whether backend files changed, so composer audit stays scoped to backend/**
-  # the same way tests.yml is. gitleaks below always runs against the whole repo.
-  changes:
+  composer-audit:
     runs-on: ubuntu-latest
-    outputs:
-      backend: ${{ steps.filter.outputs.backend }}
     steps:
       - uses: actions/checkout@v4
+
       - uses: dorny/paths-filter@v3
         id: filter
+        if: github.event_name != 'schedule'
         with:
           filters: |
             backend:
               - 'backend/**'
 
-  composer-audit:
-    needs: changes
-    if: ${{ needs.changes.outputs.backend == 'true' || github.event_name == 'schedule' }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
       - name: Set up PHP
+        if: steps.filter.outputs.backend == 'true' || github.event_name == 'schedule'
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.4"
           tools: composer:v2
 
       - name: Install Composer dependencies
+        if: steps.filter.outputs.backend == 'true' || github.event_name == 'schedule'
         uses: ramsey/composer-install@v3
         with:
           working-directory: backend
 
       - name: Composer audit
+        if: steps.filter.outputs.backend == 'true' || github.event_name == 'schedule'
         working-directory: backend
         run: composer audit --no-interaction
+
+      - name: No backend changes
+        if: steps.filter.outputs.backend != 'true' && github.event_name != 'schedule'
+        run: echo "No backend/** changes in this PR — skipping composer audit."
 
   gitleaks:
     runs-on: ubuntu-latest
