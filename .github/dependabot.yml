@@ -1,0 +1,19 @@
+version: 2
+updates:
+  # Laravel backend
+  - package-ecosystem: composer
+    directory: /backend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: chore
+
+  # React Native mobile app (no-ops until mobile/package.json exists)
+  - package-ecosystem: npm
+    directory: /mobile
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: chore

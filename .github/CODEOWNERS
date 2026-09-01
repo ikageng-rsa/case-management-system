@@ -1,0 +1,12 @@
+# Code owners for review routing. Order matters — the last matching pattern wins.
+# Sole maintainer for now; replace with team handles (e.g. @org/backend, @org/mobile)
+# once GitHub teams exist.
+
+*              @ikageng-rsa
+
+/backend/      @ikageng-rsa
+/mobile/       @ikageng-rsa
+
+/.github/      @ikageng-rsa
+/CONTRIBUTING.md  @ikageng-rsa
+/SECURITY.md      @ikageng-rsa
