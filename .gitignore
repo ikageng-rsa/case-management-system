@@ -1,0 +1,9 @@
+# Root ignore — OS / editor noise only.
+# /backend/.gitignore and /mobile/.gitignore own vendor/, node_modules/, .env, build artifacts, etc.
+
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+.claude/
