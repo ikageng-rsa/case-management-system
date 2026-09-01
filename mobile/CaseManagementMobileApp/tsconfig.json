@@ -9,7 +9,38 @@
       ],
       "@/assets/*": [
         "./assets/*"
+      ],
+      "@/api/*": [
+        "./src/api/*"
+      ],
+      "@/components/*": [
+        "./src/components/*"
+      ],
+      "@/constants/*": [
+        "./src/constants/*"
+      ],
+      "@/features/*": [
+        "./src/features/*"
+      ],
+      "@/hooks/*": [
+        "./src/hooks/*"
+      ],
+      "@/navigation/*": [
+        "./src/navigation/*"
+      ],
+      "@/screens/*": [
+        "./src/screens/*"
+      ],
+      "@/store/*": [
+        "./src/store/*"
+      ],
+      "@/theme/*": [
+        "./src/theme/*"
+      ],
+      "@/types/*": [
+        "./src/types/*"
       ]
+      
     }
   },
   "include": [
