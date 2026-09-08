@@ -3,7 +3,7 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
-    "@expo/ui": "~57.0.14",
+    "@expo/ui": "~57.0.16",
     "decode-uri-component": "^0.5.0",
     "expo": "~57.0.18",
     "expo-constants": "~57.0.16",
