@@ -1,0 +1,99 @@
+:root {
+    /* Ink */
+    --cms-ink-900: #16202b;
+
+    /* Paper */
+    --cms-paper-000: #ffffff;
+    --cms-paper-050: #fdfaf5;
+    --cms-paper-075: #faf8f4;
+    --cms-paper-100: #f6f4ef;
+
+    /* Gold */
+    --cms-gold-500: #c79a55;
+    --cms-gold-600: #d4a961;
+    --cms-gold-800: #8a5d28;
+    --cms-gold-900: #7a5220;
+
+    /* Status */
+    --cms-green-700: #3d5a44;
+    --cms-teal-700: #276060;
+    --cms-rust-700: #a3452f;
+    --cms-rust-800: #8d3a26;
+    --cms-slate-600: #4a5b70;
+
+    /* Badge tints */
+    --cms-tint-slate: #6b7c93;
+    --cms-tint-teal: #2f6b6b;
+    --cms-tint-green: #4a6b52;
+    --cms-tint-rust: #a3452f;
+    --cms-tint-gold: #c79a55;
+
+    /* Text on paper */
+    --cms-text: var(--cms-ink-900);
+    --cms-text-secondary: color-mix(in srgb, var(--cms-ink-900) 62%, transparent);
+    --cms-text-muted: color-mix(in srgb, var(--cms-ink-900) 45%, transparent);
+    --cms-text-subtle: color-mix(in srgb, var(--cms-ink-900) 32%, transparent);
+
+    /* Text on ink */
+    --cms-on-ink: #ffffff;
+    --cms-on-ink-muted: color-mix(in srgb, #ffffff 70%, transparent);
+    --cms-on-ink-caption: color-mix(in srgb, #ffffff 42%, transparent);
+    --cms-on-ink-count: color-mix(in srgb, #ffffff 38%, transparent);
+    --cms-on-ink-label: color-mix(in srgb, #ffffff 34%, transparent);
+
+    /* Borders */
+    --cms-border-subtle: color-mix(in srgb, var(--cms-ink-900) 5%, transparent);
+    --cms-border: color-mix(in srgb, var(--cms-ink-900) 10%, transparent);
+    --cms-border-strong: color-mix(in srgb, var(--cms-ink-900) 16%, transparent);
+    --cms-border-on-ink: color-mix(in srgb, #ffffff 9%, transparent);
+    --cms-border-on-ink-strong: color-mix(in srgb, #ffffff 18%, transparent);
+
+    /* Typography */
+    --cms-font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --cms-font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --cms-font-display: "Newsreader", Georgia, "Times New Roman", serif;
+
+    /* Type scale */
+    --cms-text-3xs: 0.5625rem;
+    --cms-text-2xs: 0.59375rem;
+    --cms-text-xs: 0.625rem;
+    --cms-text-sm: 0.65625rem;
+    --cms-text-base: 0.71875rem;
+    --cms-text-md: 0.78125rem;
+    --cms-text-lg: 0.8125rem;
+    --cms-text-xl: 1.0625rem;
+    --cms-display-sm: 1.375rem;
+    --cms-display-md: 1.6875rem;
+    --cms-display-lg: 1.875rem;
+    --cms-display-xl: 2rem;
+
+    /* Tracking */
+    --cms-tracking-label: 0.0594rem;
+    --cms-tracking-label-wide: 0.077rem;
+
+    /* Radii */
+    --cms-radius-xs: 3px;
+    --cms-radius-sm: 4px;
+    --cms-radius: 6px;
+    --cms-radius-md: 7px;
+    --cms-radius-lg: 10px;
+
+    /* Spacing */
+    --cms-space-2: 2px;
+    --cms-space-4: 4px;
+    --cms-space-6: 6px;
+    --cms-space-8: 8px;
+    --cms-space-10: 10px;
+    --cms-space-12: 12px;
+    --cms-space-14: 14px;
+    --cms-space-16: 16px;
+    --cms-space-18: 18px;
+    --cms-space-20: 20px;
+    --cms-space-24: 24px;
+    --cms-space-26: 26px;
+    --cms-space-32: 32px;
+
+    /* Layout */
+    --cms-sidebar-width: 240px;
+    --cms-topbar-height: 60px;
+}
