@@ -1,5 +1,3 @@
-/*
- * Tabler is the UI framework for the web app. Theming is done with the
- * --tblr-* custom properties it exposes, overridden below.
- */
 @import '@tabler/core/dist/css/tabler.css';
+@import './theme/tokens.css';
+@import './theme/tabler.css';
