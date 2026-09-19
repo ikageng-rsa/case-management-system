@@ -62,6 +62,16 @@ class Matter extends Model
         return $this->hasMany(MatterAssignment::class);
     }
 
+    public function narrations(): HasMany
+    {
+        return $this->hasMany(Narration::class);
+    }
+
+    public function diaryEntries(): HasMany
+    {
+        return $this->hasMany(DiaryEntry::class);
+    }
+
     public function assignedUsers(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'matter_assignments')

@@ -19,6 +19,7 @@ class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory;
+
     use HasUuids;
     use Notifiable;
 
@@ -38,6 +39,16 @@ class User extends Authenticatable
     public function matterAssignments(): HasMany
     {
         return $this->hasMany(MatterAssignment::class);
+    }
+
+    public function narrations(): HasMany
+    {
+        return $this->hasMany(Narration::class, 'author_id');
+    }
+
+    public function diaryEntries(): HasMany
+    {
+        return $this->hasMany(DiaryEntry::class, 'assigned_to');
     }
 
     public function matters(): BelongsToMany
