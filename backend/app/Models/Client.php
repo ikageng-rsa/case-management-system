@@ -56,6 +56,11 @@ class Client extends Model
         return $this->hasMany(ClientContact::class);
     }
 
+    public function matters(): HasMany
+    {
+        return $this->hasMany(Matter::class);
+    }
+
     /** The most recent POPIA consent decision recorded for this client. */
     public function popiaConsent(): HasOne
     {
