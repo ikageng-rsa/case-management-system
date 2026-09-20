@@ -11,7 +11,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body>
-        <div class="d-flex" style="min-height: 100vh">
+        <div class="page">
             <x-ui.sidebar
                 firm="Example Firm"
                 tagline="Attorneys Inc."
@@ -24,12 +24,13 @@
                 <x-ui.nav-item href="#" label="Clients" icon="users" :count="218" />
             </x-ui.sidebar>
 
-            <div class="flex-fill d-flex flex-column" style="min-width: 0">
-                <x-ui.header>
-                    <x-ui.button variant="dark" icon="plus">New matter</x-ui.button>
-                </x-ui.header>
+            <x-ui.header>
+                <x-ui.button variant="dark" icon="plus">New matter</x-ui.button>
+            </x-ui.header>
 
-                <main class="flex-fill p-4">
+            <div class="page-wrapper">
+                <div class="page-body">
+                    <div class="container-xl">
                     <h1 class="mb-1">Component demo</h1>
                     <p class="text-secondary mb-4">These are standard components developed from design tokens.</p>
 
@@ -139,7 +140,8 @@
                             </div>
                         </div>
                     </div>
-                </main>
+                    </div>
+                </div>
             </div>
         </div>
     </body>

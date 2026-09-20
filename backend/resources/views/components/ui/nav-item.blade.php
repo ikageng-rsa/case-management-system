@@ -6,19 +6,22 @@
     'active' => false,
 ])
 
-<a
-    href="{{ $href }}"
-    @if ($active) aria-current="page" @endif
-    {{ $attributes->class(['sidebar-nav-item', 'active' => $active]) }}
->
-    <span class="d-flex align-items-center gap-2">
+<li @class(['nav-item', 'active' => $active])>
+    <a
+        href="{{ $href }}"
+        @if ($active) aria-current="page" @endif
+        {{ $attributes->class(['nav-link']) }}
+    >
         @if ($icon)
-            <x-ui.icon :name="$icon" />
+            <span class="nav-link-icon d-md-none d-lg-inline-block">
+                <x-ui.icon :name="$icon" />
+            </span>
         @endif
-        {{ $label ?? $slot }}
-    </span>
 
-    @if (! is_null($count))
-        <span class="sidebar-nav-count">{{ $count }}</span>
-    @endif
-</a>
+        <span class="nav-link-title">{{ $label ?? $slot }}</span>
+
+        @if (! is_null($count))
+            <span class="sidebar-nav-count ms-auto">{{ $count }}</span>
+        @endif
+    </a>
+</li>
