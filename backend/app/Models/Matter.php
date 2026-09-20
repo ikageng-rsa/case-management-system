@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Document\DocumentKind;
 use App\Enums\Matter\Assignment;
 use Database\Factories\MatterFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -14,16 +15,25 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Http\UploadedFile;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Collections\MediaCollection;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 #[Fillable(['reference', 'sequence_number', 'opened_year', 'title', 'instructed_at', 'prescribes_at', 'closed_at'])]
 #[RouteKey('reference')]
-class Matter extends Model
+class Matter extends Model implements HasMedia
 {
     /** @use HasFactory<MatterFactory> */
     use HasFactory;
 
     use HasUuids;
+    use InteractsWithMedia;
     use SoftDeletes;
+
+    /** The single media collection holding everything filed on a matter. */
+    public const DOCUMENTS = 'documents';
 
     /**
      * Get the attributes that should be cast.
@@ -70,6 +80,40 @@ class Matter extends Model
     public function diaryEntries(): HasMany
     {
         return $this->hasMany(DiaryEntry::class);
+    }
+
+    /*
+     * Everything filed on the matter lives in one collection, with the kind
+     * of document kept as a custom property. Separate collections per kind
+     * would make "every document on this file" the awkward query, and that is
+     * the one the file view asks for constantly.
+     */
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection(static::DOCUMENTS)
+            ->useDisk(config('media-library.disk_name'));
+    }
+
+    /** @return MediaCollection<int, Media> */
+    public function documents(): MediaCollection
+    {
+        return $this->getMedia(static::DOCUMENTS);
+    }
+
+    /** @return MediaCollection<int, Media> */
+    public function documentsOfKind(DocumentKind $kind): MediaCollection
+    {
+        return $this->getMedia(
+            static::DOCUMENTS,
+            fn (Media $media) => $media->getCustomProperty('kind') === $kind->value,
+        );
+    }
+
+    public function addDocument(string|UploadedFile $file, DocumentKind $kind): Media
+    {
+        return $this->addMedia($file)
+            ->withCustomProperties(['kind' => $kind->value])
+            ->toMediaCollection(static::DOCUMENTS);
     }
 
     public function assignedUsers(): BelongsToMany
