@@ -119,22 +119,6 @@
 }
 
 /* Sidebar */
-.app-sidebar {
-    display: flex;
-    flex-direction: column;
-    flex: 0 0 auto;
-    width: var(--cms-sidebar-width);
-    background-color: var(--cms-ink-900);
-}
-
-.app-sidebar-brand {
-    display: flex;
-    align-items: center;
-    gap: var(--cms-space-10);
-    padding: var(--cms-space-20) var(--cms-space-18) var(--cms-space-18) var(--cms-space-16);
-    border-bottom: 1px solid var(--cms-border-on-ink);
-    text-decoration: none;
-}
 
 .app-sidebar-firm-name {
     font-size: var(--cms-text-md);
@@ -147,33 +131,6 @@
     font-size: var(--cms-text-2xs);
     letter-spacing: var(--cms-tracking-label);
     color: var(--cms-on-ink-caption);
-}
-
-.app-sidebar-nav {
-    display: flex;
-    flex: 1 1 auto;
-    flex-direction: column;
-    gap: var(--cms-space-2);
-    padding: var(--cms-space-16) var(--cms-space-10);
-    overflow-y: auto;
-}
-
-.app-sidebar-section {
-    padding: var(--cms-space-12) var(--cms-space-12) var(--cms-space-4);
-    font-family: var(--cms-font-mono);
-    font-size: var(--cms-text-2xs);
-    font-weight: 500;
-    letter-spacing: var(--cms-tracking-label-wide);
-    text-transform: uppercase;
-    color: var(--cms-on-ink-label);
-}
-
-.app-sidebar-footer {
-    display: flex;
-    align-items: center;
-    gap: var(--cms-space-10);
-    padding: var(--cms-space-14) var(--cms-space-16);
-    border-top: 1px solid var(--cms-border-on-ink);
 }
 
 .app-sidebar-user-name {
@@ -203,38 +160,6 @@
 }
 
 /* Sidebar nav item */
-.sidebar-nav-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--cms-space-8);
-    height: 34px;
-    padding: 0 var(--cms-space-10) 0 var(--cms-space-12);
-    border-radius: var(--cms-radius);
-    box-shadow: inset 0 0 0 2px transparent;
-    color: var(--cms-on-ink-muted);
-    font-size: var(--cms-text-md);
-    font-weight: 500;
-    text-decoration: none;
-    transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
-}
-
-.sidebar-nav-item:hover {
-    background-color: color-mix(in srgb, #ffffff 4%, transparent);
-    color: var(--cms-on-ink);
-}
-
-.sidebar-nav-item:focus-visible {
-    outline: 0;
-    box-shadow: inset 0 0 0 2px var(--cms-gold-500);
-    color: var(--cms-on-ink);
-}
-
-.sidebar-nav-item.active {
-    background-color: color-mix(in srgb, var(--cms-gold-500) 16%, transparent);
-    box-shadow: inset 0 0 0 2px var(--cms-gold-500);
-    color: var(--cms-on-ink);
-}
 
 .sidebar-nav-count {
     font-family: var(--cms-font-mono);
@@ -315,4 +240,45 @@
     font-size: var(--cms-text-2xs);
     letter-spacing: var(--cms-tracking-label);
     color: var(--cms-fg-muted);
+}
+
+/* Active sidebar item */
+.navbar-vertical .navbar-nav .nav-item.active > .nav-link,
+.navbar-vertical .navbar-nav .nav-link.active {
+    background-color: color-mix(in srgb, var(--cms-gold-500) 16%, transparent);
+    box-shadow: inset 0 0 0 2px var(--cms-gold-500);
+    color: var(--cms-on-ink);
+}
+
+/* Tabler underlines the active item for horizontal navbars; the vertical one
+   uses the ring above instead. */
+.navbar-vertical .navbar-nav .nav-item.active::after {
+    display: none;
+}
+
+/* Offcanvas sidebar panel */
+.navbar-vertical .offcanvas-lg {
+    --tblr-offcanvas-bg: var(--cms-ink-900);
+    --tblr-offcanvas-width: var(--cms-sidebar-width);
+    --tblr-offcanvas-color: var(--cms-on-ink);
+}
+
+/* Below the expand breakpoint Tabler styles nav links as a centred icon rail.
+   Inside the offcanvas the labels are visible, so restore a normal list. */
+@media (max-width: 991.98px) {
+    .navbar-vertical .offcanvas-lg .navbar-nav .nav-link {
+        justify-content: flex-start;
+        min-width: 0;
+    }
+
+    .navbar-vertical .offcanvas-lg .navbar-nav .nav-section-title {
+        display: block;
+        padding: var(--cms-space-12) var(--cms-space-12) var(--cms-space-4);
+        font-family: var(--cms-font-mono);
+        font-size: var(--cms-text-2xs);
+        font-weight: 500;
+        letter-spacing: var(--cms-tracking-label-wide);
+        text-transform: uppercase;
+        color: var(--cms-on-ink-label);
+    }
 }

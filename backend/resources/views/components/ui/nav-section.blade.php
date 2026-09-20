@@ -1,1 +1,1 @@
-<div {{ $attributes->class(['app-sidebar-section']) }}>{{ $slot }}</div>
+<li {{ $attributes->class(['nav-section-title']) }}>{{ $slot }}</li>
