@@ -47,6 +47,19 @@ return [
             'report' => false,
         ],
 
+        /*
+         * Client documents. Private, never web-served, and never symlinked
+         * into public/ — access is authorised by the application rather than
+         * by knowing the URL. Swap this for an S3 disk with server-side
+         * encryption before real client data lands on it.
+         */
+        'documents' => [
+            'driver' => 'local',
+            'root' => storage_path('app/documents'),
+            'throw' => true,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
