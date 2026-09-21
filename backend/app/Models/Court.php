@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\RecordsActivity;
 use App\Enums\Court\CourtTier;
 use Database\Factories\CourtFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -16,6 +17,8 @@ class Court extends Model
 {
     /** @use HasFactory<CourtFactory> */
     use HasFactory;
+
+    use RecordsActivity;
 
     /**
      * Get the attributes that should be cast.
@@ -43,5 +46,10 @@ class Court extends Model
     public function scopeOfTier(Builder $query, CourtTier $tier): void
     {
         $query->where('tier', $tier);
+    }
+
+    public function auditLabel(): string
+    {
+        return 'court '.$this->name;
     }
 }

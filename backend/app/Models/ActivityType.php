@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\RecordsActivity;
 use App\Enums\Narration\ActivityMeasure;
 use Database\Factories\ActivityTypeFactory;
 use Illuminate\Database\Eloquent\Attributes\Appends;
@@ -21,6 +22,8 @@ class ActivityType extends Model
 {
     /** @use HasFactory<ActivityTypeFactory> */
     use HasFactory;
+
+    use RecordsActivity;
 
     /**
      * Get the attributes that should be cast.
@@ -82,5 +85,10 @@ class ActivityType extends Model
     public function scopeRequiringCourt(Builder $query): void
     {
         $query->where('requires_court', true);
+    }
+
+    public function auditLabel(): string
+    {
+        return 'activity type '.$this->name;
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Concerns\RecordsActivity;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
 
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
@@ -20,8 +22,10 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory;
 
+    use HasRoles;
     use HasUuids;
     use Notifiable;
+    use RecordsActivity;
 
     /**
      * Get the attributes that should be cast.
@@ -56,5 +60,18 @@ class User extends Authenticatable
         return $this->belongsToMany(Matter::class, 'matter_assignments')
             ->withPivot(['capacity', 'assigned_at', 'unassigned_at'])
             ->withTimestamps();
+    }
+
+    public function auditLabel(): string
+    {
+        return 'user '.$this->name;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function auditExcept(): array
+    {
+        return ['password', 'remember_token'];
     }
 }

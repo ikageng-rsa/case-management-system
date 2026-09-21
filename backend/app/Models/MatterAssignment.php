@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\RecordsActivity;
 use App\Enums\Matter\Assignment;
 use Database\Factories\MatterAssignmentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -15,6 +16,8 @@ class MatterAssignment extends Model
 {
     /** @use HasFactory<MatterAssignmentFactory> */
     use HasFactory;
+
+    use RecordsActivity;
 
     protected static function booted(): void
     {
@@ -69,5 +72,10 @@ class MatterAssignment extends Model
     public function scopeInCapacity(Builder $query, Assignment $capacity): void
     {
         $query->where('capacity', $capacity);
+    }
+
+    public function auditLabel(): string
+    {
+        return $this->user?->name.' as '.$this->capacity->value.' on matter '.$this->matter?->reference;
     }
 }

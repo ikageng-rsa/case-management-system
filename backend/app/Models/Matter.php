@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\RecordsActivity;
 use App\Enums\Document\DocumentKind;
 use App\Enums\Matter\Assignment;
 use Database\Factories\MatterFactory;
@@ -30,6 +31,7 @@ class Matter extends Model implements HasMedia
 
     use HasUuids;
     use InteractsWithMedia;
+    use RecordsActivity;
     use SoftDeletes;
 
     /** The single media collection holding everything filed on a matter. */
@@ -189,5 +191,10 @@ class Matter extends Model implements HasMedia
             ->where('capacity', $capacity)
             ->first(fn (MatterAssignment $assignment) => $assignment->isActive())
             ?->user;
+    }
+
+    public function auditLabel(): string
+    {
+        return 'matter '.$this->reference;
     }
 }

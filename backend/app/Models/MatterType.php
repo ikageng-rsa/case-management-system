@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\RecordsActivity;
 use Database\Factories\MatterTypeFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\RouteKey;
@@ -18,6 +19,7 @@ class MatterType extends Model
     /** @use HasFactory<MatterTypeFactory> */
     use HasFactory;
 
+    use RecordsActivity;
     use SoftDeletes;
 
     /**
@@ -47,5 +49,10 @@ class MatterType extends Model
     public function scopeLitigation(Builder $query): void
     {
         $query->where('is_litigation', true);
+    }
+
+    public function auditLabel(): string
+    {
+        return 'matter type '.$this->name;
     }
 }
