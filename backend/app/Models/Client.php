@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\RecordsActivity;
 use App\Enums\Client\ClientType;
 use App\Enums\Client\ContactKind;
 use App\Services\Clients\GenerateBlindIndex;
@@ -25,6 +26,7 @@ class Client extends Model
     use HasFactory;
 
     use HasUuids;
+    use RecordsActivity;
     use SoftDeletes;
 
     protected static function booted(): void
@@ -110,5 +112,18 @@ class Client extends Model
     public function scopeOfType(Builder $query, ClientType $type): void
     {
         $query->where('type', $type);
+    }
+
+    public function auditLabel(): string
+    {
+        return 'client '.$this->full_name;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function auditExcept(): array
+    {
+        return ['id_number', 'id_number_hash'];
     }
 }

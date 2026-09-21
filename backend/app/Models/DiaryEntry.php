@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\RecordsActivity;
 use Database\Factories\DiaryEntryFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -14,6 +15,8 @@ class DiaryEntry extends Model
 {
     /** @use HasFactory<DiaryEntryFactory> */
     use HasFactory;
+
+    use RecordsActivity;
 
     /**
      * Get the attributes that should be cast.
@@ -99,5 +102,10 @@ class DiaryEntry extends Model
     public function scopeAssignedTo(Builder $query, User $user): void
     {
         $query->where('assigned_to', $user->getKey());
+    }
+
+    public function auditLabel(): string
+    {
+        return 'diary entry on matter '.$this->matter?->reference;
     }
 }

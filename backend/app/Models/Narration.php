@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\RecordsActivity;
 use Database\Factories\NarrationFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -17,6 +18,7 @@ class Narration extends Model
     use HasFactory;
 
     use HasUuids;
+    use RecordsActivity;
 
     protected static function booted(): void
     {
@@ -83,5 +85,10 @@ class Narration extends Model
     public function scopeLatestFirst(Builder $query): void
     {
         $query->orderByDesc('occurred_at');
+    }
+
+    public function auditLabel(): string
+    {
+        return 'narration on matter '.$this->matter?->reference;
     }
 }

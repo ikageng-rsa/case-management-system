@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\RecordsActivity;
 use App\Enums\Client\PopiaConsentMethod;
 use Database\Factories\PopiaConsentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -15,6 +16,8 @@ class PopiaConsent extends Model
 {
     /** @use HasFactory<PopiaConsentFactory> */
     use HasFactory;
+
+    use RecordsActivity;
 
     /**
      * Get the attributes that should be cast.
@@ -54,5 +57,10 @@ class PopiaConsent extends Model
     public function scopeActive(Builder $query): void
     {
         $query->where('granted', true)->whereNull('withdrawn_at');
+    }
+
+    public function auditLabel(): string
+    {
+        return 'POPIA consent for client '.$this->client?->full_name;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\RecordsActivity;
 use App\Enums\Client\ContactKind;
 use App\Services\Clients\GenerateBlindIndex;
 use Database\Factories\ClientContactFactory;
@@ -18,6 +19,8 @@ class ClientContact extends Model
 {
     /** @use HasFactory<ClientContactFactory> */
     use HasFactory;
+
+    use RecordsActivity;
 
     protected static function booted(): void
     {
@@ -79,5 +82,18 @@ class ClientContact extends Model
     public function scopePrimary(Builder $query): void
     {
         $query->where('is_primary', true);
+    }
+
+    public function auditLabel(): string
+    {
+        return $this->kind->value.' contact for client '.$this->client?->full_name;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function auditExcept(): array
+    {
+        return ['value', 'value_hash'];
     }
 }
