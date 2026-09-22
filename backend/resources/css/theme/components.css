@@ -271,8 +271,6 @@
     --tblr-offcanvas-color: var(--cms-on-ink);
 }
 
-/* Below the expand breakpoint Tabler styles nav links as a centred icon rail.
-   Inside the offcanvas the labels are visible, so restore a normal list. */
 @media (max-width: 991.98px) {
     .navbar-vertical .offcanvas-lg .navbar-nav .nav-link {
         justify-content: flex-start;
