@@ -104,6 +104,14 @@
     color: var(--cms-on-ink);
 }
 
+.form-control-dark:-webkit-autofill,
+.form-control-dark:-webkit-autofill:hover,
+.form-control-dark:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--cms-on-ink);
+    -webkit-box-shadow: 0 0 0px 1000px color-mix(in srgb, var(--cms-ink-900) 100%, white 5%) inset;
+    transition: background-color 9999s ease-in-out 0s;
+}
+
 .form-control-dark::placeholder {
     color: var(--cms-on-ink-caption);
 }
