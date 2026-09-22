@@ -104,6 +104,14 @@
     color: var(--cms-on-ink);
 }
 
+.form-control-dark:-webkit-autofill,
+.form-control-dark:-webkit-autofill:hover,
+.form-control-dark:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--cms-on-ink);
+    -webkit-box-shadow: 0 0 0px 1000px color-mix(in srgb, var(--cms-ink-900) 100%, white 5%) inset;
+    transition: background-color 9999s ease-in-out 0s;
+}
+
 .form-control-dark::placeholder {
     color: var(--cms-on-ink-caption);
 }
@@ -263,8 +271,6 @@
     --tblr-offcanvas-color: var(--cms-on-ink);
 }
 
-/* Below the expand breakpoint Tabler styles nav links as a centred icon rail.
-   Inside the offcanvas the labels are visible, so restore a normal list. */
 @media (max-width: 991.98px) {
     .navbar-vertical .offcanvas-lg .navbar-nav .nav-link {
         justify-content: flex-start;
