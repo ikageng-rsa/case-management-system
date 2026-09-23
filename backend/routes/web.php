@@ -8,4 +8,4 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::view('/login', 'auth.login');
+Route::view('/dashboard', 'dashboard')->middleware('auth')->name('dashboard');
