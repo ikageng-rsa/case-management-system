@@ -1,6 +1,5 @@
 @php
     $user = auth()->user();
-    $initials = Str::of($user->name)->explode(' ')->take(2)->map(fn ($part) => Str::substr($part, 0, 1))->implode('');
 @endphp
 
 <!DOCTYPE html>
@@ -22,7 +21,7 @@
                 tagline="Attorneys Inc."
                 :user="$user->name"
                 :role="Str::headline($user->getRoleNames()->first() ?? '')"
-                :initials="$initials"
+                :initials="Str::initials($user->name, capitalize: true)"
             >
                 <x-ui.nav-section>Practice</x-ui.nav-section>
                 <x-ui.nav-item :href="route('dashboard')" label="Dashboard" icon="layout-dashboard" :active="request()->routeIs('dashboard')" />

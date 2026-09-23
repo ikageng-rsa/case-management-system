@@ -119,4 +119,21 @@ class ClientTest extends TestCase
 
         $this->assertTrue($client->load('contacts')->primaryContact(ContactKind::Email)->is($primary));
     }
+
+    public function test_it_derives_initials_from_every_name_for_an_individual(): void
+    {
+        $client = Client::factory()->create([
+            'first_name' => 'Khalil Moses',
+            'last_name' => 'Diale',
+        ]);
+
+        $this->assertSame('KMD', $client->initials);
+    }
+
+    public function test_it_derives_initials_from_the_registered_name_for_an_entity(): void
+    {
+        $client = Client::factory()->entity()->create(['entity_name' => 'Thabo Balley']);
+
+        $this->assertSame('TB', $client->initials);
+    }
 }
