@@ -16,23 +16,35 @@
                     Example Firm Attorneys Inc. · staff access only
                 </p>
 
-                <x-ui.input
-                    label="Email"
-                    name="email"
-                    type="email"
-                    tone="dark"
-                    placeholder="name@example.com"
-                />
+                <form method="POST" action="{{ route('login') }}">
+                    @csrf
 
-                <x-ui.input
-                    label="Password"
-                    name="password"
-                    type="password"
-                    tone="dark"
-                    placeholder="••••••••"
-                />
+                    <x-ui.input
+                        label="Email"
+                        name="email"
+                        type="email"
+                        tone="dark"
+                        placeholder="name@example.com"
+                        autocomplete="username"
+                        required
+                        autofocus
+                        :value="old('email')"
+                        :error="$errors->first('email')"
+                    />
 
-                <x-ui.button class="w-100" size="lg">Sign in</x-ui.button>
+                    <x-ui.input
+                        label="Password"
+                        name="password"
+                        type="password"
+                        tone="dark"
+                        placeholder="••••••••"
+                        autocomplete="current-password"
+                        required
+                        :error="$errors->first('password')"
+                    />
+
+                    <x-ui.button type="submit" class="w-100" size="lg">Sign in</x-ui.button>
+                </form>
 
                 <p class="text-meta mt-3" style="color: var(--cms-on-ink-caption);">Sessions expire after 30 minutes idle. All access is logged.</p>
             </div>
