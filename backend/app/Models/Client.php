@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 #[Fillable(['type', 'first_name', 'last_name', 'entity_name', 'id_number', 'registration_number'])]
 #[Hidden(['id_number', 'id_number_hash'])]
@@ -86,6 +87,14 @@ class Client extends Model
 
             return trim("{$this->first_name} {$this->last_name}");
         });
+    }
+
+    /** Extract initials formed from first and last name */
+    protected function initials(): Attribute
+    {
+        return Attribute::get(
+            fn () => Str::initials($this->full_name, capitalize: true)
+        );
     }
 
     public function isEntity(): bool
