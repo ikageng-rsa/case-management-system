@@ -6,6 +6,7 @@ namespace Tests\Unit\Models;
 
 use App\Models\DiaryEntry;
 use App\Models\Matter;
+use App\Models\Narration;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -88,6 +89,27 @@ class DiaryEntryTest extends TestCase
 
         $this->assertInstanceOf(Matter::class, $entry->matter);
         $this->assertInstanceOf(User::class, $entry->assignee);
+    }
+
+    public function test_it_may_be_linked_to_the_narration_that_completed_it(): void
+    {
+        $narration = Narration::factory()->create();
+
+        $unlinked = DiaryEntry::factory()->create();
+        $linked = DiaryEntry::factory()->create(['narration_id' => $narration->id]);
+
+        $this->assertNull($unlinked->narration);
+        $this->assertTrue($linked->narration->is($narration));
+    }
+
+    public function test_it_outlives_its_narration(): void
+    {
+        $narration = Narration::factory()->create();
+        $entry = DiaryEntry::factory()->create(['narration_id' => $narration->id]);
+
+        $narration->delete();
+
+        $this->assertNull($entry->fresh()->narration_id);
     }
 
     public function test_it_is_deleted_with_its_matter(): void
