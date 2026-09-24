@@ -44,9 +44,3 @@ Added once the app is scaffolded.
 |---|---|---|
 | `tests` | changes under `backend/**` | Laravel Pint (style) + PHPUnit |
 | `security` | every push/PR + weekly | `composer audit` (backend) + gitleaks (whole repo) |
-
-## Follow-ups
-
-- Scaffold `/mobile` with the React Native community CLI (TypeScript template).
-- Add a `mobile-tests` workflow (Jest + React Native Testing Library + ESLint) once
-  `mobile/package.json` exists.

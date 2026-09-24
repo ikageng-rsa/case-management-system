@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 return [
 
     /*
@@ -44,6 +46,19 @@ return [
             'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
             'visibility' => 'public',
             'throw' => false,
+            'report' => false,
+        ],
+
+        /*
+         * Client documents. Private, never web-served, and never symlinked
+         * into public/ — access is authorised by the application rather than
+         * by knowing the URL. Swap this for an S3 disk with server-side
+         * encryption before real client data lands on it.
+         */
+        'documents' => [
+            'driver' => 'local',
+            'root' => storage_path('app/documents'),
+            'throw' => true,
             'report' => false,
         ],
 

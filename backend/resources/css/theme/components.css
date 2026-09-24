@@ -1,0 +1,290 @@
+/* Logo mark */
+.logo-mark {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--cms-gold-500);
+    border-radius: var(--cms-radius-sm);
+    color: var(--cms-gold-500);
+    font-family: var(--cms-font-display);
+    font-size: 1.1875rem;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.logo-mark-sm {
+    width: 25px;
+    height: 25px;
+    font-size: 0.9375rem;
+}
+
+/* Stage badges */
+.badge-stage {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px var(--cms-space-8);
+    border-radius: var(--cms-radius-sm);
+    font-size: var(--cms-text-sm);
+    font-weight: 500;
+    line-height: 1.25;
+    white-space: nowrap;
+}
+
+.badge-stage-neutral {
+    background-color: color-mix(in srgb, var(--cms-tint-slate) 14%, transparent);
+    color: var(--cms-slate-600);
+}
+
+.badge-stage-info {
+    background-color: color-mix(in srgb, var(--cms-tint-teal) 14%, transparent);
+    color: var(--cms-teal-700);
+}
+
+.badge-stage-accent {
+    background-color: color-mix(in srgb, var(--cms-tint-gold) 20%, transparent);
+    color: var(--cms-gold-900);
+}
+
+.badge-stage-success {
+    background-color: color-mix(in srgb, var(--cms-tint-green) 14%, transparent);
+    color: var(--cms-green-700);
+}
+
+.badge-stage-danger {
+    background-color: color-mix(in srgb, var(--cms-tint-rust) 14%, transparent);
+    color: var(--cms-rust-800);
+}
+
+/* Stat card */
+.stat-card > .card-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--cms-space-8);
+    padding: var(--cms-space-18);
+}
+
+.stat-card-label {
+    font-family: var(--cms-font-mono);
+    font-size: var(--cms-text-2xs);
+    font-weight: 500;
+    letter-spacing: var(--cms-tracking-label);
+    color: var(--cms-fg-muted);
+}
+
+.stat-card-value {
+    font-family: var(--cms-font-display);
+    font-size: var(--cms-display-xl);
+    font-weight: 400;
+    line-height: 1.2;
+    color: var(--cms-fg);
+}
+
+.stat-card-delta {
+    font-size: var(--cms-text-base);
+    font-weight: 600;
+}
+
+/* Mono field label */
+.form-label-mono {
+    font-family: var(--cms-font-mono);
+    font-size: var(--cms-text-xs);
+    font-weight: 600;
+    letter-spacing: var(--cms-tracking-label-wide);
+    text-transform: uppercase;
+    color: var(--cms-fg-muted);
+}
+
+/* Input on an ink ground */
+.form-control-dark {
+    background-color: color-mix(in srgb, #ffffff 5%, transparent);
+    border-color: var(--cms-border-on-ink-strong);
+    color: var(--cms-on-ink);
+}
+
+.form-control-dark:-webkit-autofill,
+.form-control-dark:-webkit-autofill:hover,
+.form-control-dark:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--cms-on-ink);
+    -webkit-box-shadow: 0 0 0px 1000px color-mix(in srgb, var(--cms-ink-900) 100%, white 5%) inset;
+    transition: background-color 9999s ease-in-out 0s;
+}
+
+.form-control-dark::placeholder {
+    color: var(--cms-on-ink-caption);
+}
+
+.form-control-dark:focus {
+    background-color: color-mix(in srgb, #ffffff 8%, transparent);
+    border-color: var(--cms-gold-500);
+    color: var(--cms-on-ink);
+}
+
+.form-label-mono-dark {
+    color: color-mix(in srgb, #ffffff 45%, transparent);
+}
+
+/* Sidebar */
+
+.app-sidebar-firm-name {
+    font-size: var(--cms-text-md);
+    font-weight: 600;
+    color: var(--cms-on-ink);
+}
+
+.app-sidebar-firm-sub {
+    font-family: var(--cms-font-mono);
+    font-size: var(--cms-text-2xs);
+    letter-spacing: var(--cms-tracking-label);
+    color: var(--cms-on-ink-caption);
+}
+
+.app-sidebar-user-name {
+    font-size: var(--cms-text-base);
+    font-weight: 500;
+    color: var(--cms-on-ink);
+}
+
+.app-sidebar-user-role {
+    font-family: var(--cms-font-mono);
+    font-size: var(--cms-text-xs);
+    color: var(--cms-on-ink-caption);
+}
+
+.sidebar-avatar {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: var(--cms-gold-500);
+    color: var(--cms-ink-900);
+    font-size: 0.6875rem;
+    font-weight: 600;
+}
+
+/* Sidebar nav item */
+
+.sidebar-nav-count {
+    font-family: var(--cms-font-mono);
+    font-size: var(--cms-text-xs);
+    font-weight: 500;
+    color: var(--cms-on-ink-count);
+}
+
+/* App header */
+.app-header {
+    display: flex;
+    align-items: center;
+    gap: var(--cms-space-16);
+    height: var(--cms-topbar-height);
+    padding: 0 var(--cms-space-24);
+    background-color: var(--cms-surface);
+    border-bottom: 1px solid var(--cms-line-strong);
+}
+
+.app-header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--cms-space-10);
+    margin-inline-start: auto;
+}
+
+/* Search field */
+.search-field {
+    display: flex;
+    align-items: center;
+    gap: var(--cms-space-8);
+    width: 420px;
+    max-width: 100%;
+    height: 34px;
+    padding: 0 var(--cms-space-12);
+    background-color: var(--cms-bg);
+    border: 1px solid var(--cms-line-strong);
+    border-radius: var(--cms-radius-md);
+}
+
+.search-field:focus-within {
+    border-color: var(--cms-gold-500);
+}
+
+.search-field-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0;
+    background: none;
+    border: 0;
+    color: var(--cms-fg);
+    font-size: var(--cms-text-md);
+}
+
+.search-field-input:focus {
+    outline: 0;
+}
+
+.search-field-input::placeholder {
+    color: var(--cms-fg-muted);
+}
+
+.search-field-icon {
+    font-family: var(--cms-font-mono);
+    color: var(--cms-fg-muted);
+}
+
+.search-field-shortcut {
+    font-family: var(--cms-font-mono);
+    font-size: var(--cms-text-2xs);
+    font-weight: 500;
+    color: var(--cms-text-subtle);
+}
+
+/* Mono metadata */
+.text-meta {
+    font-family: var(--cms-font-mono);
+    font-size: var(--cms-text-2xs);
+    letter-spacing: var(--cms-tracking-label);
+    color: var(--cms-fg-muted);
+}
+
+/* Active sidebar item */
+.navbar-vertical .navbar-nav .nav-item.active > .nav-link,
+.navbar-vertical .navbar-nav .nav-link.active {
+    background-color: color-mix(in srgb, var(--cms-gold-500) 16%, transparent);
+    box-shadow: inset 0 0 0 2px var(--cms-gold-500);
+    color: var(--cms-on-ink);
+}
+
+/* Tabler underlines the active item for horizontal navbars; the vertical one
+   uses the ring above instead. */
+.navbar-vertical .navbar-nav .nav-item.active::after {
+    display: none;
+}
+
+/* Offcanvas sidebar panel */
+.navbar-vertical .offcanvas-lg {
+    --tblr-offcanvas-bg: var(--cms-ink-900);
+    --tblr-offcanvas-width: var(--cms-sidebar-width);
+    --tblr-offcanvas-color: var(--cms-on-ink);
+}
+
+@media (max-width: 991.98px) {
+    .navbar-vertical .offcanvas-lg .navbar-nav .nav-link {
+        justify-content: flex-start;
+        min-width: 0;
+    }
+
+    .navbar-vertical .offcanvas-lg .navbar-nav .nav-section-title {
+        display: block;
+        padding: var(--cms-space-12) var(--cms-space-12) var(--cms-space-4);
+        font-family: var(--cms-font-mono);
+        font-size: var(--cms-text-2xs);
+        font-weight: 500;
+        letter-spacing: var(--cms-tracking-label-wide);
+        text-transform: uppercase;
+        color: var(--cms-on-ink-label);
+    }
+}
