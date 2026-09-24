@@ -16,6 +16,7 @@ return new class extends Migration
         Schema::create('diary_entries', function (Blueprint $table) {
             $table->id();
             $table->foreignUuid('matter_id')->constrained('matters')->onDelete('cascade');
+            $table->foreignUuid('narration_id')->nullable()->constrained('narrations')->nullOnDelete();
             $table->text('body');
             $table->timestamp('due_at');
             $table->foreignUuid('assigned_to')->constrained('users');

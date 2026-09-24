@@ -38,6 +38,12 @@ class DiaryEntry extends Model
         return $this->belongsTo(Matter::class);
     }
 
+    /** The narration that gave rise to this entry, when there is one. */
+    public function narration(): BelongsTo
+    {
+        return $this->belongsTo(Narration::class);
+    }
+
     public function assignee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to');
