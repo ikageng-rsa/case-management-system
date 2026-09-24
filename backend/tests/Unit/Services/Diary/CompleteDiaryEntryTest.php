@@ -59,4 +59,25 @@ class CompleteDiaryEntryTest extends TestCase
         $this->assertTrue($entry->completedBy->is($first));
         $this->assertNull($entry->narration_id);
     }
+
+    public function test_it_marks_an_entry_complete_and_records_who_did_it(): void
+    {
+        $entry = DiaryEntry::factory()->create();
+        $user = User::factory()->create();
+
+        (new CompleteDiaryEntry)->complete($entry, $user);
+
+        $this->assertTrue($entry->fresh()->isComplete());
+        $this->assertSame($user->getKey(), $entry->fresh()->completed_by);
+    }
+
+    public function test_completing_an_already_complete_entry_keeps_the_original_sign_off(): void
+    {
+        $original = User::factory()->create();
+        $entry = DiaryEntry::factory()->completed()->create(['completed_by' => $original->getKey()]);
+
+        (new CompleteDiaryEntry)->complete($entry, User::factory()->create());
+
+        $this->assertSame($original->getKey(), $entry->fresh()->completed_by);
+    }
 }
