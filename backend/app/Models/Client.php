@@ -38,6 +38,19 @@ class Client extends Model
     use RecordsActivity;
     use SoftDeletes;
 
+    protected static function booted(): void
+    {
+        static::saving(function (Client $client) {
+            if (! $client->isDirty('id_number')) {
+                return;
+            }
+
+             $client->id_number_hash = $client->id_number === null
+            ? null
+            : GenerateBlindIndex::of(NormaliseIdentifier::idNumber($client->id_number));
+        });
+    }
+
     /**
      * Get the attributes that should be cast.
      *
@@ -113,6 +126,8 @@ class Client extends Model
     /** Look a client up by ID number without decrypting the column. */
     public function scopeMatchingIdNumber(Builder $query, string $idNumber): void
     {
+            $query->where('id_number_hash', GenerateBlindIndex::of(NormaliseIdentifier::idNumber($idNumber)));
+
         $query->where('id_number_hash', GenerateBlindIndex::of(NormaliseIdentifier::idNumber($idNumber)));
 
     }

@@ -29,6 +29,35 @@ class ClientContact extends Model
 
     use RecordsActivity;
 
+    protected static function booted(): void
+    {
+        static::saving(function (ClientContact $contact) {
+            if (! $contact->isDirty('value')) {
+                return;
+            }
+
+            $contact->value_hash = GenerateBlindIndex::of(
+                NormaliseIdentifier::contact($contact->kind, $contact->value),
+            );
+        });
+
+        /*
+         * A client has at most one primary contact per kind, so promoting one
+         * demotes whichever sibling of the same kind currently holds the flag.
+         */
+        static::saved(function (ClientContact $contact) {
+            if (! $contact->is_primary) {
+                return;
+            }
+
+            static::query()
+                ->where('client_id', $contact->client_id)
+                ->where('kind', $contact->kind)
+                ->whereKeyNot($contact->getKey())
+                ->update(['is_primary' => false]);
+        });
+    }
+
     /**
      * Get the attributes that should be cast.
      *
@@ -49,13 +78,11 @@ class ClientContact extends Model
     }
 
     /** Look a contact up by its value without decrypting the column. */
-    public function scopeMatchingValue(Builder $query, string $value, ?ContactKind $kind = null): void
+    public function scopeMatchingValue(Builder $query, string $value): void
     {
-        $value = $kind !== null
-        ? NormaliseIdentifier::contact($kind, $value)
-        : mb_strtolower(trim($value));
-
-        $query->where('value_hash', GenerateBlindIndex::of($value));
+       $query->where('value_hash', GenerateBlindIndex::of(
+        $kind ? NormaliseIdentifier::contact($kind, $value) : $value,
+    ));
     }
 
     public function scopeOfKind(Builder $query, ContactKind $kind): void
