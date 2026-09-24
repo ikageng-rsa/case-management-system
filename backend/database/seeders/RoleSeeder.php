@@ -17,18 +17,18 @@ class RoleSeeder extends Seeder
      * Run the database seeds.
      */
     public function run(): void
-{
-    app(PermissionRegistrar::class)->forgetCachedPermissions();
+    {
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-    foreach (PermissionEnum::cases() as $permission) {
-        Permission::findOrCreate($permission->value);
+        foreach (PermissionEnum::cases() as $permission) {
+            Permission::findOrCreate($permission->value);
+        }
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions(); // add this line
+
+        foreach (RoleEnum::cases() as $role) {
+            Role::findOrCreate($role->value)
+                ->syncPermissions(array_column($role->permissions(), 'value'));
+        }
     }
-
-    app(PermissionRegistrar::class)->forgetCachedPermissions(); // add this line
-
-    foreach (RoleEnum::cases() as $role) {
-        Role::findOrCreate($role->value)
-            ->syncPermissions(array_column($role->permissions(), 'value'));
-    }
-}
 }
