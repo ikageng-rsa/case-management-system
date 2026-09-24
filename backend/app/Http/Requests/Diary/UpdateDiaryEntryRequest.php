@@ -27,6 +27,7 @@ class UpdateDiaryEntryRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'assigned_to' => ['required', 'uuid', Rule::exists('users', 'id')],
             'body' => ['required', 'string'],
             'due_at' => ['required', 'date'],
             // The narration must be sent, even as null
