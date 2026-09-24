@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace Tests\Feature\Services\Clients;
 
 use App\Enums\Client\ClientType;
-use App\Models\Client;
 use App\Services\Clients\DuplicateClientException;
+use App\Models\Client;
 use App\Services\Clients\GenerateBlindIndex;
 use App\Services\Clients\RegisterClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class RegisterClientTest extends TestCase
@@ -72,6 +73,18 @@ class RegisterClientTest extends TestCase
         $this->assertTrue($found->is($client));
     }
 
+    public function test_it_rejects_an_id_number_with_a_bad_checksum(): void
+    {
+        try {
+            $this->registerIndividual('9001015800083');
+            $this->fail('Expected a ValidationException.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('id_number', $e->errors());
+        }
+
+        $this->assertDatabaseCount('clients', 0);
+    }
+
     public function test_it_rejects_a_duplicate_id_number_however_it_is_formatted(): void
     {
         $existing = $this->registerIndividual();
@@ -128,6 +141,18 @@ class RegisterClientTest extends TestCase
         } catch (DuplicateClientException $e) {
             $this->assertTrue($e->existing->is($existing));
         }
+    }
+
+    public function test_it_rejects_a_malformed_registration_number(): void
+    {
+        try {
+            $this->registerEntity('!!');
+            $this->fail('Expected a ValidationException.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('registration_number', $e->errors());
+        }
+
+        $this->assertDatabaseCount('clients', 0);
     }
 
     private function registerIndividual(string $idNumber = self::ID_NUMBER): Client

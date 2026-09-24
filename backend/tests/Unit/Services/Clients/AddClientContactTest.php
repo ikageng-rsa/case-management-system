@@ -9,10 +9,10 @@ use App\Enums\Client\ContactKind;
 use App\Models\Client;
 use App\Models\ClientContact;
 use App\Services\Clients\AddClientContact;
-use App\Services\Clients\ContactKindLimitException;
 use App\Services\Clients\GenerateBlindIndex;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
@@ -75,6 +75,30 @@ class AddClientContactTest extends TestCase
         $this->assertTrue($found->is($contact));
     }
 
+    public function test_it_rejects_a_malformed_email(): void
+    {
+        $this->expectException(ValidationException::class);
+
+        $this->add($this->individual(), ContactKind::Email, 'not-an-email');
+    }
+
+    public function test_it_rejects_a_malformed_phone_number(): void
+    {
+        $this->expectException(ValidationException::class);
+
+        $this->add($this->individual(), ContactKind::Mobile, '12345');
+    }
+
+    public function test_it_rejects_a_duplicate_contact_for_the_same_client(): void
+    {
+        $client = $this->entity();
+        $this->add($client, ContactKind::Email, 'info@acme.test');
+
+        $this->expectException(ValidationException::class);
+
+        $this->add($client, ContactKind::Email, '  INFO@acme.test ');
+    }
+
     public function test_different_clients_can_share_a_contact(): void
     {
         $this->add($this->individual(), ContactKind::Email, 'shared@example.com');
@@ -100,7 +124,7 @@ class AddClientContactTest extends TestCase
         $client = $this->individual();
         $this->add($client, ContactKind::Email, 'jane@example.com');
 
-        $this->expectException(ContactKindLimitException::class);
+        $this->expectException(ValidationException::class);
 
         $this->add($client, ContactKind::Email, 'jane.doe@example.com');
     }
