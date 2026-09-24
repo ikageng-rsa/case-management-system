@@ -91,7 +91,7 @@ class DiaryEntryTest extends TestCase
         $this->assertInstanceOf(User::class, $entry->assignee);
     }
 
-    public function test_it_may_be_linked_to_the_narration_it_came_from(): void
+    public function test_it_may_be_linked_to_the_narration_that_completed_it(): void
     {
         $narration = Narration::factory()->create();
 

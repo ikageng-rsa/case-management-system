@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use InvalidArgumentException;
 
 #[Fillable(['body', 'due_at'])]
 class DiaryEntry extends Model
@@ -38,7 +39,7 @@ class DiaryEntry extends Model
         return $this->belongsTo(Matter::class);
     }
 
-    /** The narration that gave rise to this entry, when there is one. */
+    /** The narration recording the work that completed this entry, when there is one. */
     public function narration(): BelongsTo
     {
         return $this->belongsTo(Narration::class);
@@ -84,6 +85,22 @@ class DiaryEntry extends Model
             'completed_at' => now(),
             'completed_by' => $user->getKey(),
         ])->save();
+    }
+
+    /** Link or, given null, unlink the narration; the caller saves. */
+    public function linkNarration(?Narration $narration): void
+    {
+        if ($narration === null) {
+            $this->narration()->dissociate();
+
+            return;
+        }
+
+        if ($narration->matter_id !== $this->matter_id) {
+            throw new InvalidArgumentException('A diary entry can only be linked to a narration on the same matter.');
+        }
+
+        $this->narration()->associate($narration);
     }
 
     public function scopePending(Builder $query): void
