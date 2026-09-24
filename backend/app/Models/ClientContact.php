@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Concerns\RecordsActivity;
 use App\Enums\Client\ContactKind;
 use App\Services\Clients\GenerateBlindIndex;
+use App\Services\Clients\NormaliseIdentifier;
 use Database\Factories\ClientContactFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -31,7 +32,9 @@ class ClientContact extends Model
                 return;
             }
 
-            $contact->value_hash = GenerateBlindIndex::of($contact->value);
+            $contact->value_hash = GenerateBlindIndex::of(
+                NormaliseIdentifier::contact($contact->kind, $contact->value),
+            );
         });
 
         /*
@@ -71,9 +74,11 @@ class ClientContact extends Model
     }
 
     /** Look a contact up by its value without decrypting the column. */
-    public function scopeMatchingValue(Builder $query, string $value): void
+    public function scopeMatchingValue(Builder $query, string $value,?ContactKind $kind = null): void
     {
-        $query->where('value_hash', GenerateBlindIndex::of($value));
+       $query->where('value_hash', GenerateBlindIndex::of(
+        $kind ? NormaliseIdentifier::contact($kind, $value) : $value,
+    ));
     }
 
     public function scopeOfKind(Builder $query, ContactKind $kind): void
