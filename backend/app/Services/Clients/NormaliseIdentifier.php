@@ -4,25 +4,25 @@ declare(strict_types=1);
 
 namespace App\Services\Clients;
 
-use App\Enums\Client\ContactKind; // Calling the enum class for the contact kind to do the normalisation of the identifier
+use App\Enums\Client\ContactKind;
 
 class NormaliseIdentifier
 {
     public static function idNumber(string $value): string
     {
-        return preg_replace('/\D/', '', $value); // Remove all non-digit characters from the input string, effectively normalizing it to just the digits.
+        return preg_replace('/\D/', '', $value);
     }
 
     public static function registrationNumber(string $value): string
     {
         return mb_strtoupper(
             preg_replace('/\s+/', '', trim($value)) ?? ''
-        ); // Remove all whitespace characters from the input string, effectively normalizing it.
+        );
     }
 
     public static function contact(ContactKind $kind, string $value): string
     {
-        $value = trim($value); // Remove whitespace from the beginning and end of the input string.
+        $value = trim($value);
 
         return match ($kind) {
             ContactKind::Mobile => self::mobile($value),

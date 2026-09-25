@@ -15,15 +15,14 @@ class RecordPopiaConsent
     public function handle(Client $client, bool $granted, PopiaConsentMethod $method, ?CarbonInterface $at = null): PopiaConsent
     {
         $consent = DB::transaction(function () use ($client, $granted, $method, $at) {
-            // ->first() on the relation query, not the cached property.
             $current = $client->popiaConsent()->first();
 
             if ($current?->isActive()) {
                 if ($granted) {
-                    return $current;            // already consented: don't stack duplicate rows
+                    return $current;
                 }
 
-                $current->withdraw();           // client is revoking
+                $current->withdraw();
 
                 return $current;
             }
