@@ -22,6 +22,7 @@ class ActivityTypeFactory extends Factory
     {
         return [
             'code' => fake()->unique()->lexify('????'),
+            'name' => fake()->words(2, true),
             'measure' => ActivityMeasure::Minutes,
             'increment' => 6,
             'default_billable' => true,
