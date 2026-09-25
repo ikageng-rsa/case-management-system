@@ -17,15 +17,15 @@ class AddClientContact
         $value = NormaliseIdentifier::contact($contactKind, $value);
         $this->assertWellFormed($contactKind, $value);
 
-        if ($client->contacts()->matchingValue($value)->exists()) {
-            throw ValidationException::withMessages(['value' => 'This contact is already in the system']);
+        if ($client->contacts()->matchingValue($value, $contactKind)->exists()) {
+            throw ValidationException::withMessages(['value' => 'This contact is already in the system',]);
         }
         $hasKind = $client->contacts()->ofKind($contactKind)->exists();
         if (! $client->isEntity() && $hasKind) {
             throw ValidationException::withMessages(['value' => "Individual clients can only have one {$contactKind->value} contact."]);
         }
         // THE First contact of a kind is the primary by default.
-        $isPrimay = $isPrimary || ! $hasKind;
+        $isPrimary = $isPrimary || ! $hasKind;
 
         // Transaction: the saved hook demotes siblings in a second query.
         $contact = DB::transaction(fn () => $client->contacts()->create([

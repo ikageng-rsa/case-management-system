@@ -76,9 +76,11 @@ class ClientContact extends Model
     /** Look a contact up by its value without decrypting the column. */
     public function scopeMatchingValue(Builder $query, string $value, ?ContactKind $kind = null): void
     {
-        $query->where('value_hash', GenerateBlindIndex::of(
-            $kind ? NormaliseIdentifier::contact($kind, $value) : $value,
-        ));
+         $value = $kind !== null
+        ? NormaliseIdentifier::contact($kind, $value)
+        : mb_strtolower(trim($value));
+
+        $query->where('value_hash', GenerateBlindIndex::of($value));
     }
 
     public function scopeOfKind(Builder $query, ContactKind $kind): void
