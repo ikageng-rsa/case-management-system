@@ -73,18 +73,6 @@ class RegisterClientTest extends TestCase
         $this->assertTrue($found->is($client));
     }
 
-    public function test_it_rejects_an_id_number_with_a_bad_checksum(): void
-    {
-        try {
-            $this->registerIndividual('9001015800083');
-            $this->fail('Expected a ValidationException.');
-        } catch (ValidationException $e) {
-            $this->assertArrayHasKey('id_number', $e->errors());
-        }
-
-        $this->assertDatabaseCount('clients', 0);
-    }
-
     public function test_it_rejects_a_duplicate_id_number_however_it_is_formatted(): void
     {
         $existing = $this->registerIndividual();

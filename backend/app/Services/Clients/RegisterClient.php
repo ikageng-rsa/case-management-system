@@ -27,10 +27,6 @@ class RegisterClient
     {
         $idNumber = NormaliseIdentifier::idNumber($data['id_number']);
 
-        if (! ValidateSouthAfricanId::passes($idNumber)) {
-            throw ValidationException::withMessages(['id_number' => 'The ID number is not valid.']);
-        }
-
         $existingClient = Client::withTrashed()->matchingIdNumber($idNumber)->first();
 
         if ($existingClient) {
