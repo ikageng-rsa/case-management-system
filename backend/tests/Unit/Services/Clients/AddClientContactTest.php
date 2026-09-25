@@ -31,7 +31,7 @@ class AddClientContactTest extends TestCase
     #[DataProvider('southAfricanPhoneFormats')]
     public function test_it_stores_phone_numbers_in_e164(string $input): void
     {
-        $contact = $this->add($this->individual(), ContactKind::Phone, $input);
+        $contact = $this->add($this->individual(), ContactKind::Mobile, $input);
 
         $this->assertSame('+27821234567', $contact->value);
     }
@@ -68,9 +68,9 @@ class AddClientContactTest extends TestCase
     /** Fails until the scope accepts a kind and normalises (see model edits below). */
     public function test_it_finds_a_phone_contact_by_a_formatted_number(): void
     {
-        $contact = $this->add($this->individual(), ContactKind::Phone, '0821234567');
+        $contact = $this->add($this->individual(), ContactKind::Mobile, '0821234567');
 
-        $found = ClientContact::matchingValue('082 123 4567', ContactKind::Phone)->first();
+        $found = ClientContact::matchingValue('082 123 4567', ContactKind::Mobile)->first();
 
         $this->assertTrue($found->is($contact));
     }
@@ -86,7 +86,7 @@ class AddClientContactTest extends TestCase
     {
         $this->expectException(ValidationException::class);
 
-        $this->add($this->individual(), ContactKind::Phone, '12345');
+        $this->add($this->individual(), ContactKind::Mobile, '12345');
     }
 
     public function test_it_rejects_a_duplicate_contact_for_the_same_client(): void
@@ -113,7 +113,7 @@ class AddClientContactTest extends TestCase
         $client = $this->individual();
 
         $email = $this->add($client, ContactKind::Email, 'jane@example.com');
-        $phone = $this->add($client, ContactKind::Phone, '0821234567');
+        $phone = $this->add($client, ContactKind::Mobile, '0821234567');
 
         $this->assertTrue($email->is_primary);
         $this->assertTrue($phone->is_primary);
