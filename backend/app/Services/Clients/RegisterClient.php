@@ -43,8 +43,6 @@ class RegisterClient
             'id_number' => $idNumber,
             'first_name' => trim($data['first_name']),
             'last_name' => trim($data['last_name']),
-            'email' => $data['email'],
-            'phone' => $data['phone'],
             'type' => ClientType::Individual,
         ]);
     }

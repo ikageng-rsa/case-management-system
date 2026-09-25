@@ -25,7 +25,7 @@ class RecordPopiaConsentTest extends TestCase
 
         $this->assertTrue($consent->granted);
         $this->assertSame($this->method(), $consent->method);
-        $this->assertTrue($consent->granted_at->equalTo(now()));
+        $this->assertSame(now()->toDateTimeString(), $consent->granted_at->toDateTimeString());
         $this->assertNull($consent->withdrawn_at);
         $this->assertTrue($client->hasGrantedPopiaConsent());
     }

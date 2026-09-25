@@ -34,15 +34,16 @@ class NormaliseIdentifier
     public static function mobile(string $value): string
     {
         $digits = preg_replace('/[^\d+]/', '', $value);
+        $raw = ltrim($digits, '+');   // work in raw digits, decide the '+' once at the end
 
-        if (preg_match('/^0\d{9}$/', $digits) === 1) {
-            return '+27' . substr($digits, 1);
+        if (preg_match('/^0\d{9}$/', $raw) === 1) {
+            return '+27'.substr($raw, 1);
         }
 
-        if (preg_match('/^27\d{9}$/', $digits) === 1) {
-            return '+' . $digits;
+        if (preg_match('/^27\d{9}$/', $raw) === 1) {
+            return '+'.$raw;
         }
 
-        return str_starts_with($value, '+') ? '+' . $digits : $digits;
+        return str_starts_with($value, '+') ? '+'.$raw : $raw;
     }
 }

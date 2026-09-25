@@ -18,7 +18,7 @@ class AddClientContact
         $this->assertWellFormed($contactKind, $value);
 
         if ($client->contacts()->matchingValue($value, $contactKind)->exists()) {
-            throw ValidationException::withMessages(['value' => 'This contact is already in the system',]);
+            throw ValidationException::withMessages(['value' => 'This contact is already in the system']);
         }
         $hasKind = $client->contacts()->ofKind($contactKind)->exists();
         if (! $client->isEntity() && $hasKind) {

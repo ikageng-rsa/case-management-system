@@ -36,7 +36,7 @@ class ValidateSouthAfricanIdTest extends TestCase
         return [
             'wrong checksum' => ['900101580003'],
             'too short' => ['90010158008'],
-            'too long' => ['9001015800088'],
+            'too long' => ['90010158000885678'],
             'contains letters' => ['90010158000A8'],
             'contains spaces' => ['9001 015800 088'],
             'impossible data (30 Feb)' => ['9002305800085'],

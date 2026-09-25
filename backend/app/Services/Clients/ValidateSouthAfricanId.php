@@ -8,7 +8,7 @@ class ValidateSouthAfricanId
 {
     public static function passes(string $id): bool
     {
-        if (! preg_match('/^\d{13}$/', $id)) {
+        if (strlen($id) !== 13 || ! ctype_digit($id)) {
             return false;
         }
 
