@@ -40,7 +40,7 @@ class Client extends Model
                 return;
             }
 
-             $client->id_number_hash = $client->id_number === null
+            $client->id_number_hash = $client->id_number === null
             ? null
             : GenerateBlindIndex::of(NormaliseIdentifier::idNumber($client->id_number));
         });
@@ -120,7 +120,7 @@ class Client extends Model
     /** Look a client up by ID number without decrypting the column. */
     public function scopeMatchingIdNumber(Builder $query, string $idNumber): void
     {
-            $query->where('id_number_hash', GenerateBlindIndex::of(NormaliseIdentifier::idNumber($idNumber)));
+        $query->where('id_number_hash', GenerateBlindIndex::of(NormaliseIdentifier::idNumber($idNumber)));
 
     }
 

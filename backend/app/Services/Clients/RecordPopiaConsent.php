@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types= 1);
+declare(strict_types=1);
 
 namespace App\Services\Clients;
 
@@ -10,10 +10,11 @@ use App\Models\PopiaConsent;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 
-class RecordPopiaConsent{
-
-public function handle(Client $client, bool $granted, PopiaConsentMethod $method, ?CarbonInterface $at = null): PopiaConsent{
-   $consent = DB::transaction(function () use ($client, $granted, $method, $at) {
+class RecordPopiaConsent
+{
+    public function handle(Client $client, bool $granted, PopiaConsentMethod $method, ?CarbonInterface $at = null): PopiaConsent
+    {
+        $consent = DB::transaction(function () use ($client, $granted, $method, $at) {
             // ->first() on the relation query, not the cached property.
             $current = $client->popiaConsent()->first();
 
@@ -39,5 +40,4 @@ public function handle(Client $client, bool $granted, PopiaConsentMethod $method
 
         return $consent;
     }
-
 }
