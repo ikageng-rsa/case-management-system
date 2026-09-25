@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Casts\Client\ContactValue;
 use App\Concerns\RecordsActivity;
 use App\Enums\Client\ContactKind;
 use App\Services\Clients\GenerateBlindIndex;
@@ -32,9 +33,7 @@ class ClientContact extends Model
                 return;
             }
 
-            $contact->value_hash = GenerateBlindIndex::of(
-                NormaliseIdentifier::contact($contact->kind, $contact->value),
-            );
+            $contact->value_hash = GenerateBlindIndex::of($contact->value);
         });
 
         /*
@@ -63,7 +62,7 @@ class ClientContact extends Model
     {
         return [
             'kind' => ContactKind::class,
-            'value' => 'encrypted',
+            'value' => ContactValue::class,
             'is_primary' => 'boolean',
         ];
     }

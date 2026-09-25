@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Casts\Client\IdNumber;
+use App\Casts\Client\RegistrationNumber;
 use App\Concerns\RecordsActivity;
 use App\Enums\Client\ClientType;
 use App\Enums\Client\ContactKind;
@@ -40,9 +42,7 @@ class Client extends Model
                 return;
             }
 
-            $client->id_number_hash = $client->id_number === null
-            ? null
-            : GenerateBlindIndex::of(NormaliseIdentifier::idNumber($client->id_number));
+            $client->id_number_hash = GenerateBlindIndex::of($client->id_number);
         });
     }
 
@@ -55,7 +55,8 @@ class Client extends Model
     {
         return [
             'type' => ClientType::class,
-            'id_number' => 'encrypted',
+            'id_number' => IdNumber::class,
+            'registration_number' => RegistrationNumber::class,
         ];
     }
 
