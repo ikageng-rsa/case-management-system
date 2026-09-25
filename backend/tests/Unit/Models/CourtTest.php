@@ -25,7 +25,7 @@ class CourtTest extends TestCase
     {
         $court = Court::factory()->create(['name' => 'High Court', 'seat' => 'Johannesburg']);
 
-        $this->assertSame('High Court, Johannesburg', $court->full_name);
+        $this->assertSame('High Court, Johannesburg', $court->label);
     }
 
     public function test_it_scopes_courts_by_tier(): void
