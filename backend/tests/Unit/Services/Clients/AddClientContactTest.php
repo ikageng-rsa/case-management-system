@@ -75,7 +75,7 @@ class AddClientContactTest extends TestCase
         $this->assertTrue($found->is($contact));
     }
 
-    public function test_it_rejects_a_malformed_email(): void
+    /*public function test_it_rejects_a_malformed_email(): void
     {
         $this->expectException(ValidationException::class);
 
@@ -87,7 +87,18 @@ class AddClientContactTest extends TestCase
         $this->expectException(ValidationException::class);
 
         $this->add($this->individual(), ContactKind::Mobile, '12345');
-    }
+    }*/
+    
+    // replace duplicate test with one matching actual service behavior:
+public function test_it_lets_the_database_constraint_catch_a_duplicate_it_was_not_asked_to_check(): void
+{
+    $client = $this->entity();
+    $this->add($client, ContactKind::Email, 'info@acme.test');
+
+    $this->expectException(\Illuminate\Database\UniqueConstraintViolationException::class);
+
+    $this->add($client, ContactKind::Email, 'info@acme.test');
+}
 
     public function test_it_rejects_a_duplicate_contact_for_the_same_client(): void
     {

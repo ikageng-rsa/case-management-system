@@ -20,7 +20,7 @@ class AddClientContact
             throw ValidationException::withMessages(['value'=> "Individual clients can only have one {$contactKind->value} contact."]);
         }
         //THE First contact of a kind is the primary by default.
-        $isPrimay = $isPrimary || ! $hasKind;
+        $isPrimary = $isPrimary || ! $hasKind;
 
         //Transaction: the saved hook demotes siblings in a second query.
         $contact = DB::transaction(fn () => $client->contacts()->create([

@@ -33,7 +33,7 @@ class RegisterClient
        // Check if a client with the same ID number already exists
        $existingClient = Client::withTrashed()->matchingIdNumber($idNumber)->first();
 
-       if(!$existingClient){
+       if($existingClient){
          throw new DuplicateClientException($existingClient);
        }
 
@@ -42,8 +42,7 @@ class RegisterClient
            'id_number' => $idNumber,
            'first_name' =>trim($data['first_name']),
            'last_name' => trim($data['last_name']),
-           'email' => $data['email'],
-           'phone' => $data['phone'],
+ 
            'type' => ClientType::Individual,
        ]);
     }
@@ -59,7 +58,7 @@ class RegisterClient
         }
 
         $existing = Client::withTrashed()->where('registration_number', $registration)->first();
-        if(!$existing){
+        if($existing){
             throw new DuplicateClientException($existing);
         }
 
