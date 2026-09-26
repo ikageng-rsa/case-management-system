@@ -19,6 +19,7 @@ use Tests\TestCase;
 class AddClientContactTest extends TestCase
 {
     use RefreshDatabase;
+    private const ENTITY_EMAIL = 'info@acme.test';
 
     public function test_it_normalises_an_email_and_stores_its_blind_index(): void
     {
@@ -78,10 +79,10 @@ class AddClientContactTest extends TestCase
     public function test_it_rejects_a_duplicate_contact_for_the_same_client(): void
     {
         $client = $this->entity();
-        $this->add($client, ContactKind::Email, 'info@acme.test');
+        $this->add($client, ContactKind::Email, self::ENTITY_EMAIL);
 
         $this->expectException(ValidationException::class);  // ← Expects validation error
-        $this->add($client, ContactKind::Email, '  INFO@acme.test ');  // ← Gets DB constraint error
+        $this->add($client, ContactKind::Email, '  INFO@acme.test '.substr(self::ENTITY_EMAIL, -0));  // ← Gets DB constraint error
     }
 
     public function test_different_clients_can_share_a_contact(): void
