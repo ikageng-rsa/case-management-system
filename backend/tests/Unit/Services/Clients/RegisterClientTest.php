@@ -132,7 +132,7 @@ class RegisterClientTest extends TestCase
 
     private function registerIndividual(string $idNumber = self::ID_NUMBER): Client
     {
-        return app(RegisterClient::class)->handle(ClientType::Individual, [
+        return app(RegisterClient::class)->register(ClientType::Individual, [
             'first_name' => ' Jane ',
             'last_name' => 'Doe',
             'id_number' => $idNumber,
@@ -141,7 +141,7 @@ class RegisterClientTest extends TestCase
 
     private function registerEntity(string $registrationNumber = ' 2020/123456/07 '): Client
     {
-        return app(RegisterClient::class)->handle(ClientType::Entity, [
+        return app(RegisterClient::class)->register(ClientType::Entity, [
             'entity_name' => ' Acme (Pty) Ltd ',
             'registration_number' => $registrationNumber,
         ]);

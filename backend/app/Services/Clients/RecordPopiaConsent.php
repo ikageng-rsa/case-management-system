@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 
 class RecordPopiaConsent
 {
-    public function handle(Client $client, bool $granted, PopiaConsentMethod $method, ?CarbonInterface $at = null): PopiaConsent
+    public function record(Client $client, bool $granted, PopiaConsentMethod $method, ?CarbonInterface $at = null): PopiaConsent
     {
         $consent = DB::transaction(function () use ($client, $granted, $method, $at) {
             $current = $client->popiaConsent()->first();

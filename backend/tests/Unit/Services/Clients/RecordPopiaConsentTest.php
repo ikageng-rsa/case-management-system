@@ -100,7 +100,7 @@ class RecordPopiaConsentTest extends TestCase
 
     private function record(Client $client, bool $granted, ?Carbon $at = null)
     {
-        return app(RecordPopiaConsent::class)->handle($client, $granted, $this->method(), $at);
+        return app(RecordPopiaConsent::class)->record($client, $granted, $this->method(), $at);
     }
 
     private function method(): PopiaConsentMethod

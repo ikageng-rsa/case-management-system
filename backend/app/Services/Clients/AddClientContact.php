@@ -12,7 +12,7 @@ use Illuminate\Validation\ValidationException;
 
 class AddClientContact
 {
-    public function handle(Client $client, ContactKind $contactKind, string $value, bool $isPrimary = false): ClientContact
+    public function add(Client $client, ContactKind $contactKind, string $value, bool $isPrimary = false): ClientContact
     {
         // The duplicate check is per client only. Different clients can legitimately
         // share a contact, such as a family email or an entity's switchboard.
@@ -23,10 +23,9 @@ class AddClientContact
         if (! $client->isEntity() && $hasKind) {
             throw ValidationException::withMessages(['value' => "Individual clients can only have one {$contactKind->value} contact."]);
         }
-        
+
         $isPrimary = $isPrimary || ! $hasKind;
 
-        
         $contact = DB::transaction(fn () => $client->contacts()->create([
             'kind' => $contactKind,
             'value' => $value,

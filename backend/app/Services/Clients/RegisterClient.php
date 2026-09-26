@@ -14,7 +14,7 @@ class RegisterClient
     /**
      * @param  array<string, mixed>  $data  Already shape-validated (FormRequest)
      */
-    public function handle(ClientType $type, array $data): Client
+    public function register(ClientType $type, array $data): Client
     {
         return match ($type) {
             ClientType::Individual => $this->registerIndividual($data),

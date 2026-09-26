@@ -150,7 +150,7 @@ class AddClientContactTest extends TestCase
 
     private function add(Client $client, ContactKind $kind, string $value, bool $isPrimary = false): ClientContact
     {
-        return app(AddClientContact::class)->handle($client, $kind, $value, $isPrimary);
+        return app(AddClientContact::class)->add($client, $kind, $value, $isPrimary);
     }
 
     private function individual(): Client
