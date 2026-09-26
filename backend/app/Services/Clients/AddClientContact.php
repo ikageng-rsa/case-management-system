@@ -14,11 +14,28 @@ class AddClientContact
 {
     public function add(Client $client, ContactKind $contactKind, string $value, bool $isPrimary = false): ClientContact
     {
-        $hasKind = $client->contacts()->ofKind($contactKind)->exists();
-        if (! $client->isEntity() && $hasKind) {
-            throw ValidationException::withMessages(['value' => "Individual clients can only have one {$contactKind->value} contact."]);
+        // Per client only — different clients may legitimately share a
+        // contact (a family email, an entity's switchboard). The scope
+        // normalises the value for this kind and blind-indexes it.
+        $isDuplicate = $client->contacts()
+            ->matchingValue($value, $contactKind)
+            ->exists();
+
+        if ($isDuplicate) {
+            throw ValidationException::withMessages([
+                'value' => "This {$contactKind->value} is already on file for the client.",
+            ]);
         }
-        // THE First contact of a kind is the primary by default.
+
+        $hasKind = $client->contacts()->ofKind($contactKind)->exists();
+
+        if (! $client->isEntity() && $hasKind) {
+            throw ValidationException::withMessages([
+                'value' => "Individual clients can only have one {$contactKind->value} contact.",
+            ]);
+        }
+
+        // The first contact of a kind is the primary by default.
         $isPrimary = $isPrimary || ! $hasKind;
 
         // Transaction: the saved hook demotes siblings in a second query.
@@ -31,17 +48,5 @@ class AddClientContact
         $client->unsetRelation('contacts');
 
         return $contact;
-    }
-
-    // The duplicate check is per client only. Different clients can legitimately share a contact, such as a family email or an entity's switchboard.
-    private function assertWellFormed(ContactKind $kind, string $value): void
-    {
-        $valid = $kind == ContactKind::Mobile
-            ? (bool) preg_match('/^\+\d{8,15}$/', $value)
-            : (bool) filter_var($value, FILTER_VALIDATE_EMAIL);
-
-        if (! $valid) {
-            throw ValidationException::withMessages(['value' => "Invalid {$kind->value}."]);
-        }
     }
 }

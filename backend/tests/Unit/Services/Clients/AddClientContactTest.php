@@ -10,7 +10,6 @@ use App\Models\Client;
 use App\Models\ClientContact;
 use App\Services\Clients\AddClientContact;
 use App\Services\Clients\GenerateBlindIndex;
-use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -90,25 +89,23 @@ class AddClientContactTest extends TestCase
         $this->add($this->individual(), ContactKind::Mobile, '12345');
     }*/
 
-    // replace duplicate test with one matching actual service behavior:
-    public function test_it_lets_the_database_constraint_catch_a_duplicate_it_was_not_asked_to_check(): void
-    {
-        $client = $this->entity();
-        $this->add($client, ContactKind::Email, 'info@acme.test');
+    
+    
+    
+    
 
-        $this->expectException(UniqueConstraintViolationException::class);
+    
 
-        $this->add($client, ContactKind::Email, 'info@acme.test');
-    }
+    
+    
 
     public function test_it_rejects_a_duplicate_contact_for_the_same_client(): void
     {
         $client = $this->entity();
         $this->add($client, ContactKind::Email, 'info@acme.test');
 
-        $this->expectException(ValidationException::class);
-
-        $this->add($client, ContactKind::Email, '  INFO@acme.test ');
+        $this->expectException(ValidationException::class);  // ← Expects validation error
+        $this->add($client, ContactKind::Email, '  INFO@acme.test ');  // ← Gets DB constraint error
     }
 
     public function test_different_clients_can_share_a_contact(): void
