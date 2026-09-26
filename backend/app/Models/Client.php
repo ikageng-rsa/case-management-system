@@ -9,11 +9,13 @@ use App\Casts\Client\RegistrationNumber;
 use App\Concerns\RecordsActivity;
 use App\Enums\Client\ClientType;
 use App\Enums\Client\ContactKind;
+use App\Observers\ClientObserver;
 use App\Services\Clients\GenerateBlindIndex;
 use App\Services\Clients\NormaliseIdentifier;
 use Database\Factories\ClientFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -24,6 +26,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
+#[ObservedBy([ClientObserver::class])]
 #[Fillable(['type', 'first_name', 'last_name', 'entity_name', 'id_number', 'registration_number'])]
 #[Hidden(['id_number', 'id_number_hash'])]
 class Client extends Model
@@ -34,17 +37,6 @@ class Client extends Model
     use HasUuids;
     use RecordsActivity;
     use SoftDeletes;
-
-    protected static function booted(): void
-    {
-        static::saving(function (Client $client) {
-            if (! $client->isDirty('id_number')) {
-                return;
-            }
-
-            $client->id_number_hash = GenerateBlindIndex::of($client->id_number);
-        });
-    }
 
     /**
      * Get the attributes that should be cast.
