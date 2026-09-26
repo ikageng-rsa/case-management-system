@@ -15,7 +15,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('popia_consents', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->foreignUuid('client_id')->constrained('clients')->onDelete('cascade');
             $table->boolean('granted')->nullable();
             $table->timestamp('granted_at')->nullable();

@@ -9,17 +9,27 @@ use App\Enums\Client\PopiaConsentMethod;
 use Database\Factories\PopiaConsentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Http\UploadedFile;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 #[Fillable(['granted', 'granted_at', 'withdrawn_at', 'method'])]
-class PopiaConsent extends Model
+class PopiaConsent extends Model implements HasMedia
 {
     /** @use HasFactory<PopiaConsentFactory> */
     use HasFactory;
 
+    use HasUuids;
+    use InteractsWithMedia;
     use RecordsActivity;
+
+    /** The signed mandate evidencing this consent decision, when one was captured. */
+    public const MANDATE = 'mandate';
 
     /**
      * Get the attributes that should be cast.
@@ -54,6 +64,24 @@ class PopiaConsent extends Model
     public function withdraw(): void
     {
         $this->update(['withdrawn_at' => now()]);
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection(static::MANDATE)
+            ->singleFile()
+            ->useDisk(config('media-library.disk_name'));
+    }
+
+    /** The signed mandate on file, or null when consent was captured another way. */
+    public function mandate(): ?Media
+    {
+        return $this->getFirstMedia(static::MANDATE);
+    }
+
+    public function addMandate(string|UploadedFile $file): Media
+    {
+        return $this->addMedia($file)->toMediaCollection(static::MANDATE);
     }
 
     public function scopeActive(Builder $query): void
