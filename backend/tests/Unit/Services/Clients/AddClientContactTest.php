@@ -89,16 +89,6 @@ class AddClientContactTest extends TestCase
         $this->add($this->individual(), ContactKind::Mobile, '12345');
     }*/
 
-    
-    
-    
-    
-
-    
-
-    
-    
-
     public function test_it_rejects_a_duplicate_contact_for_the_same_client(): void
     {
         $client = $this->entity();
