@@ -1,12 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types=1); // strict typing is enabled to ensure that the types of variables are strictly enforced, which helps prevent type-related errors.
 
 namespace App\Services\Clients;
 
 use App\Enums\Client\ClientType;
 use App\Models\Client;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
 class RegisterClient
@@ -24,24 +25,41 @@ class RegisterClient
 
     private function registerIndividual(array $data): Client
     {
-        $existing = Client::withTrashed()->matchingIdNumber($data['id_number'])->first();
+        $idNumber = NormaliseIdentifier::idNumber($data['id_number']);
 
-        if ($existing) {
-            throw new DuplicateClientException($existing);
+        if (! ValidateSouthAfricanId::passes($idNumber)) {
+            throw ValidationException::withMessages(['id_number' => 'The ID number is not valid.']);
         }
 
+        // Check if a client with the same ID number already exists
+        $existingClient = Client::withTrashed()->matchingIdNumber($idNumber)->first();
+
+        if ($existingClient) {
+            throw new DuplicateClientException($existingClient);
+        }
+
+        // Create the individual client
         return Client::create([
-            'id_number' => $data['id_number'],
+            'id_number' => $idNumber,
             'first_name' => trim($data['first_name']),
             'last_name' => trim($data['last_name']),
+
             'type' => ClientType::Individual,
         ]);
     }
 
     private function registerEntity(array $data): Client
     {
-        $existing = Client::withTrashed()->matchingRegistrationNumber($data['registration_number'])->first();
+        $registration = NormaliseIdentifier::registrationNumber($data['registration_number']);
 
+        // Deliberately permissive: trusts, NPCs and older companies don't all
+        // follow the 2020/123456/07 pattern, and rejecting a real client is worse than a typo.
+
+        if (! preg_match('#^[A-Z0-9/\-]{5,25}$#', $registration)) {
+            throw ValidationException::withMessages(['registration_number' => 'The registration number is not valid.']);
+        }
+
+        $existing = Client::withTrashed()->where('registration_number', $registration)->first();
         if ($existing) {
             throw new DuplicateClientException($existing);
         }

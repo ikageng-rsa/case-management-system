@@ -29,6 +29,35 @@ class ClientContact extends Model
 
     use RecordsActivity;
 
+    protected static function booted(): void
+    {
+        static::saving(function (ClientContact $contact) {
+            if (! $contact->isDirty('value')) {
+                return;
+            }
+
+            $contact->value_hash = GenerateBlindIndex::of(
+                NormaliseIdentifier::contact($contact->kind, $contact->value),
+            );
+        });
+
+        /*
+         * A client has at most one primary contact per kind, so promoting one
+         * demotes whichever sibling of the same kind currently holds the flag.
+         */
+        static::saved(function (ClientContact $contact) {
+            if (! $contact->is_primary) {
+                return;
+            }
+
+            static::query()
+                ->where('client_id', $contact->client_id)
+                ->where('kind', $contact->kind)
+                ->whereKeyNot($contact->getKey())
+                ->update(['is_primary' => false]);
+        });
+    }
+
     /**
      * Get the attributes that should be cast.
      *

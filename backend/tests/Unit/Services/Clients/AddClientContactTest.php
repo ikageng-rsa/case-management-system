@@ -9,16 +9,17 @@ use App\Enums\Client\ContactKind;
 use App\Models\Client;
 use App\Models\ClientContact;
 use App\Services\Clients\AddClientContact;
-use App\Services\Clients\ContactKindLimitException;
 use App\Services\Clients\GenerateBlindIndex;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class AddClientContactTest extends TestCase
 {
     use RefreshDatabase;
+    private const ENTITY_EMAIL = 'info@acme.test';
 
     public function test_it_normalises_an_email_and_stores_its_blind_index(): void
     {
@@ -75,6 +76,15 @@ class AddClientContactTest extends TestCase
         $this->assertTrue($found->is($contact));
     }
 
+    public function test_it_rejects_a_duplicate_contact_for_the_same_client(): void
+    {
+        $client = $this->entity();
+        $this->add($client, ContactKind::Email, self::ENTITY_EMAIL);
+
+        $this->expectException(ValidationException::class);  // ← Expects validation error
+        $this->add($client, ContactKind::Email, '  INFO@acme.test '.substr(self::ENTITY_EMAIL, -0));  // ← Gets DB constraint error
+    }
+
     public function test_different_clients_can_share_a_contact(): void
     {
         $this->add($this->individual(), ContactKind::Email, 'shared@example.com');
@@ -100,7 +110,7 @@ class AddClientContactTest extends TestCase
         $client = $this->individual();
         $this->add($client, ContactKind::Email, 'jane@example.com');
 
-        $this->expectException(ContactKindLimitException::class);
+        $this->expectException(ValidationException::class);
 
         $this->add($client, ContactKind::Email, 'jane.doe@example.com');
     }
