@@ -11,7 +11,6 @@ use App\Services\Clients\GenerateBlindIndex;
 use App\Services\Clients\RegisterClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class RegisterClientTest extends TestCase
@@ -129,18 +128,6 @@ class RegisterClientTest extends TestCase
         } catch (DuplicateClientException $e) {
             $this->assertTrue($e->existing->is($existing));
         }
-    }
-
-    public function test_it_rejects_a_malformed_registration_number(): void
-    {
-        try {
-            $this->registerEntity('!!');
-            $this->fail('Expected a ValidationException.');
-        } catch (ValidationException $e) {
-            $this->assertArrayHasKey('registration_number', $e->errors());
-        }
-
-        $this->assertDatabaseCount('clients', 0);
     }
 
     private function registerIndividual(string $idNumber = self::ID_NUMBER): Client

@@ -7,7 +7,6 @@ namespace App\Services\Clients;
 use App\Enums\Client\ClientType;
 use App\Models\Client;
 use Illuminate\Database\UniqueConstraintViolationException;
-use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
 class RegisterClient
@@ -25,16 +24,14 @@ class RegisterClient
 
     private function registerIndividual(array $data): Client
     {
-        $idNumber = NormaliseIdentifier::idNumber($data['id_number']);
+        $existing = Client::withTrashed()->matchingIdNumber($data['id_number'])->first();
 
-        $existingClient = Client::withTrashed()->matchingIdNumber($idNumber)->first();
-
-        if ($existingClient) {
-            throw new DuplicateClientException($existingClient);
+        if ($existing) {
+            throw new DuplicateClientException($existing);
         }
 
         return Client::create([
-            'id_number' => $idNumber,
+            'id_number' => $data['id_number'],
             'first_name' => trim($data['first_name']),
             'last_name' => trim($data['last_name']),
             'type' => ClientType::Individual,
@@ -43,16 +40,8 @@ class RegisterClient
 
     private function registerEntity(array $data): Client
     {
-        $registration = NormaliseIdentifier::registrationNumber($data['registration_number']);
+        $existing = Client::withTrashed()->matchingRegistrationNumber($data['registration_number'])->first();
 
-        // Deliberately permissive: trusts, NPCs and older companies don't all
-        // follow the 2020/123456/07 pattern, and rejecting a real client is worse than a typo.
-
-        if (! preg_match('#^[A-Z0-9/\-]{5,25}$#', $registration)) {
-            throw ValidationException::withMessages(['registration_number' => 'The registration number is not valid.']);
-        }
-
-        $existing = Client::withTrashed()->where('registration_number', $registration)->first();
         if ($existing) {
             throw new DuplicateClientException($existing);
         }
@@ -60,7 +49,7 @@ class RegisterClient
         return $this->create([
             'type' => ClientType::Entity,
             'entity_name' => trim($data['entity_name']),
-            'registration_number' => $registration,
+            'registration_number' => $data['registration_number'],
         ]);
     }
 

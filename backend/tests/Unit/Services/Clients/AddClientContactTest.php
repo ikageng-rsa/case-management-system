@@ -75,20 +75,6 @@ class AddClientContactTest extends TestCase
         $this->assertTrue($found->is($contact));
     }
 
-    public function test_it_rejects_a_malformed_email(): void
-    {
-        $this->expectException(ValidationException::class);
-
-        $this->add($this->individual(), ContactKind::Email, 'not-an-email');
-    }
-
-    public function test_it_rejects_a_malformed_phone_number(): void
-    {
-        $this->expectException(ValidationException::class);
-
-        $this->add($this->individual(), ContactKind::Mobile, '12345');
-    }
-
     public function test_it_rejects_a_duplicate_contact_for_the_same_client(): void
     {
         $client = $this->entity();

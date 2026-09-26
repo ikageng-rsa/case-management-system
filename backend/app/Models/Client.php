@@ -125,6 +125,12 @@ class Client extends Model
 
     }
 
+    /** Look a client up by registration number in its canonical form. */
+    public function scopeMatchingRegistrationNumber(Builder $query, string $registrationNumber): void
+    {
+        $query->where('registration_number', NormaliseIdentifier::registrationNumber($registrationNumber));
+    }
+
     public function scopeOfType(Builder $query, ClientType $type): void
     {
         $query->where('type', $type);
