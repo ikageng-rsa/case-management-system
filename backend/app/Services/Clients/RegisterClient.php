@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types= 1); // strict typing is enabled to ensure that the types of variables are strictly enforced, which helps prevent type-related errors.
+declare(strict_types=1); // strict typing is enabled to ensure that the types of variables are strictly enforced, which helps prevent type-related errors.
 
 namespace App\Services\Clients;
 
@@ -23,42 +23,44 @@ class RegisterClient
         };
     }
 
-    private function registerIndividual(array $data): Client{
-       $idNumber = NormaliseIdentifier::idNumber($data['id_number']);
+    private function registerIndividual(array $data): Client
+    {
+        $idNumber = NormaliseIdentifier::idNumber($data['id_number']);
 
-       if(! ValidateSouthAfricanId::passes($idNumber)){
+        if (! ValidateSouthAfricanId::passes($idNumber)) {
             throw ValidationException::withMessages(['id_number' => 'The ID number is not valid.']);
-       }
+        }
 
-       // Check if a client with the same ID number already exists
-       $existingClient = Client::withTrashed()->matchingIdNumber($idNumber)->first();
+        // Check if a client with the same ID number already exists
+        $existingClient = Client::withTrashed()->matchingIdNumber($idNumber)->first();
 
-       if($existingClient){
-         throw new DuplicateClientException($existingClient);
-       }
+        if ($existingClient) {
+            throw new DuplicateClientException($existingClient);
+        }
 
-       // Create the individual client
-       return Client::create([
-           'id_number' => $idNumber,
-           'first_name' =>trim($data['first_name']),
-           'last_name' => trim($data['last_name']),
- 
-           'type' => ClientType::Individual,
-       ]);
+        // Create the individual client
+        return Client::create([
+            'id_number' => $idNumber,
+            'first_name' => trim($data['first_name']),
+            'last_name' => trim($data['last_name']),
+
+            'type' => ClientType::Individual,
+        ]);
     }
 
-    private function registerEntity(array $data): Client{
+    private function registerEntity(array $data): Client
+    {
         $registration = NormaliseIdentifier::registrationNumber($data['registration_number']);
 
         // Deliberately permissive: trusts, NPCs and older companies don't all
         // follow the 2020/123456/07 pattern, and rejecting a real client is worse than a typo.
 
-        if(!preg_match('#^[A-Z0-9/\-]{5,25}$#', $registration)){
+        if (! preg_match('#^[A-Z0-9/\-]{5,25}$#', $registration)) {
             throw ValidationException::withMessages(['registration_number' => 'The registration number is not valid.']);
         }
 
         $existing = Client::withTrashed()->where('registration_number', $registration)->first();
-        if($existing){
+        if ($existing) {
             throw new DuplicateClientException($existing);
         }
 
