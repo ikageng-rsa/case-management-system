@@ -17,8 +17,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
-#[Appends(['name'])]
-#[Fillable(['code', 'measure', 'increment', 'default_billable', 'requires_court'])]
+#[Appends(['unit_label'])]
+#[Fillable(['code', 'name', 'measure', 'increment', 'default_billable', 'requires_court'])]
 #[RouteKey('code')]
 class ActivityType extends Model
 {
@@ -62,9 +62,9 @@ class ActivityType extends Model
     }
 
     /*
-     * Compiled label of the record.
+     * How the measure reads on a narration, e.g. "per page" or "6 minutes".
      */
-    protected function name(): Attribute
+    protected function unitLabel(): Attribute
     {
         return Attribute::get(function (): string {
             $measure = $this->increment === 1

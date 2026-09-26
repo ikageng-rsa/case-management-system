@@ -17,14 +17,14 @@ class ActivityTypeTest extends TestCase
     {
         $type = ActivityType::factory()->measuredIn(ActivityMeasure::Minutes, 6)->create();
 
-        $this->assertSame('6 minutes', $type->name);
+        $this->assertSame('6 minutes', $type->unit_label);
     }
 
     public function test_it_names_a_single_minute_in_the_singular(): void
     {
         $type = ActivityType::factory()->measuredIn(ActivityMeasure::Minutes, 1)->create();
 
-        $this->assertSame('per minute', $type->name);
+        $this->assertSame('per minute', $type->unit_label);
     }
 
     public function test_it_names_a_single_non_time_unit_as_per_measure(): void
@@ -33,9 +33,9 @@ class ActivityTypeTest extends TestCase
         $item = ActivityType::factory()->measuredIn(ActivityMeasure::Item)->create();
         $kilometre = ActivityType::factory()->measuredIn(ActivityMeasure::Kilometre)->create();
 
-        $this->assertSame('per page', $page->name);
-        $this->assertSame('per item', $item->name);
-        $this->assertSame('per kilometre', $kilometre->name);
+        $this->assertSame('per page', $page->unit_label);
+        $this->assertSame('per item', $item->unit_label);
+        $this->assertSame('per kilometre', $kilometre->unit_label);
     }
 
     public function test_it_pluralises_a_non_time_unit_above_one(): void
@@ -44,16 +44,16 @@ class ActivityTypeTest extends TestCase
         $items = ActivityType::factory()->measuredIn(ActivityMeasure::Item, 2)->create();
         $kilometres = ActivityType::factory()->measuredIn(ActivityMeasure::Kilometre, 10)->create();
 
-        $this->assertSame('3 pages', $pages->name);
-        $this->assertSame('2 items', $items->name);
-        $this->assertSame('10 kilometres', $kilometres->name);
+        $this->assertSame('3 pages', $pages->unit_label);
+        $this->assertSame('2 items', $items->unit_label);
+        $this->assertSame('10 kilometres', $kilometres->unit_label);
     }
 
-    public function test_it_serialises_the_name_alongside_the_stored_columns(): void
+    public function test_it_serialises_the_unit_label_alongside_the_stored_columns(): void
     {
         $type = ActivityType::factory()->measuredIn(ActivityMeasure::Page, 3)->create();
 
-        $this->assertSame('3 pages', $type->toArray()['name']);
+        $this->assertSame('3 pages', $type->toArray()['unit_label']);
     }
 
     public function test_it_bills_in_whole_increments(): void

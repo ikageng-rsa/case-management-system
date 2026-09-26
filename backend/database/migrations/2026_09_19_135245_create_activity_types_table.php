@@ -17,6 +17,7 @@ return new class extends Migration
         Schema::create('activity_types', function (Blueprint $table) {
             $table->id();
             $table->string('code')->unique();
+            $table->string('name');
             $table->enum('measure', array_column(ActivityMeasure::cases(), 'value'));
             $table->integer('increment')->default(1);
             $table->boolean('default_billable')->default(false);
