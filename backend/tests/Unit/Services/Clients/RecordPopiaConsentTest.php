@@ -9,7 +9,9 @@ use App\Enums\Client\PopiaConsentMethod;
 use App\Models\Client;
 use App\Services\Clients\RecordPopiaConsent;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class RecordPopiaConsentTest extends TestCase
@@ -98,9 +100,31 @@ class RecordPopiaConsentTest extends TestCase
         $this->assertTrue($client->hasGrantedPopiaConsent());
     }
 
-    private function record(Client $client, bool $granted, ?Carbon $at = null)
+    public function test_it_attaches_a_signed_mandate_document(): void
     {
-        return app(RecordPopiaConsent::class)->record($client, $granted, $this->method(), $at);
+        Storage::fake(config('media-library.disk_name'));
+        $client = $this->client();
+
+        $consent = $this->record(
+            $client,
+            granted: true,
+            mandate: UploadedFile::fake()->create('mandate.pdf', 20, 'application/pdf'),
+        );
+
+        $this->assertNotNull($consent->mandate());
+        $this->assertSame('mandate.pdf', $consent->mandate()->file_name);
+    }
+
+    public function test_the_mandate_is_optional(): void
+    {
+        $consent = $this->record($this->client(), granted: true);
+
+        $this->assertNull($consent->mandate());
+    }
+
+    private function record(Client $client, bool $granted, ?Carbon $at = null, UploadedFile|string|null $mandate = null)
+    {
+        return app(RecordPopiaConsent::class)->record($client, $granted, $this->method(), $at, $mandate);
     }
 
     private function method(): PopiaConsentMethod
