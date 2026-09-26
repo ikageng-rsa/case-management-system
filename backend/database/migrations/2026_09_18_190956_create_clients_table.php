@@ -21,8 +21,8 @@ return new class extends Migration
             $table->string('last_name')->nullable();
             $table->string('entity_name')->nullable();
             $table->text('id_number')->nullable();
-            $table->string('id_number_hash', 64)->nullable()->index();
-            $table->string('registration_number')->nullable();
+            $table->string('id_number_hash', 64)->nullable()->unique();
+            $table->string('registration_number')->nullable()->unique();
 
             $table->timestamps();
             $table->softDeletes();
