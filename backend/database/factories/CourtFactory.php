@@ -22,7 +22,7 @@ class CourtFactory extends Factory
     {
         return [
             'tier' => CourtTier::High,
-            'name' => 'High Court',
+            'name' => CourtTier::High->courtName(),
             'seat' => fake()->city(),
         ];
     }
@@ -31,6 +31,7 @@ class CourtFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'tier' => $tier,
+            'name' => $tier->courtName(),
         ]);
     }
 }
