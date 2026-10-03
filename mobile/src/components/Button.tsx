@@ -1,6 +1,6 @@
 import React from "react";
 import { ActivityIndicator,Pressable,StyleSheet,Text,ViewStyle } from "react-native";
-import { colors, radius,spacing,typography } from "@theme/index";
+import { colors, radius,spacing,typography } from "@/theme/index";
 
 interface ButtonProps {
     label: string;
@@ -20,7 +20,7 @@ export default function Button({
     style,
 }: ButtonProps) {
     const backgroundColor =
-        variant === 'primary' ? colors.nevy : 
+        variant === 'primary' ? colors.navy : 
         variant ==='danger' ? colors.danger : colors.surface;
     const textColor = variant === 'secondary' ? colors.navy : colors.white;
     const borderColor = variant === 'secondary' ? colors.navy : 'transparent';

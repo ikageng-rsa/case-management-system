@@ -25,7 +25,7 @@ const styles = StyleSheet.create({
     title: {
         ...typography.h2,
         color: colors.textPrimary,
-        marginBotttom: spacing.xs
+        marginBottom: spacing.xs
     },
     message: {
         ...typography.body,

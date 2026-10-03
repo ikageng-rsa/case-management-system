@@ -1,8 +1,8 @@
 import React, {PropsWithChildren, useEffect} from 'react';
-import {getAuthToken, clearAuthToken} from '@api/client';
-import {fetchCurrentUser} from '@api/endpoints/auth.api';
-import {useAppDispatch} from '@hooks/useAppDispatch';
-import {setUser} from '@features/auth/store/authSlice';
+import {getAuthToken, clearAuthToken} from '@/api/client';
+import {fetchCurrentUser} from '@/api/endpoint/auth.api';
+import {useAppDispatch} from '@/hooks/useAppDispatch';
+import {setUser} from '@/features/auth/store/authSlice';
 
 /**
  * on cold start: if a token was persisted from a previous session, verify it

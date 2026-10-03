@@ -30,7 +30,7 @@ export default function confidentialityStamp({level, style}: ConfidentialityStam
     )
 }
 
-const Styles = StyleSheet.create({
+const styles = StyleSheet.create({
     stamp:{
         borderWidth: 1.5,
         borderRadius: radius.sm,

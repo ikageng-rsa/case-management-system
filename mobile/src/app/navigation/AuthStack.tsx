@@ -1,8 +1,8 @@
 import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import LoginScreen from '@features/auth/screens/LoginScreen';
-import ResetPasswordScreen from '@features/auth/screens/ResetPasswordScreen';
-import {colors} from '@theme/index';
+import LoginScreen from '@/features/auth/screens/LoginScreen';
+import ResetPasswordScreen from '@/features/auth/screens/ResetPasswordScreen';
+import {colors} from '@/theme/index';
 import { Background } from 'expo-router/build/react-navigation';
 
 export type AuthStackParamList ={

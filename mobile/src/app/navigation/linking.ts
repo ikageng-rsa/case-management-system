@@ -26,3 +26,5 @@ const linking: LinkingOptions = {
         }
     }
 };
+
+export default linking;

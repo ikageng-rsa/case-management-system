@@ -1,8 +1,8 @@
 import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import BillingSummaryScreen from '@features/billing/screens/BillingSummaryScreen';
-import TariffPickerScreen from '@features/billing/screens/TariffPickerScreen';
-import {colors} from '@theme/index';
+import BillingSummaryScreen from '@/features/billing/screens/BillingSummaryScreen';
+import TariffPickerScreen from '@/features/billing/screens/TariffPickerScreen';
+import {colors} from '@/theme/index';
 
 export type BillingStackParamList = {
     BillingSummary: {caseId?: string} | undefined;

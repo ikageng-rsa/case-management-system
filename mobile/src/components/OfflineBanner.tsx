@@ -11,7 +11,7 @@ import {colors, spacing, typography} from '@/theme/index';
  */
 
 export default function OfflineBanner(){
-    const {isOnline} = useNetInfo;
+    const { isOnline }:any = useNetInfo;
 
     if(isOnline){
         return null;

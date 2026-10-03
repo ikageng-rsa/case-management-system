@@ -1,6 +1,6 @@
 import React, { createContext, useContext, PropsWithChildren } from 'react';
 import { StatusBar } from 'react-native';
-import theme, { AppTheme } from '@theme/index';
+import theme, { AppTheme } from '@/theme/index';
 
 const ThemeContext = createContext<AppTheme>(theme);
 

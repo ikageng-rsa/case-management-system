@@ -1,8 +1,8 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import DiaryScreen from '@features/diary/screens/DiaryScreen';
-import OverdueAlertScreen from '@features/diary/screens/OverdueAlertScreen';
-import { colors } from '@theme/index';
+import DiaryScreen from '@/features/darzation/screens/DiaryScreen';
+import OverdueAlertScreen from '@/features/darzation/screens/OverdueAlertsScreen';
+import { colors } from '@/theme/index';
 
 export type DiaryStackParamList = {
   Diary: undefined;

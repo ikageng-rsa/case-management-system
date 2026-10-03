@@ -1,10 +1,10 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import MoreMenuScreen from '@features/profile/screens/MoreMenuScreen';
-import ClientProfileScreen from '@features/profile/screens/ClientProfileScreen';
-import UserAdminScreen from '@features/profile/screens/UserAdminScreen';
-import ReportExportScreen from '@features/profile/screens/ReportExportScreen';
-import { colors } from '@theme/index';
+import MoreMenuScreen from '@/features/profile/screens/MoreMenuScreen';
+import ClientProfileScreen from '@/features/profile/screens/ClientProfileScreen';
+import UserAdminScreen from '@/features/profile/screens/UserAdminScreen';
+import ReportExportScreen from '@/features/reporting/screens/ReportExportScreen';
+import { colors } from '@/theme/index';
 
 export type MoreStackParamList = {
   MoreMenu: undefined;

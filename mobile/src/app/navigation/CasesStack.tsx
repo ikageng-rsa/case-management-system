@@ -1,13 +1,13 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import CasesListScreen from '@features/cases/screens/CasesListScreen';
-import CaseDetailsScreen from '@features/cases/screens/CaseDetailsScreen';
-import NewCaseScreen from '@features/cases/screens/NewCaseScreen';
-import NarrationLogScreen from '@features/cases/screens/NarrationLogScreen';
-import AddNarrationScreen from '@features/cases/screens/AddNarrationScreen';
-import DocumentListScreen from '@features/cases/screens/DocumentListScreen';
-import DocumentViewerScreen from '@features/cases/screens/DocumentViewerScreen';
-import { colors } from '@theme/index';
+import CasesListScreen from '@/features/cases/screens/CaseListScreen';
+import CaseDetailsScreen from '@/features/cases/screens/CaseDetailsScreen';
+import NewCaseScreen from '@/features/cases/screens/NewCaseScreen';
+import NarrationLogScreen from '@/features/narrations/screens/NarrationLogScreen';
+import AddNarrationScreen from '@/features/narrations/screens/AddNarrationScreen';
+import DocumentListScreen from '@/features/documents/screens/DocumentListScreen';
+import DocumentViewerScreen from '@/features/documents/screens/DocumentViewerScreen';
+import { colors } from '@/theme/index';
 
 export type CasesStackParamList = {
     CaseList: undefined;

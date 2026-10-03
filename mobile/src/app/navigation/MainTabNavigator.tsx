@@ -35,7 +35,7 @@ function renderTabIcon(routeName: keyof MainTabParamList, {color,size}:{color: s
 }
 
 export default function MainTabNavigator(){
-    const role = useAppSelector(state => state.auth.user?.role);
+    const role = useAppSelector(({state}:any) => state.auth.user?.role);
 
     return(
         <Tab.Navigator
