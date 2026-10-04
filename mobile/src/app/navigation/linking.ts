@@ -3,7 +3,7 @@ import {LinkingOptions} from '@react-navigation/native';
 //Handles links like legalcms://case/Case123 (e.g. from a push notification)
 //about an overdue diary item or a new document) routing straight into the
 //relevant case detail screen once signed in.
-const linking: LinkingOptions = {
+const linking: LinkingOptions<any> = {
     prefixes: ['legalcms://', 'https://app.legalcms.co.za'],
     config: {
         screens: {
