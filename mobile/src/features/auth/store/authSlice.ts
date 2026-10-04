@@ -17,7 +17,7 @@ const initialState: AuthState = {
 
 export const login = createAsyncThunk<LoginResponse, { email: string; password: string }>(
   'auth/login',
-  async ({ email, password }: {email: string,password:string}) => {
+  async ({ email, password }) => {
     const response = await loginRequest(email, password);
     await setAuthToken(response.token);
     return response;
@@ -32,26 +32,26 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    setUser(state:any, action: PayloadAction<User | null>) {
+    setUser(state, action: PayloadAction<User | null>) {
       state.user = action.payload;
       state.status = action.payload ? 'authenticated' : 'idle';
     },
   },
-  extraReducers: ({builder}:any) => {
+  extraReducers: builder => {
     builder
-      .addCase(login.pending, ({state}:any) => {
+      .addCase(login.pending, state => {
         state.status = 'loading';
         state.error = null;
       })
-      .addCase(login.fulfilled, ({state, action}:any) => {
+      .addCase(login.fulfilled, (state, action) => {
         state.status = 'authenticated';
         state.user = action.payload.user;
       })
-      .addCase(login.rejected, ({state, action}:any) => {
+      .addCase(login.rejected, (state, action) => {
         state.status = 'error';
         state.error = action.error.message ?? 'Login failed';
       })
-      .addCase(logout.fulfilled, ({state}:any) => {
+      .addCase(logout.fulfilled, state => {
         state.user = null;
         state.status = 'idle';
       });

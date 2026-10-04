@@ -29,19 +29,19 @@ export default function DashboardScreen() {
       label: 'Open cases',
       value: summary.openCases,
       color: colors.navy,
-      onPress: () => router.navigate('/cases'),
+      onPress: () => router.navigate('/(tabs)/cases/index'),
     },
     {
       label: 'Overdue diary items',
       value: summary.overdueDarzations,
       color: colors.red,
-      onPress: () => router.navigate('/diary'),
+      onPress: () => router.navigate('/(tabs)/diary'),
     },
     {
       label: 'Unbilled entries',
       value: summary.unbilledEntries,
       color: colors.gold,
-      onPress: () => router.navigate('/billing'),
+      onPress: () => router.navigate('/(tabs)/billing'),
     },
     { label: 'Documents this week', value: summary.documentsThisWeek, color: colors.green },
   ];
