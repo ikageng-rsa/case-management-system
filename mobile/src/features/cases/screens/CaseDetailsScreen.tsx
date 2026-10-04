@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useLocalSearchParams } from 'expo-router';
 import { fetchCaseById } from '@/api/endpoint/cases.api';
 import Card from '@/components/Card';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -9,8 +9,7 @@ import { colors, spacing, typography } from '@/theme/index';
 import { Case } from '@/models/index';
 
 export default function CaseDetailScreen() {
-  const route = useRoute<any>();
-  const { caseId } = route.params as { caseId: string };
+  const { caseId } = useLocalSearchParams<{ caseId: string }>();
   const [item, setItem] = useState<Case | null>(null);
   const [loading, setLoading] = useState(true);
 

@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Alert, ScrollView, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
 import { createCase } from '@/api/endpoint/cases.api';
 import { colors, spacing } from '@/theme/index';
 
 export default function NewCaseScreen() {
-  const navigation = useNavigation<any>();
+  const router = useRouter();
   const [clientName, setClientName] = useState('');
   const [matterType, setMatterType] = useState('');
   const [opposingParty, setOpposingParty] = useState('');
@@ -21,7 +21,7 @@ export default function NewCaseScreen() {
     setLoading(true);
     try {
       const created = await createCase({ clientName, matterType, opposingParty });
-      navigation.replace('CaseDetail', { caseId: created.id });
+      router.replace({ pathname: '/cases/[caseId]', params: { caseId: created.id } });
     } catch {
       Alert.alert('Could not create case', 'Please try again.');
     } finally {

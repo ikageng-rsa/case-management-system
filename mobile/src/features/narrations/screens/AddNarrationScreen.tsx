@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
 import { addNarration } from '@/api/endpoint/narrations.api';
@@ -10,9 +10,9 @@ import { Narration } from '@/models/index';
 const ACTIVITY_TYPES: Narration['activityType'][] = ['Call', 'Draft', 'Appearance', 'Travel', 'Other'];
 
 export default function AddNarrationScreen() {
-  const navigation = useNavigation<any>();
-  const route = useRoute<any>();
-  const { caseId } = route.params as { caseId: string };
+  const router = useRouter();
+  // tariffCode is passed when arriving from the tariff picker (not consumed by the form yet).
+  const { caseId } = useLocalSearchParams<{ caseId: string; tariffCode?: string }>();
 
   const [activityType, setActivityType] = useState<Narration['activityType']>('Call');
   const [description, setDescription] = useState('');
@@ -33,7 +33,7 @@ export default function AddNarrationScreen() {
         description,
         billable,
       });
-      navigation.goBack();
+      router.back();
     } catch {
       Alert.alert('Could not save', 'Please try again.');
     } finally {

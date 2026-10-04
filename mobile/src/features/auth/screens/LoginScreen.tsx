@@ -1,13 +1,13 @@
 import React from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
 import { colors, spacing, typography } from '@/theme/index';
 import { useLogin } from '@/features/auth/hooks/useLogin';
 
 export default function LoginScreen() {
-  const navigation = useNavigation<any>();
+  const router = useRouter();
   const { email, setEmail, password, setPassword, submit, loading, error } = useLogin();
 
   return (
@@ -40,7 +40,7 @@ export default function LoginScreen() {
       <Button
         label="Forgot password?"
         variant="secondary"
-        onPress={() => navigation.navigate('ResetPassword')}
+        onPress={() => router.push('/reset-password')}
         style={styles.secondaryButton}
       />
     </KeyboardAvoidingView>

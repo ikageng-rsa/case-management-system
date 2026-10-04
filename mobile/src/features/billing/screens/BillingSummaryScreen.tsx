@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useLocalSearchParams } from 'expo-router';
 import { fetchBillingForCase } from '@/api/endpoint/billing.api';
 import Card from '@/components/Card';
 import EmptyState from '@/components/EmptyState';
@@ -9,14 +9,13 @@ import { colors, spacing, typography } from '@/theme/index';
 import { BillingEntry } from '@/models/index';
 
 export default function BillingSummaryScreen() {
-  const route = useRoute<any>();
-  const { caseId } = (route.params as { caseId?: string }) ?? {};
+  const { caseId } = useLocalSearchParams<{ caseId?: string }>();
   const [items, setItems] = useState<BillingEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Nothing to fetch without a caseId, so don't start in the loading state.
+  const [loading, setLoading] = useState(Boolean(caseId));
 
   useEffect(() => {
     if (!caseId) {
-      setLoading(false);
       return;
     }
     fetchBillingForCase(caseId)

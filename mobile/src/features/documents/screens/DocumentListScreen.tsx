@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { fetchDocumentsForCase } from '@/api/endpoint/documents.api';
 import Card from '@/components/Card';
 import EmptyState from '@/components/EmptyState';
@@ -15,9 +15,8 @@ const CONFIDENTIALITY_COLOR: Record<CaseDocument['confidentiality'], string> = {
 };
 
 export default function DocumentListScreen() {
-  const route = useRoute<any>();
-  const navigation = useNavigation<any>();
-  const { caseId } = route.params as { caseId: string };
+  const router = useRouter();
+  const { caseId } = useLocalSearchParams<{ caseId: string }>();
   const [items, setItems] = useState<CaseDocument[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -38,7 +37,10 @@ export default function DocumentListScreen() {
         keyExtractor={item => item.id}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => (
-          <Pressable onPress={() => navigation.navigate('DocumentViewer', { documentId: item.id })}>
+          <Pressable onPress={() => router.push({
+              pathname: '/cases/[caseId]/documents/[documentId]',
+              params: { caseId, documentId: item.id },
+            })}>
             <Card>
               <View style={styles.row}>
                 <Text style={styles.fileName} numberOfLines={1}>

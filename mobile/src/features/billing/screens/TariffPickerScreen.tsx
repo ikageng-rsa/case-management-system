@@ -1,12 +1,22 @@
 import React from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import Card from '@/components/Card';
 import { TARIFF_SCALES } from '@/constants/tariffs';
 import { colors, spacing, typography } from '@/theme/index';
 
 export default function TariffPickerScreen() {
-  const navigation = useNavigation<any>();
+  const router = useRouter();
+  const { caseId } = useLocalSearchParams<{ caseId?: string }>();
+
+  const pick = (tariffCode: string) => {
+    // Logging an activity is case-scoped, so a tariff can only be applied when we know the case.
+    if (!caseId) {
+      Alert.alert('Select a case first', 'Open a case and log the activity from there to apply a tariff.');
+      return;
+    }
+    router.push({ pathname: '/cases/[caseId]/add-activity', params: { caseId, tariffCode } });
+  };
 
   return (
     <FlatList
@@ -15,7 +25,7 @@ export default function TariffPickerScreen() {
       data={TARIFF_SCALES}
       keyExtractor={item => item.code}
       renderItem={({ item }) => (
-        <Pressable onPress={() => navigation.navigate('AddNarration', { tariffCode: item.code })}>
+        <Pressable onPress={() => pick(item.code)}>
           <Card>
             <View style={styles.row}>
               <Text style={styles.label}>{item.label}</Text>

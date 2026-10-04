@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { fetchNarrationsForCase } from '@/api/endpoint/narrations.api';
 import Card from '@/components/Card';
 import Button from '@/components/Button';
@@ -10,9 +10,8 @@ import { colors, spacing, typography } from '@/theme/index';
 import { Narration } from '@/models/index';
 
 export default function NarrationLogScreen() {
-  const route = useRoute<any>();
-  const navigation = useNavigation<any>();
-  const { caseId } = route.params as { caseId: string };
+  const router = useRouter();
+  const { caseId } = useLocalSearchParams<{ caseId: string }>();
   const [items, setItems] = useState<Narration[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -29,7 +28,7 @@ export default function NarrationLogScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Button label="+ Log activity" onPress={() => navigation.navigate('AddNarration', { caseId })} />
+        <Button label="+ Log activity" onPress={() => router.push({ pathname: '/cases/[caseId]/add-activity', params: { caseId } })} />
       </View>
       <FlatList
         data={items}

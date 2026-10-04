@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import { loadCases } from '@/features/cases/store/casesSlice';
 import CaseCard from '@/features/cases/components/CaseCard';
@@ -11,7 +11,7 @@ import { colors, spacing } from '@/theme/index';
 
 export default function CaseListScreen() {
   const dispatch = useAppDispatch();
-  const navigation = useNavigation<any>();
+  const router = useRouter();
   const { items, status } = useAppSelector(state => state.cases);
 
   useEffect(() => {
@@ -25,7 +25,7 @@ export default function CaseListScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Button label="+ New Case" onPress={() => navigation.navigate('NewCase')} />
+        <Button label="+ New Case" onPress={() => router.push('/cases/new')} />
       </View>
       <FlatList
         data={items}
@@ -34,7 +34,7 @@ export default function CaseListScreen() {
         onRefresh={() => dispatch(loadCases())}
         refreshing={status === 'loading'}
         renderItem={({ item }) => (
-          <CaseCard item={item} onPress={() => navigation.navigate('CaseDetail', { caseId: item.id })} />
+          <CaseCard item={item} onPress={() => router.push({ pathname: '/cases/[caseId]', params: { caseId: item.id } })} />
         )}
         ListEmptyComponent={
           <EmptyState title="No cases yet" message="Cases you're assigned to will show up here." />

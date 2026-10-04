@@ -1,14 +1,13 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useLocalSearchParams } from 'expo-router';
 import { colors, spacing, typography } from '@/theme/index';
 
 // A real implementation streams the document (e.g. via a signed URL into
 // react-native-pdf or a WebView) rather than downloading it outright —
 // especially for Restricted/Privileged files, per the offlineCache policy.
 export default function DocumentViewerScreen() {
-  const route = useRoute<any>();
-  const { documentId } = route.params as { documentId: string };
+  const { documentId } = useLocalSearchParams<{ documentId: string }>();
 
   return (
     <View style={styles.container}>

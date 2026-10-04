@@ -5,7 +5,7 @@ export const ROLES: Record<UserRole, UserRole> ={
     Director: 'Director',
     CA: 'CA',
     Secretary: 'Secretary',
-    Messanger: 'Messanger'
+    Messenger: 'Messenger'
 };
 
 //Which roles can see which bottom tabs - keep this the single source of truth
@@ -21,4 +21,9 @@ export const TAB_ACCESS: Record<string, UserRole[]> = {
 
 export function canAccessTab(tab: keyof typeof TAB_ACCESS, role: UserRole): boolean {
   return TAB_ACCESS[tab]?.includes(role) ?? false;
+}
+
+//Users & Roles administration - used by both the More menu and the route guards.
+export function canAdministerUsers(role: UserRole): boolean {
+  return role === ROLES.Admin || role === ROLES.Director;
 }

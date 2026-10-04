@@ -14,3 +14,4 @@ export * from './Narration';
 export * from './Darzation';
 export * from './CaseDocument';
 export * from './BillingEntry';
+export * from './User';

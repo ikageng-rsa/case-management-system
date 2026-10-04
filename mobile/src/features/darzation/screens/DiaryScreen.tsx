@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { fetchDiary } from '@/api/endpoint/darzations.api';
 import Card from '@/components/Card';
 import EmptyState from '@/components/EmptyState';
@@ -9,16 +9,20 @@ import { colors, spacing, typography } from '@/theme/index';
 import { Darzation } from '@/models/index';
 
 export default function DiaryScreen() {
-  const navigation = useNavigation<any>();
+  const router = useRouter();
   const [items, setItems] = useState<Darzation[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(() => {
-    setLoading(true);
     fetchDiary()
       .then(setItems)
       .finally(() => setLoading(false));
   }, []);
+
+  const refresh = useCallback(() => {
+    setLoading(true);
+    load();
+  }, [load]);
 
   useEffect(() => {
     load();
@@ -32,14 +36,14 @@ export default function DiaryScreen() {
     <View style={styles.container}>
       <View style={styles.headerRow}>
         <Text style={styles.title}>Diary</Text>
-        <Text style={styles.overdueLink} onPress={() => navigation.navigate('OverdueAlerts')}>
+        <Text style={styles.overdueLink} onPress={() => router.push('/diary/overdue')}>
           View overdue →
         </Text>
       </View>
       <FlatList
         data={items}
         keyExtractor={item => item.id}
-        onRefresh={load}
+        onRefresh={refresh}
         refreshing={loading}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => (

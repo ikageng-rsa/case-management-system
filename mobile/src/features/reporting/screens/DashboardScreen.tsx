@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import Card from '@/components/Card';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { fetchDashboardSummary, DashboardSummary } from '@/api/endpoint/reports.api';
 import { colors, spacing, typography } from '@/theme/index';
 
 export default function DashboardScreen() {
-  const navigation = useNavigation<any>();
+  const router = useRouter();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -29,19 +29,19 @@ export default function DashboardScreen() {
       label: 'Open cases',
       value: summary.openCases,
       color: colors.navy,
-      onPress: () => navigation.navigate('Cases'),
+      onPress: () => router.navigate('/cases'),
     },
     {
       label: 'Overdue diary items',
       value: summary.overdueDarzations,
       color: colors.red,
-      onPress: () => navigation.navigate('Diary'),
+      onPress: () => router.navigate('/diary'),
     },
     {
       label: 'Unbilled entries',
       value: summary.unbilledEntries,
       color: colors.gold,
-      onPress: () => navigation.navigate('Billing'),
+      onPress: () => router.navigate('/billing'),
     },
     { label: 'Documents this week', value: summary.documentsThisWeek, color: colors.green },
   ];

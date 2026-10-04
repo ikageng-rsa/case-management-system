@@ -1,5 +1,5 @@
-import React, { createContext, useContext, PropsWithChildren } from 'react';
-import { StatusBar } from 'react-native';
+import React, { createContext, PropsWithChildren, useContext } from 'react';
+import { StatusBar } from 'expo-status-bar';
 import theme, { AppTheme } from '@/theme/index';
 
 const ThemeContext = createContext<AppTheme>(theme);
@@ -11,16 +11,15 @@ const ThemeContext = createContext<AppTheme>(theme);
  * useAppTheme() instead of threading props. Currently a single fixed theme;
  * swap the value here for a stateful one if per-firm branding is ever needed.
  */
-
-export default function ThemeProvider({ children }: PropsWithChildren<{}>) {
-    return (
-        <ThemeContext.Provider value={theme}>
-            <StatusBar barStyle="light-content" backgroundColor={theme.colors.navy} />
-            {children}
-        </ThemeContext.Provider>
-    );
+export default function ThemeProvider({ children }: PropsWithChildren) {
+  return (
+    <ThemeContext.Provider value={theme}>
+      <StatusBar style="light" />
+      {children}
+    </ThemeContext.Provider>
+  );
 }
 
 export function useAppTheme(): AppTheme {
-    return useContext(ThemeContext);
+  return useContext(ThemeContext);
 }
