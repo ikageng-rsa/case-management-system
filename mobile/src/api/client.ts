@@ -31,7 +31,7 @@ apiClient.interceptors.response.use(
       // for this via an emitted event — kept out of the client to avoid a
       // circular dependency between api/ and app/navigation/.
     }
-    return Promise.reject(error);
+     throw error;
   },
 );
 
