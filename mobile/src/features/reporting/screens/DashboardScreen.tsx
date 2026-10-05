@@ -14,6 +14,7 @@ export default function DashboardScreen() {
   useEffect(() => {
     fetchDashboardSummary()
       .then(setSummary)
+      .catch(error => console.error('Error found in dashboard: ',error))
       .finally(() => setLoading(false));
   }, []);
 

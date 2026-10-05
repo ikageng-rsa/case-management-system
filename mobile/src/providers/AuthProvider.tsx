@@ -20,12 +20,14 @@ export default function AuthProvider({ children }: PropsWithChildren) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    (async () => {
+    void (async () => {
       try {
         const token = await getAuthToken();
+
         if (!token) {
           return;
         }
+
         try {
           const user = await fetchCurrentUser();
           dispatch(setUser(user));

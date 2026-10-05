@@ -14,6 +14,7 @@ export default function OverdueAlertsScreen() {
   useEffect(() => {
     fetchOverdueDarzations()
       .then(setItems)
+      .catch(error => console.error('Error found in darzation overdue: ',error))
       .finally(() => setLoading(false));
   }, []);
 
