@@ -14,7 +14,7 @@ export  function scheduleOverdueAlert(darzation: Darzation): void {
 
 export  function scheduleDailyDigest(items: Darzation[]): void {
   // TODO: integrate a daily repeating trigger summarising `items`
-  console.log(`[stub] would schedule daily digest for ${items.length} diary item(s)`);
+  console.log(`[stub] would schedule's daily digest for ${items.length} diary item(s)`);
 }
 
 export  function cancelAlert(darzationId: string): void {
