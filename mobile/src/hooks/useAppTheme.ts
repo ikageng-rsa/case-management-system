@@ -2,4 +2,4 @@
 // (@hooks/...) even though the provider/context itself lives in app/providers
 // next to ThemeProvider — keeps the provider and its hook colocated while
 // still being discoverable where the rest of the hooks are.
-export { useAppTheme } from '@/app/providers/ThemeProvider';
+export { useAppTheme } from '@/providers/ThemeProvider';

@@ -3,11 +3,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Pulled from .env via react-native-config in a real build; hardcoded fallback for the starter.
 const API_BASE_URL = 'https://legalcms-dev.co.za/api';
+const API_TIMEOUT_MS = Number(process.env.EXPO_PUBLIC_API_TIMEOUT_MS ?? 15000);
 const AUTH_TOKEN_KEY = 'legalcms_auth_token';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 15000,
+  timeout: API_TIMEOUT_MS,
   headers: {
     'Content-Type': 'application/json',
   },
