@@ -3,12 +3,12 @@ import { ActivityIndicator,Pressable,StyleSheet,Text,ViewStyle } from "react-nat
 import { colors, radius,spacing,typography } from "@/theme/index";
 
 interface ButtonProps {
-    label: string;
-    onPress: () => void;
-    loading?: boolean;
-    disabled?: boolean;
-    style?: ViewStyle;
-    variant?: 'primary' | 'secondary' | 'danger';
+    readonly label: string;
+    readonly onPress: () => void;
+    readonly loading?: boolean;
+    readonly disabled?: boolean;
+    readonly style?: ViewStyle;
+    readonly variant?: 'primary' | 'secondary' | 'danger';
 }
 
 export default function Button({
@@ -19,11 +19,23 @@ export default function Button({
     disabled = false,
     style,
 }: ButtonProps) {
-    const backgroundColor =
-        variant === 'primary' ? colors.navy : 
-        variant ==='danger' ? colors.danger : colors.surface;
+    let backgroundColor: string;
+
+    switch (variant) {
+        case 'primary':
+        backgroundColor = colors.navy;
+        break;
+        case 'danger':
+        backgroundColor = colors.danger;
+        break;
+        default:
+        backgroundColor = colors.surface;
+        break;
+    }
+
     const textColor = variant === 'secondary' ? colors.navy : colors.white;
     const borderColor = variant === 'secondary' ? colors.navy : 'transparent';
+    
 
     return(
         <Pressable
@@ -33,7 +45,7 @@ export default function Button({
             accessibilityState={{disabled: disabled || loading}}
             style ={ ({pressed}) =>[
                 styles.base,
-                { backgroundColor, borderColor, opacity: pressed ? 0.85 : disabled ? 0.5 : 1 },
+                { backgroundColor, borderColor,  opacity: pressed ? 0.85 : disabled ? 0.5 : 1,},
                 style,
             ]}
             >

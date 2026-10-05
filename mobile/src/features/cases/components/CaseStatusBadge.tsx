@@ -11,7 +11,7 @@ const STATUS_COLORS: Record<CaseStatus, string> = {
   Archived: colors.purple,
 };
 
-export default function CaseStatusBadge({ status }: { status: CaseStatus }) {
+export default function CaseStatusBadge({ status }: Readonly<{ status: CaseStatus }>) {
   const color = STATUS_COLORS[status];
   return (
     <View style={[styles.badge, { backgroundColor: `${color}1A`, borderColor: color }]}>

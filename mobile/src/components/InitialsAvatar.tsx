@@ -4,9 +4,9 @@ import { colors, typography } from '@/theme/index';
 import {getInitials} from '@/utils/initials';
 
 interface InitialsAvatarProps{
-    name: string;
-    size?: number;
-    style?: ViewStyle;
+    readonly name: string;
+    readonly size?: number;
+    readonly style?: ViewStyle;
 }
 
 export default function InitialsAvatar({name,size = 40,style}: InitialsAvatarProps){

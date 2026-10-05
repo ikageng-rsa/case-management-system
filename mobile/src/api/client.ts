@@ -43,6 +43,6 @@ export async function clearAuthToken() {
   await AsyncStorage.removeItem(AUTH_TOKEN_KEY);
 }
 
-export async function getAuthToken(): Promise<string | null> {
-  return AsyncStorage.getItem(AUTH_TOKEN_KEY);
+export function getAuthToken(): Promise<string | null> {
+  return  AsyncStorage.getItem(AUTH_TOKEN_KEY);
 }

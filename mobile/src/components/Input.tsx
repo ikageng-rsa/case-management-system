@@ -3,8 +3,8 @@ import { StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native'
 import { colors, spacing, radius, typography } from '@/theme/index';
 
 interface InputProps extends TextInputProps{
-    label?: string;
-    error?: string;
+    readonly label?: string;
+    readonly error?: string;
 }
 
 export default function Input({label, error, style, ...rest}: InputProps){

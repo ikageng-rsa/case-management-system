@@ -44,8 +44,11 @@ export default function CaseDetailScreen() {
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
-  return (
+function Row({
+  label,
+  value,
+}: Readonly<{ label: string; value: string }>) {
+    return (
     <View style={styles.row}>
       <Text style={styles.rowLabel}>{label}</Text>
       <Text style={styles.rowValue}>{value}</Text>

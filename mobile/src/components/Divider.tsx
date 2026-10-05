@@ -3,8 +3,8 @@ import { StyleSheet, View, ViewStyle } from 'react-native';
 import { colors, spacing} from '@/theme/index';
 
 interface DividerProps {
-    ornament?: boolean; // show the samll centered diamond flourish
-    style?: ViewStyle;
+    readonly ornament?: boolean; // show the samll centered diamond flourish
+    readonly style?: ViewStyle;
 }
 
 export default function Divider({ornament = false, style}: DividerProps){

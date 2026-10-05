@@ -6,8 +6,8 @@ import { colors, spacing, typography } from '@/theme/index';
 import { Case } from '@/models/index';
 
 interface CaseCardProps {
-  item: Case;
-  onPress: () => void;
+  readonly item: Case;
+  readonly onPress: () => void;
 }
 
 export default function CaseCard({ item, onPress }: CaseCardProps) {

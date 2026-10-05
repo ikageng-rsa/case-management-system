@@ -5,7 +5,7 @@
  * a payload might contain a ClientProfile, Case, or Narration object —
  * device logs are exactly the kind of place POPIA compliance reviews check.
  */
-const SENSITIVE_KEYS = [
+const SENSITIVE_KEYS = new Set([
   'fullName',
   'clientName',
   'email',
@@ -17,7 +17,7 @@ const SENSITIVE_KEYS = [
   'ficaVerified',
   'password',
   'token',
-];
+]);
 
 function redact(value: unknown, seen = new WeakSet<object>()): unknown {
   if (value === null || typeof value !== 'object') {
@@ -34,7 +34,7 @@ function redact(value: unknown, seen = new WeakSet<object>()): unknown {
 
   const out: Record<string, unknown> = {};
   for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
-    out[key] = SENSITIVE_KEYS.includes(key) ? '[redacted]' : redact(val, seen);
+    out[key] = SENSITIVE_KEYS.has(key) ? '[redacted]' : redact(val, seen);
   }
   return out;
 }

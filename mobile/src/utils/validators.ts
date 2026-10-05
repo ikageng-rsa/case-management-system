@@ -1,5 +1,15 @@
 export function isValidEmail(value: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+  const email = value.trim();
+
+  const atIndex = email.indexOf("@"); /**looks at where the @ is found */
+
+  return (
+    atIndex > 0 &&
+    atIndex === email.lastIndexOf("@") &&
+    atIndex < email.length - 1 &&
+    email.indexOf(".", atIndex) > atIndex + 1 &&
+    !email.includes(" ")
+  );
 }
 
 /** Accepts 08x/07x local format or +27 international, spaces/dashes ignored. */

@@ -3,8 +3,8 @@ import { StyleSheet, Text,View } from 'react-native';
 import { colors, spacing, typography} from '@/theme/index';
 
 interface EmptyStateProps{
-    title: string;
-    message?: string;
+    readonly title: string;
+    readonly message?: string;
 }
 
 export default function EmptyState ({title,message}: EmptyStateProps){

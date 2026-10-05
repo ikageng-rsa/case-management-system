@@ -21,7 +21,10 @@ export interface ParsedFileReference {
 }
 
 export function parseFileReference(reference: string): ParsedFileReference | null {
-  const match = reference.match(/^([A-Z]{1,4})\/([A-Z]{2,6})\/(\d{1,4})\/(\d{4})$/i);
+  const pattern =
+    /^([A-Z]{1,4})\/([A-Z]{2,6})\/(\d{1,4})\/(\d{4})$/i;
+
+  const match = pattern.exec(reference);
   if (!match) {
     return null;
   }
@@ -29,8 +32,8 @@ export function parseFileReference(reference: string): ParsedFileReference | nul
   return {
     attorneyInitials: attorneyInitials.toUpperCase(),
     matterTypeCode: matterTypeCode.toUpperCase(),
-    sequence: parseInt(sequence, 10),
-    year: parseInt(year, 10),
+    sequence: Number.parseInt(sequence, 10),
+    year: Number.parseInt(year, 10),
   };
 }
 
@@ -43,5 +46,5 @@ export function getInitials(fullName: string): string {
   if (parts.length === 1) {
     return parts[0].slice(0, 2).toUpperCase();
   }
-  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  return `${parts[0][0]}${parts.at(-1)?.[0] ?? ''}`.toUpperCase();
 }

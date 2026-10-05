@@ -7,16 +7,16 @@
  */
 import { Darzation } from '@/models/index';
 
-export async function scheduleOverdueAlert(darzation: Darzation): Promise<void> {
+export  function scheduleOverdueAlert(darzation: Darzation): void {
   // TODO: integrate notifee.createTriggerNotification with darzation.nextActionDate
   console.log(`[stub] would schedule overdue alert for ${darzation.id} on ${darzation.nextActionDate}`);
 }
 
-export async function scheduleDailyDigest(items: Darzation[]): Promise<void> {
+export  function scheduleDailyDigest(items: Darzation[]): void {
   // TODO: integrate a daily repeating trigger summarising `items`
   console.log(`[stub] would schedule daily digest for ${items.length} diary item(s)`);
 }
 
-export async function cancelAlert(darzationId: string): Promise<void> {
+export  function cancelAlert(darzationId: string): void {
   console.log(`[stub] would cancel alert for ${darzationId}`);
 }
