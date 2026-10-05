@@ -20,6 +20,9 @@ export default function BillingSummaryScreen() {
     }
     fetchBillingForCase(caseId)
       .then(setItems)
+      .catch(error => {
+          console.error("Failed to fetch billing:", error);
+      })
       .finally(() => setLoading(false));
   }, [caseId]);
 

@@ -16,6 +16,7 @@ export default function DiaryScreen() {
   const load = useCallback(() => {
     fetchDiary()
       .then(setItems)
+      .catch(error => console.error('Error found in darzation: ',error))
       .finally(() => setLoading(false));
   }, []);
 

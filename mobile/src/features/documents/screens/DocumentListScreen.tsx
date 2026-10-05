@@ -23,6 +23,7 @@ export default function DocumentListScreen() {
   useEffect(() => {
     fetchDocumentsForCase(caseId)
       .then(setItems)
+      .catch(error => console.error('Error found in document: ',error))
       .finally(() => setLoading(false));
   }, [caseId]);
 

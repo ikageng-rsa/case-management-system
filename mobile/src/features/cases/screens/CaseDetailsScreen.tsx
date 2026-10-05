@@ -16,6 +16,7 @@ export default function CaseDetailScreen() {
   useEffect(() => {
     fetchCaseById(caseId)
       .then(setItem)
+      .catch(error => console.error('Error found in case: ',error))
       .finally(() => setLoading(false));
   }, [caseId]);
 

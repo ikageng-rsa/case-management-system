@@ -18,6 +18,7 @@ export default function NarrationLogScreen() {
   useEffect(() => {
     fetchNarrationsForCase(caseId)
       .then(setItems)
+      .catch(error => console.error('Error found in narration: ',error))
       .finally(() => setLoading(false));
   }, [caseId]);
 
