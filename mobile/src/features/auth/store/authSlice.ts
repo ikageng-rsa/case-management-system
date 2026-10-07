@@ -1,0 +1,68 @@
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { login as loginRequest, LoginResponse } from '@/api/endpoint/auth.api';
+import { setAuthToken, clearAuthToken } from '@/api/client';
+import { User } from '@/models/index';
+import { DEMO_TOKEN,DEMO_USER,isDemoLogin } from '@/constants/demoUser';
+
+interface AuthState {
+  user: User | null;
+  status: 'idle' | 'loading' | 'authenticated' | 'error';
+  error: string | null;
+}
+
+const initialState: AuthState = {
+  user: null,
+  status: 'idle',
+  error: null,
+};
+
+export const login = createAsyncThunk<LoginResponse, { email: string; password: string }>(
+  'auth/login',
+  async ({ email, password }) => {
+    //Demo account: authenticate locally, no network call (dev builds / opt-in only).
+    if(isDemoLogin(email,password)){
+      await setAuthToken(DEMO_TOKEN);
+      return {token: DEMO_TOKEN, user: DEMO_USER}
+    }
+    const response = await loginRequest(email, password);
+    await setAuthToken(response.token);
+    return response;
+  },
+);
+
+export const logout = createAsyncThunk('auth/logout', async () => {
+  await clearAuthToken();
+});
+
+const authSlice = createSlice({
+  name: 'auth',
+  initialState,
+  reducers: {
+    setUser(state, action: PayloadAction<User | null>) {
+      state.user = action.payload;
+      state.status = action.payload ? 'authenticated' : 'idle';
+    },
+  },
+  extraReducers: builder => {
+    builder
+      .addCase(login.pending, state => {
+        state.status = 'loading';
+        state.error = null;
+      })
+      .addCase(login.fulfilled, (state, action) => {
+        state.status = 'authenticated';
+        state.user = action.payload.user;
+      })
+      .addCase(login.rejected, (state, action) => {
+        state.status = 'error';
+        state.error = action.error.message ?? 'Login failed';
+      })
+      .addCase(logout.fulfilled, state => {
+        state.user = null;
+        state.status = 'idle';
+      });
+  },
+});
+
+export const { setUser } = authSlice.actions;
+export default authSlice.reducer;
