@@ -13,7 +13,7 @@
                     Case management
                 </h1>
                 <p class="mb-4" style="color: var(--cms-on-ink-caption);">
-                    Example Firm Attorneys Inc. · staff access only
+                    Ngunduza Attorneys Inc. · staff access only
                 </p>
 
                 <form method="POST" action="{{ route('login') }}">
