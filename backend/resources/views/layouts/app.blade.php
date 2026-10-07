@@ -17,7 +17,7 @@
     <body>
         <div class="page">
             <x-ui.sidebar
-                firm="Ngunduza Attorneys"
+                firm="Example Firm"
                 tagline="Attorneys Inc."
                 :user="$user->name"
                 :role="Str::headline($user->getRoleNames()->first() ?? '')"

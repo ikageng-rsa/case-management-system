@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard — Ngunduza Attorneys')
+@section('title', 'Dashboard — Example Firm')
 
 @section('content')
     <h1 class="mb-1">Good morning, {{ Str::before(auth()->user()->name, ' ') }}</h1>
@@ -40,11 +40,11 @@
                         </thead>
                         <tbody>
                             @foreach ([
-                                ['ref' => 'NGA/2026/LAB/0134', 'client' => 'Mokoena, T', 'stage' => 'Arbitration', 'tone' => 'info', 'date' => '04 Sep'],
-                                ['ref' => 'NGA/2026/CRM/0088', 'client' => 'Diale, R', 'stage' => 'Trial prep', 'tone' => 'danger', 'date' => '05 Sep'],
-                                ['ref' => 'NGA/2026/MAT/0051', 'client' => 'Sithole & Sithole', 'stage' => 'Settlement', 'tone' => 'success', 'date' => '09 Sep'],
-                                ['ref' => 'NGA/2026/LAB/0140', 'client' => 'Radebe, K', 'stage' => 'Pleadings', 'tone' => 'accent', 'date' => '11 Sep'],
-                                ['ref' => 'NGA/2026/EST/0012', 'client' => 'Bafokeng Estate', 'stage' => 'Filing', 'tone' => 'neutral', 'date' => '15 Sep'],
+                                ['ref' => 'EXF/2026/LAB/0134', 'client' => 'Mokoena, T', 'stage' => 'Arbitration', 'tone' => 'info', 'date' => '04 Sep'],
+                                ['ref' => 'EXF/2026/CRM/0088', 'client' => 'Diale, R', 'stage' => 'Trial prep', 'tone' => 'danger', 'date' => '05 Sep'],
+                                ['ref' => 'EXF/2026/MAT/0051', 'client' => 'Sithole & Sithole', 'stage' => 'Settlement', 'tone' => 'success', 'date' => '09 Sep'],
+                                ['ref' => 'EXF/2026/LAB/0140', 'client' => 'Radebe, K', 'stage' => 'Pleadings', 'tone' => 'accent', 'date' => '11 Sep'],
+                                ['ref' => 'EXF/2026/EST/0012', 'client' => 'Bafokeng Estate', 'stage' => 'Filing', 'tone' => 'neutral', 'date' => '15 Sep'],
                             ] as $matter)
                                 <tr>
                                     <td class="text-meta">{{ $matter['ref'] }}</td>
@@ -68,17 +68,17 @@
                     <div class="mb-3">
                         <p class="text-meta mb-0">09:00</p>
                         <p class="mb-0">Consultation — B. Diale</p>
-                        <p class="text-meta mb-0">NGA/2026/CRM/0088</p>
+                        <p class="text-meta mb-0">EXF/2026/CRM/0088</p>
                     </div>
                     <div class="mb-3">
                         <p class="text-meta mb-0">11:30</p>
                         <p class="mb-0">CCMA arbitration — T. Mokoena</p>
-                        <p class="text-meta mb-0">NGA/2026/LAB/0134</p>
+                        <p class="text-meta mb-0">EXF/2026/LAB/0134</p>
                     </div>
                     <div>
                         <p class="text-meta mb-0">16:00</p>
                         <p class="mb-0">File review</p>
-                        <p class="text-meta mb-0">NGA/2026/EST/0012</p>
+                        <p class="text-meta mb-0">EXF/2026/EST/0012</p>
                     </div>
                 </div>
             </div>
@@ -92,7 +92,7 @@
                     <p class="text-meta mb-3">T. Mokoena · 09:12</p>
 
                     <p class="mb-1">Filed heads of argument with CCMA registrar.</p>
-                    <p class="text-meta mb-0">L. Ngunduza · yesterday</p>
+                    <p class="text-meta mb-0">L. Phiri · yesterday</p>
                 </div>
             </div>
         </div>
