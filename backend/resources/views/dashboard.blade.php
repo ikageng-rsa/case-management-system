@@ -3,7 +3,14 @@
 @section('title', 'Dashboard — Example Firm')
 
 @section('content')
-    <h1 class="mb-1">Good morning, {{ Str::before(auth()->user()->name, ' ') }}</h1>
+    @php
+        $greeting = match (true) {
+            now()->hour < 12 => 'Good morning',
+            now()->hour < 18 => 'Good afternoon',
+            default => 'Good evening',
+        };
+    @endphp
+    <h1 class="mb-1">{{ $greeting }}, {{ Str::before(auth()->user()->name, ' ') }}</h1>
     <p class="text-secondary mb-4">{{ now()->format('l d F Y') }}</p>
 
     <div class="row row-cards mb-4">

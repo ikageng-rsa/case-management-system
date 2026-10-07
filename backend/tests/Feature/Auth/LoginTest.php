@@ -50,7 +50,7 @@ class LoginTest extends TestCase
         $this->actingAs($user)
             ->get('/dashboard')
             ->assertOk()
-            ->assertSee('Good morning, Jane')
+            ->assertSee('Jane')
             ->assertSee('Sign out');
     }
 
