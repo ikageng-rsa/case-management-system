@@ -10,4 +10,13 @@ enum Assignment: string
     case Supervising = 'supervising';
     case Assisting = 'assisting';
     case Messenger = 'messenger';
+
+    /** Responsible and Supervising are held by one person at a time; the rest may be shared. */
+    public function isExclusive(): bool
+    {
+        return match ($this) {
+            self::Responsible, self::Supervising => true,
+            self::Assisting, self::Messenger => false,
+        };
+    }
 }
