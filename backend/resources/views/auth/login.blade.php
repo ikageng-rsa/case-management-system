@@ -7,13 +7,13 @@
         {{-- Left panel: the actual sign-in form --}}
         <div class="col-lg-6 d-flex align-items-center">
             <div class="w-100 px-4 mx-auto" style="max-width: 380px;">
-                <x-ui.logo-mark initial="N" class="mb-3" />
+                <x-ui.logo-mark initial="E" class="mb-3" />
 
                 <h1 class="mb-1 text-white">
                     Case management
                 </h1>
                 <p class="mb-4" style="color: var(--cms-on-ink-caption);">
-                    Ngunduza Attorneys Inc. · staff access only
+                    Example Firm Attorneys Inc. · staff access only
                 </p>
 
                 <form method="POST" action="{{ route('login') }}">
@@ -54,7 +54,7 @@
         <div class="col-lg-6 d-none d-lg-flex align-items-center"
              style="border-left: 1px solid var(--cms-border-on-ink);">
             <div class="w-100 px-5 mx-auto" style="max-width: 420px;">
-                <p class="text-meta mb-2" style="color: var(--cms-gold-500);">RUSTENBURG · EST. 2014</p>
+                <p class="text-meta mb-2" style="color: var(--cms-gold-500);">EXAMPLE CITY · EST. 2014</p>
                 <p class="text-white" style="font-family: var(--cms-font-display); font-size: var(--cms-display-sm);">
                     Labour, criminal and matrimonial practice — 64 open matters, one file per client, one record of every attendance.
                 </p>
