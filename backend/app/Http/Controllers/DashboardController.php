@@ -34,12 +34,16 @@ class DashboardController extends Controller
             fn (Matter $matter) => $matter->instructed_at?->isAfter(now()->subDays(7)) ?? false,
         );
 
+        $unbilledNarrations = $this->unbilledNarrations($seesAllMatters ? null : $user)->get(['quantity']);
+        $unbilledMinutes = (float) $unbilledNarrations->sum('quantity');
+
         return view('dashboard', [
             'openMattersCount' => $matters->count(),
             'openedThisWeekCount' => $newIntakes->count(),
             'awaitingActionCount' => DiaryEntry::query()->assignedTo($user)->pending()->count(),
             'overdueCount' => DiaryEntry::query()->assignedTo($user)->overdue()->count(),
-            'unbilledHours' => $this->unbilledHours($seesAllMatters ? null : $user),
+            'unbilledHours' => $unbilledMinutes / 60,
+            'unbilledEntriesCount' => $unbilledNarrations->count(),
             'newIntakesCount' => $newIntakes->count(),
             'unassignedIntakesCount' => $newIntakes->filter(
                 fn (Matter $matter) => $matter->assignedUsers->isEmpty(),
@@ -61,22 +65,14 @@ class DashboardController extends Controller
         ]);
     }
 
-    /*
-     * There is no invoicing yet, so every billable hour logged is, by
-     * definition, unbilled. This stands in until billing exists to say
-     * otherwise.
-     */
-    protected function unbilledHours(?User $scopeToUser): float
+    protected function unbilledNarrations(?User $scopeToUser): Builder
     {
-        $minutes = Narration::query()
+        return Narration::query()
             ->whereHas(
                 'activityType',
                 fn (Builder $query) => $query->billable()->where('measure', ActivityMeasure::Minutes),
             )
-            ->when($scopeToUser, fn (Builder $query, User $user) => $query->by($user))
-            ->sum('quantity');
-
-        return round(((float) $minutes) / 60, 1);
+            ->when($scopeToUser, fn (Builder $query, User $user) => $query->by($user));
     }
 
     /**

@@ -9,34 +9,40 @@
             now()->hour < 18 => 'Good afternoon',
             default => 'Good evening',
         };
+
+        $openMattersDelta = "+{$openedThisWeekCount} this week";
+        $awaitingActionDelta = "{$overdueCount} overdue";
+        $unbilledHoursDelta = $unbilledEntriesCount.' '.Str::plural('entry', $unbilledEntriesCount);
+        $newIntakesDelta = "{$unassignedIntakesCount} unassigned";
     @endphp
     <h1 class="mb-1">{{ $greeting }}, {{ Str::before(auth()->user()->name, ' ') }}</h1>
     <p class="text-secondary mb-4">{{ now()->format('l d F Y') }}</p>
 
     <div class="row row-cards mb-4">
         <div class="col-sm-6 col-lg-3">
-            <x-ui.stat-card
-                label="Open matters"
-                :value="$openMattersCount"
-                :delta="$openedThisWeekCount > 0 ? \"+{$openedThisWeekCount} this week\" : null"
-            />
+            <x-ui.stat-card label="Open matters" :value="$openMattersCount" :delta="$openMattersDelta" />
         </div>
         <div class="col-sm-6 col-lg-3">
             <x-ui.stat-card
                 label="Awaiting my action"
                 :value="$awaitingActionCount"
-                :delta="$overdueCount > 0 ? \"{$overdueCount} overdue\" : null"
+                :delta="$awaitingActionDelta"
                 tone="danger"
             />
         </div>
         <div class="col-sm-6 col-lg-3">
-            <x-ui.stat-card label="Unbilled hours" :value="number_format($unbilledHours, 1)" tone="secondary" />
+            <x-ui.stat-card
+                label="Unbilled hours"
+                :value="number_format($unbilledHours, 1)"
+                :delta="$unbilledHoursDelta"
+                tone="secondary"
+            />
         </div>
         <div class="col-sm-6 col-lg-3">
             <x-ui.stat-card
                 label="New intakes"
                 :value="$newIntakesCount"
-                :delta="$unassignedIntakesCount > 0 ? \"{$unassignedIntakesCount} unassigned\" : null"
+                :delta="$newIntakesDelta"
                 tone="warning"
             />
         </div>
@@ -63,7 +69,7 @@
                             @forelse ($mattersNeedingAttention as $row)
                                 <tr>
                                     <td class="text-meta">{{ $row['matter']->reference }}</td>
-                                    <td>{{ $row['matter']->client->full_name }}</td>
+                                    <td>{{ $row['matter']->client?->full_name ?? '—' }}</td>
                                     <td><x-ui.stage-badge :tone="$row['tone']">{{ $row['label'] }}</x-ui.stage-badge></td>
                                     <td>{{ $row['nextDate']?->format('d M') ?? '—' }}</td>
                                 </tr>
