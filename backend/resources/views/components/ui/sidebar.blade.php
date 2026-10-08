@@ -51,6 +51,10 @@
                             <span class="app-sidebar-user-name d-block">{{ $user }}</span>
                             <span class="app-sidebar-user-role d-block">{{ $role }}</span>
                         </span>
+
+                        @isset($footerActions)
+                            <span class="ms-auto">{{ $footerActions }}</span>
+                        @endisset
                     </div>
                 @endif
             </div>

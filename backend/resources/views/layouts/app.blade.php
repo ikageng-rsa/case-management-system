@@ -29,15 +29,17 @@
                 <x-ui.nav-item href="#" label="Clients" icon="users" />
                 <x-ui.nav-item href="#" label="Diary & Alerts" icon="calendar" />
                 <x-ui.nav-item href="#" label="Documents" icon="file-text" />
+
+                <x-slot:footerActions>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+
+                        <x-ui.button type="submit" variant="ghost-secondary" icon="logout" aria-label="Sign out" />
+                    </form>
+                </x-slot:footerActions>
             </x-ui.sidebar>
 
-            <x-ui.header>
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-
-                    <x-ui.button type="submit" variant="ghost-secondary" icon="logout">Sign out</x-ui.button>
-                </form>
-            </x-ui.header>
+            <x-ui.header />
 
             <div class="page-wrapper">
                 <div class="page-body">
