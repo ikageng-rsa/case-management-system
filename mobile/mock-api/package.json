@@ -1,0 +1,29 @@
+{
+  "name": "mock-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Throwaway Laravel-style mock API for developing LegalCMS-Mobile before the real backend is avaliable",
+  "main": "server.js",
+  "scripts": {
+    "api:install": "npm --prefix mock-api install",
+    "api": "npm --prefix mock-api run serve",
+    "api:fresh": "npm --prefix mock-api run fresh",
+    "serve": "node server.js",
+    "fresh": "node server.js --fresh",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "type": "commonjs",
+  "devDependencies": {
+    "jest": "^30.5.2"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "crypto": "^1.0.1",
+    "express": "^5.3.0",
+    "multer": "^2.4.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
