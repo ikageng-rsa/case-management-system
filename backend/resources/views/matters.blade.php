@@ -11,21 +11,21 @@
     </div>
 
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-        <div class="btn-group" role="group" aria-label="Matter filters">
-            <button type="button" class="btn btn-dark btn-sm">All 64</button>
-            <button type="button" class="btn btn-ghost-secondary btn-sm">Mine 34</button>
-            <button type="button" class="btn btn-ghost-secondary btn-sm">Unassigned 3</button>
-            <button type="button" class="btn btn-ghost-secondary btn-sm">Closed</button>
+        <div class="d-flex align-items-center gap-2 bg-light rounded-pill p-1" role="group" aria-label="Matter filters">
+            <button type="button" class="btn btn-dark btn-sm rounded-pill">All 64</button>
+            <button type="button" class="btn btn-ghost-secondary btn-sm rounded-pill">Mine 34</button>
+            <button type="button" class="btn btn-ghost-secondary btn-sm rounded-pill">Unassigned 3</button>
+            <button type="button" class="btn btn-ghost-secondary btn-sm rounded-pill">Closed</button>
         </div>
 
-        <div class="d-flex align-items-center gap-2">
-            <button type="button" class="btn btn-ghost-secondary btn-sm">
+        <div class="d-flex align-items-center gap-2 bg-light rounded-pill p-1">
+            <button type="button" class="btn btn-ghost-secondary btn-sm rounded-pill">
                 type: all <x-ui.icon name="chevron-down" class="ms-1" />
             </button>
-            <button type="button" class="btn btn-ghost-secondary btn-sm">
+            <button type="button" class="btn btn-ghost-secondary btn-sm rounded-pill">
                 stage: all <x-ui.icon name="chevron-down" class="ms-1" />
             </button>
-            <button type="button" class="btn btn-ghost-secondary btn-sm">
+            <button type="button" class="btn btn-ghost-secondary btn-sm rounded-pill">
                 sort: next date <x-ui.icon name="chevron-down" class="ms-1" />
             </button>
         </div>
