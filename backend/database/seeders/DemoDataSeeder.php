@@ -37,8 +37,14 @@ class DemoDataSeeder extends Seeder
     /** Next file number per matter type, so references stay sequential. */
     protected array $sequences = [];
 
-    /** The demo always shows at least one overdue entry, not a random chance of one. */
-    protected bool $seededOverdue = false;
+    /*
+     * Of the plan's open matters (indices 0, 1, 2, 3, 5, 6 — see seedMatters),
+     * only these get an overdue diary entry. The rest stay on track, and index
+     * 0 is left alone deliberately so its "prescribing soon" state isn't
+     * masked by an overdue one — the dashboard should show a mix of statuses,
+     * not every open matter in the same state.
+     */
+    protected const OVERDUE_MATTER_INDEXES = [1, 5];
 
     public function run(): void
     {
@@ -64,8 +70,8 @@ class DemoDataSeeder extends Seeder
 
         $matters = $this->seedMatters($clients, $matterTypes, $courts, $staff);
 
-        foreach ($matters as $matter) {
-            $this->seedWork($matter, $activityTypes, $staff);
+        foreach ($matters as $index => $matter) {
+            $this->seedWork($matter, $activityTypes, $staff, $index);
         }
 
         $this->command?->info("Seeded {$matters->count()} matters with narrations, diary entries and documents.");
@@ -213,7 +219,7 @@ class DemoDataSeeder extends Seeder
         }
     }
 
-    protected function seedWork(Matter $matter, Collection $activityTypes, Collection $staff): void
+    protected function seedWork(Matter $matter, Collection $activityTypes, Collection $staff, int $matterIndex): void
     {
         $author = $matter->load('assignments')->responsibleAttorney() ?? $staff->first();
 
@@ -221,7 +227,7 @@ class DemoDataSeeder extends Seeder
             $this->seedNarration($matter, $activityTypes, $author, $index);
         }
 
-        $this->seedDiaryEntries($matter, $author);
+        $this->seedDiaryEntries($matter, $author, $matterIndex);
         $this->seedDocuments($matter, $author);
     }
 
@@ -249,7 +255,7 @@ class DemoDataSeeder extends Seeder
         }
     }
 
-    protected function seedDiaryEntries(Matter $matter, User $author): void
+    protected function seedDiaryEntries(Matter $matter, User $author, int $matterIndex): void
     {
         if (! $matter->isOpen()) {
             DiaryEntry::factory()->for($matter)->create([
@@ -268,16 +274,15 @@ class DemoDataSeeder extends Seeder
             'due_at' => now()->addDays(fake()->numberBetween(2, 21)),
         ]);
 
-        if ($this->seededOverdue && ! fake()->boolean(35)) {
+        if (! in_array($matterIndex, self::OVERDUE_MATTER_INDEXES, true)) {
             return;
         }
 
-        DiaryEntry::factory()->for($matter)->overdue()->create([
+        DiaryEntry::factory()->for($matter)->create([
             'assigned_to' => $author->id,
             'body' => 'Serve the notice of intention to defend.',
+            'due_at' => now()->subDays(fake()->numberBetween(1, 14)),
         ]);
-
-        $this->seededOverdue = true;
     }
 
     protected function seedDocuments(Matter $matter, User $author): void
