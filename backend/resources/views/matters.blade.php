@@ -8,26 +8,28 @@
             <h1 class="mb-1">Matters</h1>
             <p class="text-secondary mb-4">64 open · 3 unassigned · 12 closed this year</p>
         </div>
+        
+         <x-ui.button variant="primary" icon="plus" size="sm">New Matter</x-ui.button>
     </div>
 
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
         <div class="d-flex align-items-center gap-2 bg-light rounded-pill p-1" role="group" aria-label="Matter filters">
-            <button type="button" class="btn btn-dark btn-sm rounded-pill">All 64</button>
-            <button type="button" class="btn btn-ghost-secondary btn-sm rounded-pill">Mine 34</button>
-            <button type="button" class="btn btn-ghost-secondary btn-sm rounded-pill">Unassigned 3</button>
-            <button type="button" class="btn btn-ghost-secondary btn-sm rounded-pill">Closed</button>
+            <x-ui.button variant="dark" class="rounded-pill" size="sm">All 64</x-ui.button>
+            <x-ui.button variant="ghost-secondary" class="rounded-pill" size="sm">Mine 34</x-ui.button>
+            <x-ui.button variant="ghost-secondary" class="rounded-pill" size="sm">Unassigned 3</x-ui.button>
+            <x-ui.button variant="ghost-secondary" class="rounded-pill" size="sm">Closed</x-ui.button>
         </div>
 
         <div class="d-flex align-items-center gap-2 bg-light rounded-pill p-1">
-            <button type="button" class="btn btn-ghost-secondary btn-sm rounded-pill">
+            <x-ui.button variant="ghost-secondary" class="rounded-pill" size="sm">
                 type: all <x-ui.icon name="chevron-down" class="ms-1" />
-            </button>
-            <button type="button" class="btn btn-ghost-secondary btn-sm rounded-pill">
+            </x-ui.button>
+            <x-ui.button variant="ghost-secondary" class="rounded-pill" size="sm">
                 stage: all <x-ui.icon name="chevron-down" class="ms-1" />
-            </button>
-            <button type="button" class="btn btn-ghost-secondary btn-sm rounded-pill">
+            </x-ui.button>
+            <x-ui.button variant="ghost-secondary" class="rounded-pill" size="sm">
                 sort: next date <x-ui.icon name="chevron-down" class="ms-1" />
-            </button>
+            </x-ui.button>
         </div>
     </div>
 
@@ -47,7 +49,7 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td class="text-meta">NGA/2026/LAB/0134</td>
+                        <td class="text-meta"><a href="{{ route('matter.show') }}">NGA/2026/LAB/0134</a></td>
                         <td>Mokoena, T</td>
                         <td class="text-secondary">Labour</td>
                         <td><x-ui.stage-badge tone="danger">Trial</x-ui.stage-badge></td>
