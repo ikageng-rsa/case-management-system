@@ -11,7 +11,8 @@ Route::get('/', function () {
 
 Route::middleware('auth')->group(function() {
     Route::get('/dashboard', DashboardController::class)->middleware('auth')->name('dashboard');
-    Route::view('/matters', 'matters')->name('matter');
+    Route::view('/matters', 'matters')->name('matters');
     Route::view('/matters/:id', 'matter-show')->name('matter.show');
+    Route::view('/documents', 'documents')->name('documents');
 });
 
