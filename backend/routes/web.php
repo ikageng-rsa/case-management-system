@@ -16,5 +16,6 @@ Route::middleware('auth')->group(function() {
     Route::view('/clients', 'clients')->name('clients');
     Route::view('/documents', 'documents')->name('documents');
     Route::view('/users', 'users')->name('users');
+    Route::view('/audit-log', 'audit-log')->name('audit-log');
 });
 

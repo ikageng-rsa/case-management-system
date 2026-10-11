@@ -32,7 +32,7 @@
 
                 <x-ui.nav-section>Firm</x-ui.nav-section>
                 <x-ui.nav-item :href="route('users')" label="Users" icon="users" :active="request()->routeIs('users')"/>
-                <x-ui.nav-item href="#" label="Audit log" icon="history"/>
+                <x-ui.nav-item :href="route('audit-log')" label="Audit log" icon="history" :active="request()->routeIs('audit-log')"/>
 
                 <x-slot:footerActions>
                     <form method="POST" action="{{ route('logout') }}">
