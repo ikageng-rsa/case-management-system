@@ -10,18 +10,17 @@
     part-way through fixing the field it is about.
 --}}
 @php
-    $seed = collect([
-        ['tone' => 'success', 'message' => 'testing this toaster'],
-        ['tone' => 'danger', 'message' => 'testing another toaster'],
-    ]);
+    $seed = collect();
 
-    //if (session('status')) {
-      //  $seed->push(['tone' => 'success', 'message' => session('status')]);
-    //}
+    if (session('status')) {
+        $seed->push(['tone' => 'success', 'message' => session('status')]);
+    }
 
-    //foreach ($errors->all() as $error) {
-      //  $seed->push(['tone' => 'danger', 'message' => $error]);
-    //}
+    // Errors may sit in a named bag when a sheet has to reopen on its own fields.
+    collect($errors->getBags())
+        ->flatMap(fn ($bag) => $bag->all())
+        ->unique()
+        ->each(fn ($error) => $seed->push(['tone' => 'danger', 'message' => $error]));
 @endphp
 
 
@@ -39,9 +38,9 @@
                x-bind:class="toast.tone === 'success' ? 'ti-circle-check' : 'ti-alert-triangle'"></i>
         </div>
 
-        An error occurred!
+        <span x-text="toast.message"></span>
 
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="close"></button>
+        <button type="button" class="btn-close" x-on:click="dismiss(toast.id)" aria-label="close"></button>
     </div>
         
         <!-- <div class="toast fade show alert-dismissible" x-bind:class="`is-${toast.tone}`" id="toast-simple" role="alert" aria-live="assertive" aria-atomic="true">

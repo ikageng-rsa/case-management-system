@@ -21,6 +21,12 @@ trait RecordsActivity
      */
     protected static array $recordedAccesses = [];
 
+    /** Forget which accesses were recorded, for the start of a new request or test. */
+    public static function flushRecordedAccesses(): void
+    {
+        static::$recordedAccesses = [];
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

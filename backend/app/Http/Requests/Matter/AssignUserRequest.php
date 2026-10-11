@@ -11,6 +11,8 @@ use Illuminate\Validation\Rule;
 
 class AssignUserRequest extends FormRequest
 {
+    protected $errorBag = 'assignment';
+
     /**
      * Determine if the user is authorized to make this request.
      */

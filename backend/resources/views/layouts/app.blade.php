@@ -56,5 +56,6 @@
         </div>
 
         <x-ui.confirm />
+        <x-ui.toasts />
     </body>
 </html>

@@ -4,14 +4,17 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\Document\DocumentKind;
 use App\Enums\Matter\Assignment;
 use App\Http\Requests\Matter\AssignUserRequest;
 use App\Http\Requests\Matter\StoreMatterRequest;
 use App\Http\Requests\Matter\UpdateMatterRequest;
+use App\Models\ActivityType;
 use App\Models\Client;
 use App\Models\Court;
 use App\Models\Matter;
 use App\Models\MatterType;
+use App\Models\Narration;
 use App\Models\User;
 use App\Services\Matters\AssignUserToMatter;
 use App\Services\Matters\CannotAssignToClosedMatter;
@@ -23,6 +26,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Spatie\Activitylog\Models\Activity;
 
 class MatterController extends Controller
 {
@@ -90,20 +94,58 @@ class MatterController extends Controller
         ]);
     }
 
-    public function show(Matter $matter): View
+    public function show(Request $request, Matter $matter): View
     {
         Gate::authorize('view', $matter);
+
+        /** @var User $user */
+        $user = $request->user();
+
+        $tabs = ['ledger', 'documents', 'parties', 'diary'];
+
+        if ($user->can('viewAudit', $matter)) {
+            $tabs[] = 'audit';
+        }
+
+        $tab = in_array($request->query('tab'), $tabs, true) ? $request->query('tab') : 'ledger';
 
         $matter->load([
             'client',
             'matterType',
             'court',
+            'assignments' => fn ($query) => $query->active(),
             'assignments.user',
-            'narrations',
-            'diaryEntries',
         ]);
 
-        return view('matter-show', ['matter' => $matter]);
+        $matter->recordAccess('read', ['ip' => $request->ip()]);
+
+        return view('matter-show', [
+            'matter' => $matter,
+            'tab' => $tab,
+            'tabs' => $tabs,
+            'nextDate' => $matter->diaryEntries()->pending()->orderBy('due_at')->first()?->due_at,
+            'canWork' => $user->can('work', $matter),
+            'activityTypes' => ActivityType::query()->orderBy('name')->get(),
+            'courts' => Court::query()->orderBy('name')->get(),
+            'assignable' => $user->can('assign', $matter) ? User::query()->orderBy('name')->get() : collect(),
+            'capacities' => Assignment::cases(),
+            'team' => $matter->assignments->pluck('user')->unique('id')->values(),
+            'recentDocuments' => $matter->documents(),
+            'recentReads' => Activity::query()
+                ->where('subject_type', $matter->getMorphClass())
+                ->where('subject_id', $matter->getKey())
+                ->where('event', 'read')
+                ->with('causer')
+                ->latest('id')
+                ->limit(3)
+                ->get(),
+        ] + match ($tab) {
+            'ledger' => $this->ledger($request, $matter, $user),
+            'documents' => $this->documents($request, $matter),
+            'parties' => $this->parties($matter, $user),
+            'diary' => $this->diary($request, $matter, $user),
+            'audit' => $this->audit($matter),
+        });
     }
 
     public function store(StoreMatterRequest $request, OpenMatter $openMatter): RedirectResponse
@@ -159,10 +201,10 @@ class MatterController extends Controller
                 Assignment::from($request->validated('capacity')),
             );
         } catch (CannotAssignToClosedMatter $e) {
-            return back()->withErrors(['matter' => $e->getMessage()]);
+            return back()->withErrors(['matter' => $e->getMessage()], 'assignment');
         }
 
-        return redirect()->route('matter.show', $matter);
+        return redirect()->route('matter.show', [$matter, 'tab' => 'parties']);
     }
 
     public function unassign(AssignUserRequest $request, Matter $matter, UnassignUserFromMatter $unassignUser): RedirectResponse
@@ -175,6 +217,123 @@ class MatterController extends Controller
             Assignment::from($request->validated('capacity')),
         );
 
-        return redirect()->route('matter.show', $matter);
+        return redirect()->route('matter.show', [$matter, 'tab' => 'parties']);
+    }
+
+    /** @return array<string, mixed> */
+    protected function ledger(Request $request, Matter $matter, User $user): array
+    {
+        $all = $matter->narrations()->with(['activityType', 'author'])->latestFirst()->get();
+
+        $filter = $request->query('filter');
+
+        $narrations = match (true) {
+            $filter === 'mine' => $all->where('author_id', $user->getKey()),
+            filled($filter) => $all->filter(fn (Narration $narration) => $narration->activityType->code === $filter),
+            default => $all,
+        };
+
+        $filters = $all->groupBy(fn (Narration $narration) => $narration->activityType->code)
+            ->map(fn ($group) => ['label' => strtolower($group->first()->activityType->name), 'count' => $group->count()]);
+
+        return [
+            'narrations' => $narrations->values(),
+            'allCount' => $all->count(),
+            'filter' => $filter,
+            'filters' => $filters,
+            'mineCount' => $all->where('author_id', $user->getKey())->count(),
+            'minutesRecorded' => (float) $all
+                ->filter(fn (Narration $narration) => $narration->activityType->measure->isTimed())
+                ->sum('quantity'),
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    protected function documents(Request $request, Matter $matter): array
+    {
+        $kind = DocumentKind::tryFrom((string) $request->query('kind'));
+
+        $all = $matter->documents();
+
+        return [
+            'documents' => $all
+                ->when($kind, fn ($documents) => $documents->filter(
+                    fn ($media) => $media->getCustomProperty('kind') === $kind->value,
+                ))
+                ->sortByDesc('created_at')
+                ->values(),
+            'allDocumentsCount' => $all->count(),
+            'kind' => $kind,
+            'kindCounts' => $all->countBy(fn ($media) => $media->getCustomProperty('kind')),
+            'kinds' => DocumentKind::cases(),
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    protected function parties(Matter $matter, User $user): array
+    {
+        $client = $matter->client;
+
+        return [
+            'contacts' => $user->can('view_client_contacts') && $user->can('view_unmasked_client_data') ? $client->contacts()->get() : collect(),
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    protected function diary(Request $request, Matter $matter, User $user): array
+    {
+        $show = in_array($request->query('show'), ['pending', 'completed', 'overdue', 'mine'], true)
+            ? $request->query('show')
+            : 'pending';
+
+        $entries = $matter->diaryEntries()
+            ->with(['assignee', 'completedBy'])
+            ->when($show === 'pending', fn (Builder $query) => $query->pending())
+            ->when($show === 'completed', fn (Builder $query) => $query->completed())
+            ->when($show === 'overdue', fn (Builder $query) => $query->overdue())
+            ->when($show === 'mine', fn (Builder $query) => $query->pending()->assignedTo($user))
+            ->orderBy('due_at')
+            ->get();
+
+        return [
+            'entries' => $entries,
+            'show' => $show,
+            'diaryCounts' => [
+                'pending' => $matter->diaryEntries()->pending()->count(),
+                'completed' => $matter->diaryEntries()->completed()->count(),
+                'overdue' => $matter->diaryEntries()->overdue()->count(),
+                'mine' => $matter->diaryEntries()->pending()->assignedTo($user)->count(),
+            ],
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    protected function audit(Matter $matter): array
+    {
+        $related = [
+            'narration' => $matter->narrations()->pluck('id'),
+            'diary_entry' => $matter->diaryEntries()->pluck('id'),
+            'matter_assignment' => $matter->assignments()->pluck('id'),
+            'document' => $matter->media()->pluck('id'),
+        ];
+
+        $activities = Activity::query()
+            ->where(function (Builder $query) use ($matter, $related): void {
+                $query->where(fn (Builder $query) => $query
+                    ->where('subject_type', $matter->getMorphClass())
+                    ->where('subject_id', $matter->getKey()));
+
+                foreach ($related as $type => $ids) {
+                    $query->orWhere(fn (Builder $query) => $query
+                        ->where('subject_type', $type)
+                        ->whereIn('subject_id', $ids->map(fn ($id) => (string) $id)->all()));
+                }
+            })
+            ->with('causer')
+            ->latest('id')
+            ->paginate(8, ['*'], 'audit_page')
+            ->withQueryString();
+
+        return ['activities' => $activities];
     }
 }
