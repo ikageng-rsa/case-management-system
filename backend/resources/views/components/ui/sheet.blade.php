@@ -8,6 +8,10 @@
     'bags' => [],
     'wide' => false,
     'record' => [],
+    'action' => null,
+    'method' => 'POST',
+    'enctype' => null,
+    'formData' => null,
 ])
 
 @php($anyBagHasErrors = collect(array_merge([$bag], $bags))->contains(fn ($b) => $errors->getBag($b)->any()))
@@ -16,6 +20,12 @@
     Usage:
     Open a blank one with   $dispatch('sheet-open', 'add-rate')
     or one filled in with   $dispatch('sheet-open', { name: 'edit-member', record: {…} })
+
+    The buttons of a sheet live in its footer slot, pinned under the body.
+
+    Given an action, the sheet is one form around its body and footer, so a
+    submit button in the footer submits what is in the body. formData is an
+    Alpine x-data expression for that form, shared by body and footer alike.
 
 --}}
 <div x-data="{
@@ -65,8 +75,36 @@
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
 
-        <div class="offcanvas-body">
-            {{ $slot }}
-        </div>
+        @if ($action)
+            <form method="{{ strtoupper($method) === 'GET' ? 'GET' : 'POST' }}" action="{{ $action }}"
+                  @if ($enctype) enctype="{{ $enctype }}" @endif
+                  @if ($formData) x-data="{{ $formData }}" @endif
+                  class="d-flex flex-column flex-grow-1 overflow-hidden" novalidate>
+                @csrf
+                @if (! in_array(strtoupper($method), ['GET', 'POST'], true))
+                    @method($method)
+                @endif
+
+                <div class="offcanvas-body">
+                    {{ $slot }}
+                </div>
+
+                @isset($footer)
+                    <div class="border-top p-3">
+                        {{ $footer }}
+                    </div>
+                @endisset
+            </form>
+        @else
+            <div class="offcanvas-body">
+                {{ $slot }}
+            </div>
+
+            @isset($footer)
+                <div class="border-top p-3">
+                    {{ $footer }}
+                </div>
+            @endisset
+        @endif
     </div>
 </div>
