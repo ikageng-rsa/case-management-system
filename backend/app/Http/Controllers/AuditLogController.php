@@ -51,6 +51,7 @@ class AuditLogController extends Controller
             'actions' => Activity::query()->whereNotNull('event')->distinct()->orderBy('event')->pluck('event'),
             'canExport' => $request->user()->can(Permission::ExportAuditLog->value),
             'matterOf' => fn (Activity $activity): ?Matter => $this->matterOf($activity->subject),
+            'details' => $activities->getCollection()->mapWithKeys(fn (Activity $activity) => [$activity->getKey() => $this->detail($activity)]),
         ]);
     }
 
@@ -92,6 +93,55 @@ class AuditLogController extends Controller
         return Activity::query()
             ->when($request->query('actor'), fn (Builder $query, string $actor) => $query->where('causer_id', $actor))
             ->when($request->query('action'), fn (Builder $query, string $action) => $query->where('event', $action));
+    }
+
+    /**
+     * Everything the log holds about an entry, in the shape the detail sheet reads.
+     *
+     * @return array<string, mixed>
+     */
+    protected function detail(Activity $activity): array
+    {
+        $subject = $activity->subject;
+        $matter = $this->matterOf($subject);
+        $changes = $activity->attribute_changes ?? collect();
+
+        $properties = collect($activity->properties ?? [])->except('ip');
+
+        return [
+            'when' => $activity->created_at->format('d M Y H:i:s'),
+            'actor' => $activity->causer?->name ?? 'System',
+            'event' => str_replace('_', ' ', (string) $activity->event),
+            'log' => $activity->log_name,
+            'description' => $activity->description,
+            'subject' => $subject?->auditLabel() ?? $activity->log_name.'#'.$activity->subject_id,
+            'subjectDeleted' => $activity->subject_id !== null && $subject === null,
+            'matter' => $matter?->reference,
+            'matterUrl' => $matter ? route('matter.show', $matter) : null,
+            'ip' => $activity->properties['ip'] ?? null,
+            'changes' => collect($changes['attributes'] ?? [])
+                ->map(fn (mixed $new, string $field) => [
+                    'field' => str_replace('_', ' ', $field),
+                    'old' => $this->display($changes['old'][$field] ?? null),
+                    'new' => $this->display($new),
+                ])
+                ->values()
+                ->all(),
+            'properties' => $properties
+                ->map(fn (mixed $value, string $key) => ['key' => str_replace('_', ' ', $key), 'value' => $this->display($value)])
+                ->values()
+                ->all(),
+        ];
+    }
+
+    protected function display(mixed $value): string
+    {
+        return match (true) {
+            $value === null => '—',
+            is_bool($value) => $value ? 'yes' : 'no',
+            is_array($value) => json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            default => (string) $value,
+        };
     }
 
     protected function matterOf(?Model $subject): ?Matter

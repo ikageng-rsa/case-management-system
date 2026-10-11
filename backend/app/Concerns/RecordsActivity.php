@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Concerns;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
@@ -12,20 +13,6 @@ use Spatie\Activitylog\Support\LogOptions;
 trait RecordsActivity
 {
     use LogsActivity;
-
-    /**
-     * Accesses already recorded this request, so rendering a record
-     * twice does not write the same entry twice.
-     *
-     * @var array<string, true>
-     */
-    protected static array $recordedAccesses = [];
-
-    /** Forget which accesses were recorded, for the start of a new request or test. */
-    public static function flushRecordedAccesses(): void
-    {
-        static::$recordedAccesses = [];
-    }
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -45,19 +32,27 @@ trait RecordsActivity
      */
     public function recordAccess(string $verb = 'read', array $properties = []): void
     {
-        $key = $this->auditLogName().':'.$this->getKey().':'.$verb;
-
-        if (isset(static::$recordedAccesses[$key])) {
+        if ($verb === 'read' && ! $this->claimReadWindow()) {
             return;
         }
-
-        static::$recordedAccesses[$key] = true;
 
         activity($this->auditLogName())
             ->performedOn($this)
             ->withProperties($properties)
             ->event($verb)
             ->log($this->describeActivity($verb));
+    }
+
+    /*
+     * A read is recorded once per person per record for the length of the
+     * window, however often the page is reloaded in it. The cache entry is
+     * added atomically, so two requests arriving together cannot both record.
+     */
+    protected function claimReadWindow(): bool
+    {
+        $key = sprintf('audit:read:%s:%s:%s', Auth::id() ?? 'guest', $this->getMorphClass(), $this->getKey());
+
+        return Cache::add($key, true, now()->addMinutes(config('audit.read_window_minutes')));
     }
 
     /**

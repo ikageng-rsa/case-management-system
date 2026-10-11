@@ -73,7 +73,9 @@
                             $subject = $activity->subject;
                             $matter = $matterOf($activity);
                         @endphp
-                        <tr>
+                        <tr class="cursor-pointer" tabindex="0" role="button" x-data
+                            x-on:click="$dispatch('sheet-open', { name: 'audit-entry', record: @js($details[$activity->getKey()]) })"
+                            x-on:keydown.enter="$dispatch('sheet-open', { name: 'audit-entry', record: @js($details[$activity->getKey()]) })">
                             <td class="text-meta text-nowrap">{{ $activity->created_at->format('d M H:i') }}</td>
                             @if ($activity->causer)
                                 <td>{{ $activity->causer->name }}</td>
@@ -83,7 +85,7 @@
                             <td @class(['text-meta', $tone($activity->event)])>{{ str_replace('_', ' ', $activity->event) }}</td>
                             <td class="text-meta">{{ $subject?->auditLabel() ?? $activity->log_name.'#'.$activity->subject_id }}</td>
                             @if ($matter)
-                                <td class="text-meta"><a href="{{ route('matter.show', $matter) }}">{{ $matter->reference }}</a></td>
+                                <td class="text-meta"><a href="{{ route('matter.show', $matter) }}" x-on:click.stop>{{ $matter->reference }}</a></td>
                             @else
                                 <td class="text-meta text-secondary">—</td>
                             @endif
@@ -112,4 +114,93 @@
             </div>
         @endif
     </div>
+
+    <x-ui.sheet name="audit-entry" title="Audit entry" wide>
+        <x-slot:header>
+            <div>
+                <h2 class="offcanvas-title mb-1">Audit entry</h2>
+                <p class="text-meta mb-0" x-text="record.when"></p>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </x-slot:header>
+
+        <template x-if="record.when">
+            <div>
+                <p class="mb-4" x-text="record.description"></p>
+
+                <dl class="row mb-4">
+                    <dt class="col-sm-3 text-meta text-uppercase">Actor</dt>
+                    <dd class="col-sm-9" x-text="record.actor"></dd>
+
+                    <dt class="col-sm-3 text-meta text-uppercase">Action</dt>
+                    <dd class="col-sm-9" x-text="record.event"></dd>
+
+                    <dt class="col-sm-3 text-meta text-uppercase">Subject</dt>
+                    <dd class="col-sm-9">
+                        <span x-text="record.subject"></span>
+                        <span class="text-secondary" x-show="record.subjectDeleted"> · no longer exists</span>
+                    </dd>
+
+                    <dt class="col-sm-3 text-meta text-uppercase">Log</dt>
+                    <dd class="col-sm-9" x-text="record.log"></dd>
+
+                    <template x-if="record.matter">
+                        <dt class="col-sm-3 text-meta text-uppercase">Matter</dt>
+                    </template>
+                    <template x-if="record.matter">
+                        <dd class="col-sm-9"><a x-bind:href="record.matterUrl" x-text="record.matter"></a></dd>
+                    </template>
+
+                    <template x-if="record.ip">
+                        <dt class="col-sm-3 text-meta text-uppercase">IP</dt>
+                    </template>
+                    <template x-if="record.ip">
+                        <dd class="col-sm-9" x-text="record.ip"></dd>
+                    </template>
+                </dl>
+
+                <template x-if="record.changes.length">
+                    <div class="mb-4">
+                        <h3 class="text-meta text-uppercase mb-2">What changed</h3>
+                        <table class="table table-vcenter table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Before</th>
+                                    <th>After</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="change in record.changes" :key="change.field">
+                                    <tr>
+                                        <td class="text-meta" x-text="change.field"></td>
+                                        <td class="text-secondary" x-text="change.old"></td>
+                                        <td x-text="change.new"></td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </template>
+
+                <template x-if="record.properties.length">
+                    <div>
+                        <h3 class="text-meta text-uppercase mb-2">Details</h3>
+                        <dl class="row mb-0">
+                            <template x-for="property in record.properties" :key="property.key">
+                                <div class="row g-0">
+                                    <dt class="col-sm-3 text-meta text-uppercase" x-text="property.key"></dt>
+                                    <dd class="col-sm-9" x-text="property.value"></dd>
+                                </div>
+                            </template>
+                        </dl>
+                    </div>
+                </template>
+            </div>
+        </template>
+
+        <x-slot:footer>
+            <x-ui.button variant="outline-secondary" x-on:click="close()">Close</x-ui.button>
+        </x-slot:footer>
+    </x-ui.sheet>
 @endsection

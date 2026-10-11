@@ -184,4 +184,42 @@ class AuditLogControllerTest extends TestCase
             ->get(route('audit-log'))
             ->assertSee('export csv');
     }
+
+    public function test_each_entry_carries_its_full_detail_for_the_sheet(): void
+    {
+        $director = $this->userWithRole(RoleEnum::Director);
+        $matter = Matter::factory()->create(['reference' => 'IOT/CIV/105/2026', 'title' => 'Old title']);
+        Activity::query()->delete();
+
+        $this->actingAs($director);
+        $matter->update(['title' => 'New title']);
+        $matter->recordAccess('exported', ['ip' => '102.132.45.0', 'format' => 'csv']);
+
+        $response = $this->get(route('audit-log'))->assertOk()->assertSee('audit-entry');
+
+        $details = $response->viewData('details');
+        $updated = $details->first(fn ($detail) => $detail['event'] === 'updated');
+        $exported = $details->first(fn ($detail) => $detail['event'] === 'exported');
+
+        $this->assertSame([['field' => 'title', 'old' => 'Old title', 'new' => 'New title']], $updated['changes']);
+        $this->assertSame($director->name, $updated['actor']);
+        $this->assertSame('IOT/CIV/105/2026', $updated['matter']);
+        $this->assertSame(route('matter.show', $matter), $updated['matterUrl']);
+
+        $this->assertSame('102.132.45.0', $exported['ip']);
+        $this->assertSame([['key' => 'format', 'value' => 'csv']], $exported['properties']);
+        $this->assertSame([], $exported['changes']);
+    }
+
+    public function test_the_detail_of_an_entry_whose_subject_is_gone_says_so(): void
+    {
+        $director = $this->userWithRole(RoleEnum::Director);
+        Activity::query()->delete();
+        $this->entry('deleted', $director)->update(['subject_type' => 'document', 'subject_id' => '41']);
+
+        $detail = $this->actingAs($director)->get(route('audit-log'))->viewData('details')->first();
+
+        $this->assertTrue($detail['subjectDeleted']);
+        $this->assertSame('matter#41', $detail['subject']);
+    }
 }
