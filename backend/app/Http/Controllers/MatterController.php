@@ -160,7 +160,9 @@ class MatterController extends Controller
             instructedAt: $request->date('instructed_at'),
         );
 
-        return redirect()->route('matter.show', $matter);
+        return redirect()
+            ->route('matter.show', $matter)
+            ->with('status', 'Matter opened.');
     }
 
     public function update(UpdateMatterRequest $request, Matter $matter): RedirectResponse

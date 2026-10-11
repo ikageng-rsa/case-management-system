@@ -6,14 +6,21 @@ namespace App\Http\Controllers;
 
 use App\Enums\Client\ClientType;
 use App\Enums\Client\ContactKind;
+use App\Enums\Client\PopiaConsentMethod;
 use App\Http\Requests\Client\StoreClientRequest;
+use App\Http\Requests\Client\UpdateClientRequest;
 use App\Models\Client;
+use App\Models\Court;
 use App\Models\Matter;
+use App\Models\MatterType;
 use App\Models\User;
 use App\Services\Clients\AddClientContact;
 use App\Services\Clients\DuplicateClientException;
 use App\Services\Clients\NormaliseIdentifier;
+use App\Services\Clients\RecordPopiaConsent;
 use App\Services\Clients\RegisterClient;
+use App\Services\Clients\UpdateClient;
+use App\Services\Matters\OpenMatter;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -46,29 +53,73 @@ class ClientController extends Controller
         return $this->render($request, $client);
     }
 
-    public function store(StoreClientRequest $request, RegisterClient $registerClient, AddClientContact $addContact): RedirectResponse
-    {
+    public function store(
+        StoreClientRequest $request,
+        RegisterClient $registerClient,
+        AddClientContact $addContact,
+        RecordPopiaConsent $recordConsent,
+        OpenMatter $openMatter,
+    ): RedirectResponse {
         Gate::authorize('create', Client::class);
 
+        $opensMatter = $request->input('intent') === 'matter';
+
+        if ($opensMatter) {
+            Gate::authorize('create', Matter::class);
+        }
+
         try {
-            $client = DB::transaction(function () use ($request, $registerClient, $addContact): Client {
+            [$client, $matter] = DB::transaction(function () use ($request, $registerClient, $addContact, $recordConsent, $openMatter, $opensMatter): array {
                 $client = $registerClient->register(ClientType::from($request->validated('type')), $request->validated());
 
-                foreach (['mobile' => ContactKind::Mobile, 'email' => ContactKind::Email] as $field => $kind) {
+                $contacts = [
+                    'mobile' => ContactKind::Mobile,
+                    'email' => ContactKind::Email,
+                    'physical_address' => ContactKind::Physical,
+                ];
+
+                foreach ($contacts as $field => $kind) {
                     if ($request->filled($field)) {
                         $addContact->add($client, $kind, $request->validated($field));
                     }
                 }
 
-                return $client;
+                if ($request->boolean('popia_consent') && $request->user()->can('record_popia_consent')) {
+                    $recordConsent->record($client, true, PopiaConsentMethod::Verbal);
+                }
+
+                $matter = $opensMatter
+                    ? $openMatter->open(
+                        $client,
+                        MatterType::findOrFail($request->validated('matter_type_id')),
+                        court: $request->filled('court_id') ? Court::findOrFail($request->validated('court_id')) : null,
+                    )
+                    : null;
+
+                return [$client, $matter];
             });
         } catch (DuplicateClientException $e) {
             return back()->withInput()->withErrors(['type' => $e->getMessage()], 'client');
         }
 
+        return $matter
+            ? redirect()->route('matter.show', $matter)->with('status', 'Client registered and matter opened.')
+            : redirect()->route('client.show', $client)->with('status', 'Client registered.');
+    }
+
+    public function update(UpdateClientRequest $request, Client $client, UpdateClient $updateClient): RedirectResponse
+    {
+        Gate::authorize('update', $client);
+
+        try {
+            $updateClient->update($client, $request->validated());
+        } catch (DuplicateClientException $e) {
+            return back()->withInput()->withErrors(['id_number' => $e->getMessage()], 'client_edit');
+        }
+
         return redirect()
             ->route('client.show', $client)
-            ->with('status', 'Client registered.');
+            ->with('status', 'Client updated.');
     }
 
     protected function render(Request $request, ?Client $client): View
@@ -88,6 +139,8 @@ class ClientController extends Controller
             'query' => (string) $request->query('q'),
             'client' => $client,
             'canSeeContacts' => $user->can('view_client_contacts'),
+            'matterTypes' => $user->can('create', Matter::class) ? MatterType::query()->orderBy('name')->get() : collect(),
+            'courts' => $user->can('create', Matter::class) ? Court::query()->orderBy('name')->get() : collect(),
         ] + ($client === null ? [] : $this->detail($client, $user)));
     }
 
@@ -107,6 +160,7 @@ class ClientController extends Controller
             : null;
 
         return [
+            'canSeeFullIdentifiers' => $user->can('view_unmasked_client_data'),
             'matters' => $matters,
             'openMattersCount' => $matters->filter->isOpen()->count(),
             'consent' => $consent,

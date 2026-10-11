@@ -11,6 +11,8 @@ use Illuminate\Validation\Rule;
 
 class StoreMatterRequest extends FormRequest
 {
+    protected $errorBag = 'matter';
+
     /**
      * Determine if the user is authorized to make this request.
      */

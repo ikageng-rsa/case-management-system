@@ -142,6 +142,69 @@ document.addEventListener('click', (event) => {
 }, true);
 
 
+/*
+ * The client intake form: which identity fields apply to the kind of client,
+ * and whether the matter being opened alongside is before a court.
+ */
+Alpine.data('clientIntake', ({ type = 'individual', matterTypeId = '', matterTypes = {} } = {}) => ({
+    type,
+    matterTypeId,
+    matterTypes,
+
+    get litigation() {
+        return this.matterTypes[this.matterTypeId]?.litigation ?? false;
+    },
+}));
+
+/*
+ * The steps of opening a matter, walked client side and submitted as one
+ * ordinary form. The server validates every field again, so a step cannot be
+ * skipped by going around the page.
+ */
+Alpine.data('matterIntake', ({ step = 1, types = {}, typeId = '' } = {}) => ({
+    step,
+    types,
+    typeId,
+    steps: ['Matter type', 'Details', 'Review'],
+    review: {},
+
+    get litigation() {
+        return this.types[this.typeId]?.litigation ?? false;
+    },
+
+    next() {
+        const fields = this.$refs['step' + this.step].querySelectorAll('input, select, textarea');
+
+        for (const field of fields) {
+            if (! field.reportValidity()) {
+                return;
+            }
+        }
+
+        if (this.step === 2) {
+            this.summarise();
+        }
+
+        this.step++;
+    },
+
+    back() {
+        this.step--;
+    },
+
+    summarise() {
+        const value = (ref) => this.$refs[ref]?.value || '—';
+
+        this.review = {
+            type: this.types[this.typeId]?.name ?? '—',
+            court: this.litigation ? (this.$refs.court.selectedOptions[0]?.text ?? '—') : 'Not before a court',
+            title: value('title'),
+            instructed: value('instructed'),
+        };
+    },
+}));
+
+
 /* Floating messages config */
 Alpine.data('toasts', (seed = []) => ({
     items: [],

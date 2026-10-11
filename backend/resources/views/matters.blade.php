@@ -218,6 +218,7 @@
             />
         </form>
 
+    <x-slot:footer>
         <div class="d-flex align-items-center justify-content-between">
             <x-ui.button variant="outline-secondary">
                 <x-ui.icon name="arrow-left" class="me-1" /> Back
@@ -228,5 +229,6 @@
                 <x-ui.button variant="primary">Continue to parties →</x-ui.button>
             </div>
         </div>
+    </x-slot:footer>
     </x-ui.sheet>
 @endsection
