@@ -27,8 +27,12 @@
                 <x-ui.nav-item :href="route('dashboard')" label="Dashboard" icon="layout-dashboard" :active="request()->routeIs('dashboard')" />
                 <x-ui.nav-item :href="route('matters')" label="Matters" icon="briefcase" :active="request()->routeIs('matter*')" />
                 <x-ui.nav-item :href="route('clients')" label="Clients" icon="users" :active="request()->routeIs('clients')"/>
-                <x-ui.nav-item href="#" label="Diary & Alerts" icon="calendar" />
                 <x-ui.nav-item :href="route('documents')" label="Documents" icon="file-text" :active="request()->routeIs('documents')"/>
+                <x-ui.nav-item href="#" label="Reports" icon="chart-bar"/>
+
+                <x-ui.nav-section>Firm</x-ui.nav-section>
+                <x-ui.nav-item :href="route('users')" label="Users" icon="users" :active="request()->routeIs('users')"/>
+                <x-ui.nav-item href="#" label="Audit log" icon="history"/>
 
                 <x-slot:footerActions>
                     <form method="POST" action="{{ route('logout') }}">

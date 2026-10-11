@@ -70,7 +70,18 @@
     font-family: var(--cms-font-mono);
     font-size: var(--cms-text-2xs);
     font-weight: 500;
-    letter-spacing: var(--cms-tracking-label);
+    letter-spacing: var(--cms-tracking-label-wide);
+    text-transform: uppercase;
+    color: var(--cms-fg-muted);
+}
+
+/* Table headers */
+.card-table thead th {
+    font-family: var(--cms-font-mono);
+    font-size: var(--cms-text-2xs);
+    font-weight: 500;
+    letter-spacing: var(--cms-tracking-label-wide);
+    text-transform: uppercase;
     color: var(--cms-fg-muted);
 }
 

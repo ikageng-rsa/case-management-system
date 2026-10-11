@@ -15,5 +15,6 @@ Route::middleware('auth')->group(function() {
     Route::view('/matters/:id', 'matter-show')->name('matter.show');
     Route::view('/clients', 'clients')->name('clients');
     Route::view('/documents', 'documents')->name('documents');
+    Route::view('/users', 'users')->name('users');
 });
 
