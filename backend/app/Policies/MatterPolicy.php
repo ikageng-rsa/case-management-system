@@ -20,4 +20,24 @@ class MatterPolicy
     {
         return $user->can(Permission::ViewAllMatters->value) || $matter->isAssignedTo($user);
     }
+
+    public function create(User $user): bool
+    {
+        return $user->can(Permission::CreateMatters->value);
+    }
+
+    public function update(User $user, Matter $matter): bool
+    {
+        return $user->can(Permission::EditMatters->value);
+    }
+
+    public function close(User $user, Matter $matter): bool
+    {
+        return $user->can(Permission::CloseMatters->value);
+    }
+
+    public function assign(User $user, Matter $matter): bool
+    {
+        return $user->can(Permission::AssignMatters->value);
+    }
 }
