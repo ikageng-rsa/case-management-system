@@ -22,8 +22,16 @@ const Darzations = require('../app/Http/Controllers/DarzationController');
 const Reports = require('../app/Http/Controllers/ReportController');
 
 const router = express.Router();
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
-
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 20 * 1024 * 1024, // 20 MiB per file
+    files: 1,                   // One file per request
+    fields: 10,                 // Maximum text fields
+    parts: 11,                  // Files + fields
+    fieldSize: 100 * 1024,      // 100 KiB per text field
+  },
+});
 const ALL = ['Admin', 'Director', 'CA', 'Secretary', 'Messenger'];
 const CASE_STAFF = ['Admin', 'Director', 'CA', 'Secretary'];
 const BILLING_STAFF = ['Admin', 'Director', 'CA'];
@@ -31,15 +39,11 @@ const ADMINS = ['Admin', 'Director'];
 
 router.get('/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
 
-//friendly index so opening http://localhost:8000/api in a browser shows something useful
-router.get('/',(req,res)=>{
-    res.json({
-        name: 'LegalCMS mock API',
-        status: 'running',
-        try: ['GET /api/health', 'POST /api/auth/login {"email": "demo@legalcms.co.za", "password":"demo@1234"'],
-        docs: 'See mock-api/ReadME.md for every endpoint and the seeded users.'
-    })
-})
+
+
+
+
+
 // ---- public ----
 router.post('/auth/login', Auth.login);
 router.post('/auth/password-reset', Auth.passwordReset);

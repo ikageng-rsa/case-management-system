@@ -50,7 +50,20 @@ const seeded = db.load({ fresh: process.argv.includes('--fresh'), seed});
 ensureSamplePDF();
 
 const app = express();
-app.use(cors());
+// Disable the header that identifies Express.
+app.disable('x-powered-by');
+
+
+if (process.env.NODE_ENV === 'production') {
+  app.use(
+    cors({
+      origin: ['https://legalcms.example.com'],
+    }),
+  );
+} else {
+  app.use(cors());
+}
+// Continue with your existing middleware.
 app.use(express.json());
 
 app.use((req,res,next)=>{
