@@ -14,38 +14,7 @@ export const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
 });
-console.log('platform: ',Platform.OS);
-if(__DEV__){
-  console.log(`[api] base URL = ${API_BASE_URL}`);
 
-  apiClient.interceptors.request.use(config =>{
-    console.log(`[api] -> ${config.method?.toUpperCase()} ${apiClient.getUri(config)}`);
-    return config;
-  });
-
-  apiClient.interceptors.response.use(
-    response => response,
-    error =>{
-      const where = error.config ? `${error.config.method?.toUpperCase()} ${apiClient.getUri(error.config)}`: '';
-      console.log(`[api] x ${where} -> ${error.response?.status ?? error.message}`);
-      return Promise.reject(error);
-    },
-  );
-
-  if(!process.env.EXPO_PUBLIC_API_BASE_URL){
-    console.log(`[api] EXPO_PUBLIC_API_BASE_URL is NOT set -> using the placeholder URL. Is .env in the project root? Restart with: npx expo start -c`);
-
-  }else if(process.env.NODE_ENV !== 'test'){
-    //Connectivity self-test at app start: GET {base}/health (public , no token)
-    apiClient
-      .get('/health')
-      .then(res =>{
-        const who = res.headers?.['x-mock-api'] ? 'the mock API':'a server that is NOT the mock API';
-        console.log(`[api] health check OK - answered by ${who}:`, JSON.stringify(res.data))
-
-      }).catch(()=>{}) //already logged by the interceptor above.
-  }
-}
 
 
 apiClient.interceptors.request.use(async config => {
