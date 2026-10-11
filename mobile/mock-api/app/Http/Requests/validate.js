@@ -11,7 +11,7 @@
  * max:n, in:a,b,c, exists:table,column. `field.*` validates each array item.
  */
 const db = require('../../../database/db');
-
+const validator = require('validator');
 const label = field => field.replace(/\.\*$/, '').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/_/g, ' ').toLowerCase();
 const isPresent = v => v !== undefined && v !== null && v !== '';
 const BOOLEANS = [true, false, 1, 0, '1', '0', 'true', 'false'];
@@ -27,7 +27,7 @@ function check(value, rules, field) {
   for (const rule of rules) {
     const [key, arg] = rule.split(/:(.+)/);
     if (key === 'string' && typeof value !== 'string') errors.push(`The ${name} field must be a string.`);
-    if (key === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value))) errors.push(`The ${name} field must be a valid email address.`);
+    if (key === 'email' && !validator.isEmail(String(value))) errors.push(`The ${name} field must be a valid email address.`);
     if (key === 'boolean' && !BOOLEANS.includes(value)) errors.push(`The ${name} field must be true or false.`);
     if (key === 'date' && Number.isNaN(Date.parse(value))) errors.push(`The ${name} field must be a valid date.`);
     if (key === 'array' && !Array.isArray(value)) errors.push(`The ${name} field must be an array.`);
