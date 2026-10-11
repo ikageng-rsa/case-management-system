@@ -24,27 +24,27 @@
 
     <div class="row mb-3">
         <div class="col-6 col-md-2">
-            <div class="text-meta mb-1">Reference</div>
+            <div class="text-meta text-uppercase mb-1">Reference</div>
             <div class="text-meta">NGA/2026/LAB/0134</div>
         </div>
         <div class="col-6 col-md-2">
-            <div class="text-meta mb-1">Type</div>
+            <div class="text-meta text-uppercase mb-1">Type</div>
             <div>Labour · unfair dismissal</div>
         </div>
         <div class="col-6 col-md-2">
-            <div class="text-meta mb-1">Stage</div>
+            <div class="text-meta text-uppercase mb-1">Stage</div>
             <div class="text-primary fw-bold">Arbitration</div>
         </div>
         <div class="col-6 col-md-2">
-            <div class="text-meta mb-1">Attorney</div>
+            <div class="text-meta text-uppercase mb-1">Attorney</div>
             <div class="text-primary">L. Radebe</div>
         </div>
         <div class="col-6 col-md-2">
-            <div class="text-meta mb-1">Next date</div>
+            <div class="text-meta text-uppercase mb-1">Next date</div>
             <div>04 Sep 2026 08:30</div>
         </div>
         <div class="col-6 col-md-2">
-            <div class="text-meta mb-1">Opened</div>
+            <div class="text-meta text-uppercase mb-1">Opened</div>
             <div>14 Aug 2026</div>
         </div>
     </div>
@@ -151,7 +151,7 @@
         <div class="col-lg-4">
             <div class="card mb-3">
                 <div class="card-body">
-                    <h3 class="card-title text-meta mb-3">Parties</h3>
+                    <h3 class="card-title text-meta text-uppercase mb-3">Parties</h3>
 
                     <div class="mb-3">
                         <div class="mb-0">Thabo Mokoena</div>
@@ -173,7 +173,7 @@
             <div class="card mb-3">
                 <div class="card-body">
                     <div class="d-flex align-items-center justify-content-between mb-3">
-                        <h3 class="card-title text-meta mb-0">Related documents</h3>
+                        <h3 class="card-title text-meta text-uppercase mb-0">Related documents</h3>
                         <a href="#" class="text-meta text-decoration-none">all 14 →</a>
                     </div>
 
@@ -201,7 +201,7 @@
 
             {{-- <div class="card mb-3">
                 <div class="card-body">
-                    <h3 class="card-title text-meta mb-3">Fees</h3>
+                    <h3 class="card-title text-meta text-uppercase mb-3">Fees</h3>
 
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="text-secondary">Recorded</span>
@@ -220,7 +220,7 @@
 
             <div class="card" style="border-style: dashed;">
                 <div class="card-body">
-                    <h3 class="card-title text-meta mb-3">Who has read this file</h3>
+                    <h3 class="card-title text-meta text-uppercase mb-3">Who has read this file</h3>
 
                     <p class="text-meta mb-1">09:14 &nbsp; L.Radebe &nbsp; read &nbsp; narration#412</p>
                     <p class="text-meta mb-1">08:52 &nbsp; T.Baloyi &nbsp; read &nbsp; doc:bundle.pdf</p>

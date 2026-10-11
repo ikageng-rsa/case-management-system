@@ -125,7 +125,7 @@
                 <div class="col">
                     <div class="card">
                         <div class="card-body">
-                            <h3 class="text-meta mb-2">Matters</h3>
+                            <h3 class="text-meta text-uppercase mb-2">Matters</h3>
                             <div class="table-responsive">
                                 <table class="table table-vcenter">
                                     <tbody>
@@ -152,11 +152,11 @@
 
             <div class="row">
                 <div class="col-md-6">
-                    <h3 class="text-meta mb-2">Popia consent</h3>
+                    <h3 class="text-meta text-uppercase mb-2">Popia consent</h3>
                     <p class="mb-0">Captured 14 Aug 2026 · signed mandate on file · marketing opt-out</p>
                 </div>
                 <div class="col-md-6">
-                    <h3 class="text-meta mb-2">Conflict check</h3>
+                    <h3 class="text-meta text-uppercase mb-2">Conflict check</h3>
                     <p class="mb-0">Cleared 14 Aug 2026 by L. Radebe · no adverse party match</p>
                 </div>
             </div>
