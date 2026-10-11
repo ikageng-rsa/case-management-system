@@ -32,7 +32,7 @@ function ensureSamplePDF(){
         '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
     ];
     const stream = 'BT /F1 24 Tf 72 760 Td (LegalCMS mock document) Tj ET';
-    object[3] = `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`;
+    objects[3] = `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`;
     let pdf = '%PDF-1.4\n';
     const offsets = [];
     objects.forEach((body,i)=>{
@@ -70,12 +70,24 @@ app.use((err,req,res,next) =>{
     res.status(500).json({message: 'Server Error'});
 });
 
-app.listen(PORT, '0.0.0.0', ()=>{
+app.listen(PORT, ()=>{
     const lan = Object.values(os.networkInterfaces()).flat().find(i => i && i.family === 'IPv4' && !i.internal);
     console.log(`\nLegalCMS mock API ${seeded ? '(freshly seeded)':'(existing data)'}`);
     console.log(` Web /iOS simulator : http://localhost:${PORT}/api`);
     console.log(` Android emulator : http://10.0.2.2:${PORT}/api`);
     if(lan) console.log(` Physical device  : http://${lan.address}:${PORT}/api`);
     console.log('\n Login: demo@legalCMS.co.za / Demo@1234   (or cal@legalcms.test /password)\n');
+    console.log('  Every request the app makes is logged below. If you press Sign In and NOTHING appears,');           
+    console.log('  the app is not reaching this server (wrong URL/host, firewall, or another server on this port).\n');
+
 });
 
+server.on('error', err => {                                                                                                                   
+  if (err.code === 'EADDRINUSE') {                                                                                                            
+    console.error(`\nPort ${PORT} is already in use — probably \`php artisan serve\` (also port 8000) or another copy of this server.`);      
+    console.error(`Stop that process, or run this on another port:  PORT=8001 npm run serve   (PowerShell: $env:PORT=8001; npm run serve)\n`);
+  } else {                                                                                                                                    
+    console.error(err);                                                                                                                       
+  }                                                                                                                                           
+  process.exit(1);                                                                                                                            
+});                                                                                                                                           

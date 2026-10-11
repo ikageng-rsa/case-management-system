@@ -31,6 +31,15 @@ const ADMINS = ['Admin', 'Director'];
 
 router.get('/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
 
+//friendly index so opening http://localhost:8000/api in a browser shows something useful
+router.get('/',(req,res)=>{
+    res.json({
+        name: 'LegalCMS mock API',
+        status: 'running',
+        try: ['GET /api/health', 'POST /api/auth/login {"email": "demo@legalcms.co.za", "password":"demo@1234"'],
+        docs: 'See mock-api/ReadME.md for every endpoint and the seeded users.'
+    })
+})
 // ---- public ----
 router.post('/auth/login', Auth.login);
 router.post('/auth/password-reset', Auth.passwordReset);

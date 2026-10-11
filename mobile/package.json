@@ -46,7 +46,10 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "api:install": "npm --prefix mock-api install",
+    "api": "npm --prefix mock-api run serve",
+    "api:fresh": "npm --prefix mock-api run fresh"
   },
   "private": true
 }
