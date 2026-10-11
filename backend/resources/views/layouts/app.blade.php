@@ -37,6 +37,7 @@
                 <x-slot:footerActions>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
+                        
 
                         <x-ui.button type="submit" variant="ghost-secondary" icon="logout" aria-label="Sign out" />
                     </form>
@@ -53,5 +54,7 @@
                 </div>
             </div>
         </div>
+
+        <x-ui.confirm />
     </body>
 </html>

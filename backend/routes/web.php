@@ -9,7 +9,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::middleware('auth')->group(function() {
+Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->middleware('auth')->name('dashboard');
     Route::view('/matters', 'matters')->name('matters');
     Route::view('/matters/:id', 'matter-show')->name('matter.show');
@@ -18,4 +18,3 @@ Route::middleware('auth')->group(function() {
     Route::view('/users', 'users')->name('users');
     Route::view('/audit-log', 'audit-log')->name('audit-log');
 });
-
