@@ -3,6 +3,7 @@ import { Case } from '@/models/index';
 
 export async function fetchCases(params?: { status?: string; search?: string }): Promise<Case[]> {
   const { data } = await apiClient.get<Case[]>('/cases', { params });
+  console.log('on params',params);
   return data;
 }
 

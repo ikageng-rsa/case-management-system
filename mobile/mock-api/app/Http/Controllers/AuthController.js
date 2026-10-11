@@ -24,7 +24,7 @@ exports.login = (req,res) => {
         createdAt: new Date().toISOString(),
     });
 
-    res.json({token: `${record.id} | ${plain}`, user: Resource.user(user)});
+    res.json({token: `${record.id}|${plain}`, user: Resource.user(user)});
 };
 
 exports.me = (req,res)=> res.json(Resource.user(req.user));
