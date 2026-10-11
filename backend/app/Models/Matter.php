@@ -187,6 +187,15 @@ class Matter extends Model implements HasMedia
         $query->whereNotNull('prescribes_at')->where('prescribes_at', '<', now());
     }
 
+    /** Matters the given user currently carries, in any capacity. */
+    public function scopeAssignedTo(Builder $query, User $user): void
+    {
+        $query->whereHas(
+            'assignments',
+            fn (Builder $query) => $query->active()->where('user_id', $user->getKey()),
+        );
+    }
+
     protected function userAssignedAs(Assignment $capacity): ?User
     {
         return $this->assignments

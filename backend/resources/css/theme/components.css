@@ -153,6 +153,10 @@
     color: var(--cms-on-ink-caption);
 }
 
+.navbar-vertical .navbar-footer {
+    padding-inline: var(--cms-space-16);
+}
+
 .sidebar-avatar {
     display: inline-flex;
     flex: 0 0 auto;
