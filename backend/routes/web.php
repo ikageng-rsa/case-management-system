@@ -9,6 +9,7 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\MatterController;
 use App\Http\Controllers\MatterDocumentController;
 use App\Http\Controllers\NarrationController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -43,6 +44,10 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/documents', [DocumentController::class, 'index'])->name('documents');
     Route::post('/documents', [DocumentController::class, 'store'])->name('documents.store');
-    Route::view('/users', 'users')->name('users');
+    Route::get('/users', [UserController::class, 'index'])->name('users');
+    Route::patch('/users/{user}/roles', [UserController::class, 'updateRoles'])->name('user.roles.update');
+    Route::post('/roles', [UserController::class, 'storeRole'])->name('role.store');
+    Route::patch('/roles/{role}', [UserController::class, 'updateRole'])->name('role.update');
+    Route::delete('/roles/{role}', [UserController::class, 'destroyRole'])->name('role.destroy');
     Route::view('/audit-log', 'audit-log')->name('audit-log');
 });
