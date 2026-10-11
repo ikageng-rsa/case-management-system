@@ -18,7 +18,8 @@ class MatterDocumentController extends Controller
     {
         Gate::authorize('work', $matter);
 
-        $matter->addDocument($request->file('file'), DocumentKind::from($request->validated('kind')));
+        $matter->addDocument($request->file('file'), DocumentKind::from($request->validated('kind')))
+            ->recordAccess('uploaded');
 
         return redirect()
             ->route('matter.show', [$matter, 'tab' => 'documents'])

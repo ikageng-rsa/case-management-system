@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiaryEntryController;
+use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\MatterController;
 use App\Http\Controllers\MatterDocumentController;
 use App\Http\Controllers\NarrationController;
@@ -38,8 +39,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/clients', [ClientController::class, 'index'])->name('clients');
     Route::post('/clients', [ClientController::class, 'store'])->name('client.store');
     Route::get('/clients/{client}', [ClientController::class, 'show'])->name('client.show');
-    
-    Route::view('/documents', 'documents')->name('documents');
+    Route::patch('/clients/{client}', [ClientController::class, 'update'])->name('client.update');
+
+    Route::get('/documents', [DocumentController::class, 'index'])->name('documents');
+    Route::post('/documents', [DocumentController::class, 'store'])->name('documents.store');
     Route::view('/users', 'users')->name('users');
     Route::view('/audit-log', 'audit-log')->name('audit-log');
 });
