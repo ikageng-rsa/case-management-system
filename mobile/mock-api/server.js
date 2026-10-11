@@ -15,7 +15,7 @@ const db = require('./database/db');
 const seed = require('./database/seeders/DatabaseSeeder');
 const routes = require('./routes/api');
 
-const PORT = Number(process.env.PORT || 8000);
+const PORT = 8000;
 const LATENCY = Number(process.env.MOCK_LATENCY_MS ?? 300);
 const FILES_DIR = path.join(__dirname, 'storage','files');
 
@@ -70,7 +70,7 @@ app.use((err,req,res,next) =>{
     res.status(500).json({message: 'Server Error'});
 });
 
-app.listen(PORT, ()=>{
+const server = app.listen(PORT, '0.0.0.0',()=>{
     const lan = Object.values(os.networkInterfaces()).flat().find(i => i && i.family === 'IPv4' && !i.internal);
     console.log(`\nLegalCMS mock API ${seeded ? '(freshly seeded)':'(existing data)'}`);
     console.log(` Web /iOS simulator : http://localhost:${PORT}/api`);

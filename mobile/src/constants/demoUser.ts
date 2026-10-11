@@ -12,7 +12,8 @@ export const isDemoLoginEnabled: boolean =
 
 export const DEMO_CREDENTIALS = {
   email: process.env.EXPO_PUBLIC_DEMO_EMAIL ?? 'demo@legalcms.co.za',
-  password: process.env.EXPO_PUBLIC_DEMO_PASSWORD,
+  password:  process.env.EXPO_PUBLIC_DEMO_PASSWORD ??
+    (__DEV__ ? 'Demo@1234' : ''),
 } as const;
 
 // Admin so every tab (Cases, Diary, Billing) and the Users & Roles screen are reachable.
