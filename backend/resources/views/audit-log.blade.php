@@ -3,6 +3,18 @@
 @section('title', 'Audit log — Example Firm')
 
 @section('content')
+    @php
+        $query = fn (array $overrides) => array_filter(array_merge(['actor' => $actor, 'action' => $action], $overrides));
+
+        $tone = fn (?string $event) => match ($event) {
+            'created', 'uploaded', 'role_granted' => 'text-success',
+            'updated' => 'text-info',
+            'deleted', 'role_revoked' => 'text-danger',
+            'exported', 'downloaded' => 'text-primary',
+            default => 'text-secondary',
+        };
+    @endphp
+
     <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-1">
         <div>
             <h1 class="mb-1">Audit log</h1>
@@ -10,13 +22,35 @@
         </div>
 
         <div class="d-flex align-items-center gap-2">
-            <x-ui.button variant="outline-secondary" size="sm">
-                actor: all <x-ui.icon name="chevron-down" class="ms-1" />
-            </x-ui.button>
-            <x-ui.button variant="outline-secondary" size="sm">
-                action: all <x-ui.icon name="chevron-down" class="ms-1" />
-            </x-ui.button>
-            <x-ui.button variant="outline-secondary" size="sm">export csv</x-ui.button>
+            <div class="dropdown position-relative" x-data="{ open: false }" x-on:click.outside="open = false">
+                <x-ui.button variant="outline-secondary" size="sm" x-on:click="open = ! open">
+                    actor: {{ $actors->firstWhere('id', $actor)?->name ?? 'all' }}
+                    <x-ui.icon name="chevron-down" class="ms-1" />
+                </x-ui.button>
+                <div class="dropdown-menu dropdown-menu-end" x-bind:class="{ show: open }">
+                    <a class="dropdown-item" href="{{ route('audit-log', $query(['actor' => null])) }}">All</a>
+                    @foreach ($actors as $person)
+                        <a class="dropdown-item" href="{{ route('audit-log', $query(['actor' => $person->getKey()])) }}">{{ $person->name }}</a>
+                    @endforeach
+                </div>
+            </div>
+
+            <div class="dropdown position-relative" x-data="{ open: false }" x-on:click.outside="open = false">
+                <x-ui.button variant="outline-secondary" size="sm" x-on:click="open = ! open">
+                    action: {{ $action ? str_replace('_', ' ', $action) : 'all' }}
+                    <x-ui.icon name="chevron-down" class="ms-1" />
+                </x-ui.button>
+                <div class="dropdown-menu dropdown-menu-end" x-bind:class="{ show: open }">
+                    <a class="dropdown-item" href="{{ route('audit-log', $query(['action' => null])) }}">All</a>
+                    @foreach ($actions as $event)
+                        <a class="dropdown-item" href="{{ route('audit-log', $query(['action' => $event])) }}">{{ str_replace('_', ' ', $event) }}</a>
+                    @endforeach
+                </div>
+            </div>
+
+            @if ($canExport)
+                <x-ui.button variant="outline-secondary" size="sm" :href="route('audit-log.export', $query([]))">export csv</x-ui.button>
+            @endif
         </div>
     </div>
 
@@ -34,104 +68,48 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td class="text-meta text-nowrap">03 Sep 09:14</td>
-                        <td>L. Radebe</td>
-                        <td class="text-meta text-secondary">read</td>
-                        <td class="text-meta">narration#412</td>
-                        <td class="text-meta">NGA/2026/LAB/0134</td>
-                        <td class="text-meta">102.132.45.0</td>
-                    </tr>
-                    <tr>
-                        <td class="text-meta text-nowrap">03 Sep 09:12</td>
-                        <td>L. Radebe</td>
-                        <td class="text-meta text-success">create</td>
-                        <td class="text-meta">narration#412</td>
-                        <td class="text-meta">NGA/2026/LAB/0134</td>
-                        <td class="text-meta">102.132.45.0</td>
-                    </tr>
-                    <tr>
-                        <td class="text-meta text-nowrap">03 Sep 08:52</td>
-                        <td>T. Baloyi</td>
-                        <td class="text-meta text-secondary">read</td>
-                        <td class="text-meta">document#bundle.pdf</td>
-                        <td class="text-meta">NGA/2026/LAB/0134</td>
-                        <td class="text-meta">102.132.45.0</td>
-                    </tr>
-                    <tr>
-                        <td class="text-meta text-nowrap">03 Sep 08:41</td>
-                        <td>T. Baloyi</td>
-                        <td class="text-meta text-secondary">login</td>
-                        <td class="text-meta">session#a41f</td>
-                        <td class="text-meta text-secondary">—</td>
-                        <td class="text-meta">102.132.45.0</td>
-                    </tr>
-                    <tr>
-                        <td class="text-meta text-nowrap">03 Sep 07:31</td>
-                        <td>P. Mahlangu</td>
-                        <td class="text-meta text-secondary">read</td>
-                        <td class="text-meta">case#0134</td>
-                        <td class="text-meta">NGA/2026/LAB/0134</td>
-                        <td class="text-meta">41.203.18.0</td>
-                    </tr>
-                    <tr>
-                        <td class="text-meta text-nowrap">02 Sep 16:02</td>
-                        <td>K. Mabe</td>
-                        <td class="text-meta text-primary">export</td>
-                        <td class="text-meta">report#practice (pdf)</td>
-                        <td class="text-meta text-secondary">—</td>
-                        <td class="text-meta">41.203.18.0</td>
-                    </tr>
-                    <tr>
-                        <td class="text-meta text-nowrap">02 Sep 15:41</td>
-                        <td>T. Baloyi</td>
-                        <td class="text-meta text-success">create</td>
-                        <td class="text-meta">document#bundle.pdf</td>
-                        <td class="text-meta">NGA/2026/LAB/0134</td>
-                        <td class="text-meta">102.132.45.0</td>
-                    </tr>
-                    <tr>
-                        <td class="text-meta text-nowrap">02 Sep 11:22</td>
-                        <td>L. Radebe</td>
-                        <td class="text-meta text-info">update</td>
-                        <td class="text-meta">case#0134 stage</td>
-                        <td class="text-meta">NGA/2026/LAB/0134</td>
-                        <td class="text-meta">102.132.45.0</td>
-                    </tr>
-                    <tr>
-                        <td class="text-meta text-nowrap">02 Sep 09:15</td>
-                        <td class="text-meta text-secondary">—</td>
-                        <td class="text-meta text-danger">login</td>
-                        <td class="text-meta">failed · s.nel@···.co.za</td>
-                        <td class="text-meta text-secondary">—</td>
-                        <td class="text-meta">196.44.72.0</td>
-                    </tr>
-                    <tr>
-                        <td class="text-meta text-nowrap">01 Sep 14:48</td>
-                        <td>P. Mahlangu</td>
-                        <td class="text-meta text-danger">delete</td>
-                        <td class="text-meta">document#draft_v1.docx</td>
-                        <td class="text-meta">NGA/2026/MAT/0051</td>
-                        <td class="text-meta">41.203.18.0</td>
-                    </tr>
-                    <tr>
-                        <td class="text-meta text-nowrap">01 Sep 11:05</td>
-                        <td>L. Radebe</td>
-                        <td class="text-meta text-success">create</td>
-                        <td class="text-meta">narration#408</td>
-                        <td class="text-meta">NGA/2026/LAB/0134</td>
-                        <td class="text-meta">102.152.45.0</td>
-                    </tr>
-                    <tr>
-                        <td class="text-meta text-nowrap">28 Aug 12:05</td>
-                        <td>L. Radebe</td>
-                        <td class="text-meta text-primary">export</td>
-                        <td class="text-meta">ledger#0134 (csv)</td>
-                        <td class="text-meta">NGA/2026/LAB/0134</td>
-                        <td class="text-meta">102.152.45.0</td>
-                    </tr>
+                    @forelse ($activities as $activity)
+                        @php
+                            $subject = $activity->subject;
+                            $matter = $matterOf($activity);
+                        @endphp
+                        <tr>
+                            <td class="text-meta text-nowrap">{{ $activity->created_at->format('d M H:i') }}</td>
+                            @if ($activity->causer)
+                                <td>{{ $activity->causer->name }}</td>
+                            @else
+                                <td class="text-meta text-secondary">—</td>
+                            @endif
+                            <td @class(['text-meta', $tone($activity->event)])>{{ str_replace('_', ' ', $activity->event) }}</td>
+                            <td class="text-meta">{{ $subject?->auditLabel() ?? $activity->log_name.'#'.$activity->subject_id }}</td>
+                            @if ($matter)
+                                <td class="text-meta"><a href="{{ route('matter.show', $matter) }}">{{ $matter->reference }}</a></td>
+                            @else
+                                <td class="text-meta text-secondary">—</td>
+                            @endif
+                            <td class="text-meta">{{ $activity->properties['ip'] ?? '—' }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="text-center text-secondary py-4">Nothing recorded yet.</td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
+
+        @if ($activities->hasPages())
+            <div class="card-footer d-flex align-items-center justify-content-between">
+                <span class="text-meta">showing {{ $activities->firstItem() }}–{{ $activities->lastItem() }} of {{ $activities->total() }}</span>
+                <div class="d-flex gap-3">
+                    @if (! $activities->onFirstPage())
+                        <a href="{{ $activities->previousPageUrl() }}" class="text-meta">← newer</a>
+                    @endif
+                    @if ($activities->hasMorePages())
+                        <a href="{{ $activities->nextPageUrl() }}" class="text-meta">older →</a>
+                    @endif
+                </div>
+            </div>
+        @endif
     </div>
 @endsection

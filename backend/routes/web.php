@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiaryEntryController;
@@ -49,5 +50,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/roles', [UserController::class, 'storeRole'])->name('role.store');
     Route::patch('/roles/{role}', [UserController::class, 'updateRole'])->name('role.update');
     Route::delete('/roles/{role}', [UserController::class, 'destroyRole'])->name('role.destroy');
-    Route::view('/audit-log', 'audit-log')->name('audit-log');
+    Route::get('/audit-log', [AuditLogController::class, 'index'])->name('audit-log');
+    Route::get('/audit-log/export', [AuditLogController::class, 'export'])->name('audit-log.export');
 });
