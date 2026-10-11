@@ -1,4 +1,4 @@
-const crypo = require('crypto');
+const crypto = require('crypto');
 const db = require('../../../database/db');
 const hash = require('../../Support/hash');
 const validate = require('../Requests/validate');
