@@ -1,3 +1,16 @@
+/* Alpine hides [x-cloak] elements only once it has booted; until then this
+   keeps them from flashing visible. */
+[x-cloak] {
+    display: none !important;
+}
+.modal.confirm-modal {
+    display: block;
+}
+
+.modal-backdrop {
+    background-color: color-mix(in srgb, var(--tblr-backdrop-bg) 32%, transparent);
+}
+
 /* Logo mark */
 .logo-mark {
     display: inline-flex;
@@ -70,7 +83,18 @@
     font-family: var(--cms-font-mono);
     font-size: var(--cms-text-2xs);
     font-weight: 500;
-    letter-spacing: var(--cms-tracking-label);
+    letter-spacing: var(--cms-tracking-label-wide);
+    text-transform: uppercase;
+    color: var(--cms-fg-muted);
+}
+
+/* Table headers */
+.card-table thead th {
+    font-family: var(--cms-font-mono);
+    font-size: var(--cms-text-2xs);
+    font-weight: 500;
+    letter-spacing: var(--cms-tracking-label-wide);
+    text-transform: uppercase;
     color: var(--cms-fg-muted);
 }
 

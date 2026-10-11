@@ -20,4 +20,40 @@ class MatterPolicy
     {
         return $user->can(Permission::ViewAllMatters->value) || $matter->isAssignedTo($user);
     }
+
+    public function create(User $user): bool
+    {
+        return $user->can(Permission::CreateMatters->value);
+    }
+
+    public function update(User $user, Matter $matter): bool
+    {
+        return $user->can(Permission::EditMatters->value);
+    }
+
+    public function close(User $user, Matter $matter): bool
+    {
+        return $user->can(Permission::CloseMatters->value);
+    }
+
+    public function assign(User $user, Matter $matter): bool
+    {
+        return $user->can(Permission::AssignMatters->value);
+    }
+
+    /** Work on a file belongs to the people assigned to it, while it is open. */
+    public function work(User $user, Matter $matter): bool
+    {
+        return $matter->isOpen() && $matter->isAssignedTo($user);
+    }
+
+    public function deleteDocument(User $user, Matter $matter): bool
+    {
+        return $user->can(Permission::DeleteDocuments->value) && $this->view($user, $matter);
+    }
+
+    public function viewAudit(User $user, Matter $matter): bool
+    {
+        return $user->can(Permission::ViewAuditLog->value) && $this->view($user, $matter);
+    }
 }
