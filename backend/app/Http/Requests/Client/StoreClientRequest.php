@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Requests\Client;
 
 use App\Enums\Client\ClientType;
+use App\Enums\Client\ContactKind;
 use App\Rules\Client\UniqueClientIdNumber;
 use App\Rules\Client\UniqueClientRegistrationNumber;
+use App\Rules\Client\ValidContactValue;
 use App\Rules\Client\ValidRegistrationNumber;
 use App\Rules\Client\ValidSouthAfricanId;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -15,6 +17,8 @@ use Illuminate\Validation\Rule;
 
 class StoreClientRequest extends FormRequest
 {
+    protected $errorBag = 'client';
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -35,7 +39,7 @@ class StoreClientRequest extends FormRequest
             ClientType::Individual => $this->individualRules(),
             ClientType::Entity => $this->entityRules(),
             default => ['type' => ['required', Rule::enum(ClientType::class)]],
-        };
+        } + $this->contactRules();
     }
 
     /**
@@ -60,6 +64,20 @@ class StoreClientRequest extends FormRequest
             'type' => ['required', Rule::enum(ClientType::class)],
             'entity_name' => ['required', 'string', 'max:255'],
             'registration_number' => ['required', 'string', new ValidRegistrationNumber, new UniqueClientRegistrationNumber],
+        ];
+    }
+
+    /**
+     * Ways to reach the client, optional at intake. A new client has no
+     * contacts yet, so there is nothing for them to clash with.
+     *
+     * @return array<string, ValidationRule|array<mixed>|string>
+     */
+    protected function contactRules(): array
+    {
+        return [
+            'mobile' => ['nullable', 'string', new ValidContactValue(ContactKind::Mobile)],
+            'email' => ['nullable', 'string', new ValidContactValue(ContactKind::Email)],
         ];
     }
 

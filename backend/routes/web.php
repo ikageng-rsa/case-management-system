@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiaryEntryController;
 use App\Http\Controllers\MatterController;
@@ -34,7 +35,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/matters/{matter}/documents/{document}', [MatterDocumentController::class, 'download'])->name('matter.documents.download');
     Route::delete('/matters/{matter}/documents/{document}', [MatterDocumentController::class, 'destroy'])->name('matter.documents.destroy');
 
-    Route::view('/clients', 'clients')->name('clients');
+    Route::get('/clients', [ClientController::class, 'index'])->name('clients');
+    Route::post('/clients', [ClientController::class, 'store'])->name('client.store');
+    Route::get('/clients/{client}', [ClientController::class, 'show'])->name('client.show');
+    
     Route::view('/documents', 'documents')->name('documents');
     Route::view('/users', 'users')->name('users');
     Route::view('/audit-log', 'audit-log')->name('audit-log');

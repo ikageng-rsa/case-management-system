@@ -26,7 +26,7 @@
                 <x-ui.nav-section>Practice</x-ui.nav-section>
                 <x-ui.nav-item :href="route('dashboard')" label="Dashboard" icon="layout-dashboard" :active="request()->routeIs('dashboard')" />
                 <x-ui.nav-item :href="route('matters')" label="Matters" icon="briefcase" :active="request()->routeIs('matter*')" />
-                <x-ui.nav-item :href="route('clients')" label="Clients" icon="users" :active="request()->routeIs('clients')"/>
+                <x-ui.nav-item :href="route('clients')" label="Clients" icon="users" :active="request()->routeIs('client*', 'clients')"/>
                 <x-ui.nav-item :href="route('documents')" label="Documents" icon="file-text" :active="request()->routeIs('documents')"/>
                 <x-ui.nav-item href="#" label="Reports" icon="chart-bar"/>
 
