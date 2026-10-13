@@ -196,7 +196,7 @@
                             @if ($active && $canWithdrawConsent)
                                 <form x-ref="withdraw" method="POST" action="{{ route('client.consent.withdraw', $client) }}"
                                     data-confirm="Withdraw this client's consent? It cannot be switched back on; if they consent again, that is recorded as a new consent."
-                                    data-confirm-title="Withdraw consent" data-confirm-action="Withdraw" data-confirm-tone="danger">
+                                    data-confirm-title="Withdraw consent" data-confirm-action="Withdraw" data-confirm-tone="danger" data-confirm-icon="shield-x">
                                     @csrf
                                 </form>
                             @endif

@@ -44,7 +44,7 @@
                             @can('deleteDocument', $matter)
                                 <form method="POST" action="{{ route('matter.documents.destroy', [$matter, $document->getKey()]) }}" class="d-inline"
                                     data-confirm="Delete {{ $document->name }}? This cannot be undone."
-                                    data-confirm-title="Delete document" data-confirm-action="Delete" data-confirm-tone="danger">
+                                    data-confirm-title="Delete document" data-confirm-action="Delete" data-confirm-tone="danger" data-confirm-icon="trash">
                                     @csrf
                                     @method('DELETE')
                                     <x-ui.button type="submit" variant="ghost-danger" size="sm">Delete</x-ui.button>

@@ -20,6 +20,7 @@ Alpine.data('confirmDialog', () => ({
     actionLabel: 'Confirm',
     cancelLabel: 'Cancel',
     tone: 'danger',
+    icon: 'alert-triangle',
     promptLabel: null,
     reason: '',
     resolve: null,
@@ -30,6 +31,7 @@ Alpine.data('confirmDialog', () => ({
         this.actionLabel = options.actionLabel ?? 'Confirm';
         this.cancelLabel = options.cancelLabel ?? 'Cancel';
         this.tone = options.tone ?? 'danger';
+        this.icon = options.icon ?? (this.tone === 'danger' ? 'alert-triangle' : 'help-circle');
         this.promptLabel = options.promptLabel ?? null;
         this.reason = '';
         this.resolve = options.resolve ?? null;
@@ -82,6 +84,7 @@ const confirmOptionsFrom = (element) => ({
     actionLabel: element.dataset.confirmAction,
     cancelLabel: element.dataset.confirmCancel,
     tone: element.dataset.confirmTone,
+    icon: element.dataset.confirmIcon,
     promptLabel: element.dataset.confirmPromptLabel,
 });
 

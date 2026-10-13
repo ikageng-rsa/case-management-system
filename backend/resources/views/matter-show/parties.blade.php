@@ -35,7 +35,7 @@
                 @can('assign', $matter)
                     <form method="POST" action="{{ route('matter.unassign', $matter) }}"
                         data-confirm="Remove {{ $assignment->user->name }} as {{ $assignment->capacity->value }}?"
-                        data-confirm-title="Remove from matter" data-confirm-action="Remove" data-confirm-tone="danger">
+                        data-confirm-title="Remove from matter" data-confirm-action="Remove" data-confirm-tone="danger" data-confirm-icon="user-minus">
                         @csrf
                         @method('DELETE')
                         <input type="hidden" name="user_id" value="{{ $assignment->user_id }}">

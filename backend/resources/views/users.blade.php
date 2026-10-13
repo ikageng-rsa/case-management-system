@@ -146,7 +146,7 @@
 
                                 <form method="POST" action="{{ route('role.destroy', $role) }}" class="d-inline"
                                     data-confirm="Delete the {{ $label($role->name) }} role? This cannot be undone."
-                                    data-confirm-title="Delete role" data-confirm-action="Delete" data-confirm-tone="danger">
+                                    data-confirm-title="Delete role" data-confirm-action="Delete" data-confirm-tone="danger" data-confirm-icon="trash">
                                     @csrf
                                     @method('DELETE')
                                     <x-ui.button type="submit" variant="ghost-danger" size="sm">Delete</x-ui.button>
