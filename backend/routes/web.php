@@ -22,6 +22,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/matters', [MatterController::class, 'index'])->name('matters');
     Route::post('/matters', [MatterController::class, 'store'])->name('matter.store');
 
+    // Likewise, ahead of the matter routes.
+    Route::get('/matters/reference-preview', [MatterController::class, 'previewReference'])->name('matter.reference-preview');
     Route::post('/matters/{matter}/close', [MatterController::class, 'close'])->name('matter.close');
     Route::post('/matters/{matter}/assign', [MatterController::class, 'assign'])->name('matter.assign');
     Route::delete('/matters/{matter}/assign', [MatterController::class, 'unassign'])->name('matter.unassign');
@@ -40,6 +42,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/clients', [ClientController::class, 'index'])->name('clients');
     Route::post('/clients', [ClientController::class, 'store'])->name('client.store');
+    // Declared before the client route, which would otherwise take "lookup" for an id.
+    Route::get('/clients/lookup', [ClientController::class, 'lookup'])->name('client.lookup');
     Route::get('/clients/{client}', [ClientController::class, 'show'])->name('client.show');
     Route::patch('/clients/{client}', [ClientController::class, 'update'])->name('client.update');
 

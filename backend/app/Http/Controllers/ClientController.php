@@ -16,6 +16,7 @@ use App\Models\MatterType;
 use App\Models\User;
 use App\Services\Clients\AddClientContact;
 use App\Services\Clients\DuplicateClientException;
+use App\Services\Clients\MaskIdentifier;
 use App\Services\Clients\NormaliseIdentifier;
 use App\Services\Clients\RecordPopiaConsent;
 use App\Services\Clients\RegisterClient;
@@ -23,6 +24,7 @@ use App\Services\Clients\UpdateClient;
 use App\Services\Matters\OpenMatter;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -122,6 +124,27 @@ class ClientController extends Controller
             ->with('status', 'Client updated.');
     }
 
+    /** Matching clients for the picker in a form, with enough to tell two of the same name apart. */
+    public function lookup(Request $request): JsonResponse
+    {
+        Gate::authorize('viewAny', Client::class);
+
+        return response()->json(
+            $this->search($request)
+                ->withCount('matters')
+                ->limit(8)
+                ->get()
+                ->map(fn (Client $client) => [
+                    'id' => $client->getKey(),
+                    'name' => $client->full_name,
+                    'detail' => $client->isEntity()
+                        ? ($client->registration_number ? 'reg '.MaskIdentifier::registrationNumber($client->registration_number) : '')
+                        : ($client->id_number ? MaskIdentifier::idNumber($client->id_number) : ''),
+                    'matters' => $client->matters_count,
+                ]),
+        );
+    }
+
     protected function render(Request $request, ?Client $client): View
     {
         /** @var User $user */
@@ -141,6 +164,7 @@ class ClientController extends Controller
             'canSeeContacts' => $user->can('view_client_contacts'),
             'matterTypes' => $user->can('create', Matter::class) ? MatterType::query()->orderBy('name')->get() : collect(),
             'courts' => $user->can('create', Matter::class) ? Court::query()->orderBy('name')->get() : collect(),
+            'attorneys' => $user->can('assign_matters') ? User::query()->orderBy('name')->get() : collect(),
         ] + ($client === null ? [] : $this->detail($client, $user)));
     }
 

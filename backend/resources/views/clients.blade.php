@@ -219,7 +219,7 @@
         @endcan
 
         @can('create', \App\Models\Matter::class)
-            <x-matter.intake name="new-client-matter" :client="$client" :matter-types="$matterTypes" :courts="$courts" :action="route('matter.store')" />
+            <x-matter.intake name="new-client-matter" :client="$client" :matter-types="$matterTypes" :courts="$courts" :attorneys="$attorneys" :action="route('matter.store')" />
         @endcan
     @endif
 

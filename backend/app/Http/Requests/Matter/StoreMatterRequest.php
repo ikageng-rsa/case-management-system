@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Matter;
 
+use App\Enums\Auth\Permission;
 use App\Models\MatterType;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -39,6 +40,12 @@ class StoreMatterRequest extends FormRequest
                 'integer',
                 Rule::exists('courts', 'id'),
             ],
+            // Choosing who carries the file is assigning it, which has its own permission.
+            'responsible_attorney_id' => $this->user()->can(Permission::AssignMatters->value)
+                ? ['nullable', Rule::exists('users', 'id')]
+                : ['prohibited'],
+            // Becomes the first entry in the ledger.
+            'narration' => ['nullable', 'string', 'max:5000'],
         ];
     }
 

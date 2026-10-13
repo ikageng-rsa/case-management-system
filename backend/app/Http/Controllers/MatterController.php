@@ -19,13 +19,17 @@ use App\Models\User;
 use App\Services\Matters\AssignUserToMatter;
 use App\Services\Matters\CannotAssignToClosedMatter;
 use App\Services\Matters\CloseMatter;
+use App\Services\Matters\MatterReference;
 use App\Services\Matters\OpenMatter;
 use App\Services\Matters\UnassignUserFromMatter;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 use Spatie\Activitylog\Models\Activity;
 
 class MatterController extends Controller
@@ -33,6 +37,9 @@ class MatterController extends Controller
     private const FILTERS = ['all', 'mine', 'unassigned', 'closed'];
 
     private const SORTS = ['next_date', 'opened', 'reference'];
+
+    /** The activity an opening narration is filed under. */
+    private const OPENING_ACTIVITY = 'ADMIN';
 
     public function index(Request $request): View
     {
@@ -78,7 +85,12 @@ class MatterController extends Controller
             ->paginate()
             ->withQueryString();
 
+        $canOpen = $user->can('create', Matter::class);
+
         return view('matters', [
+            'courts' => $canOpen ? Court::query()->orderBy('name')->get() : collect(),
+            'attorneys' => $user->can('assign_matters') ? User::query()->orderBy('name')->get() : collect(),
+            'selectedClient' => $request->old('client_id') ? Client::find($request->old('client_id')) : null,
             'matters' => $matters,
             'filter' => $filter,
             'sort' => $sort,
@@ -148,21 +160,68 @@ class MatterController extends Controller
         });
     }
 
-    public function store(StoreMatterRequest $request, OpenMatter $openMatter): RedirectResponse
+    public function store(StoreMatterRequest $request, OpenMatter $openMatter, AssignUserToMatter $assignUser): RedirectResponse
     {
         Gate::authorize('create', Matter::class);
 
-        $matter = $openMatter->open(
-            client: Client::findOrFail($request->validated('client_id')),
-            matterType: MatterType::findOrFail($request->validated('matter_type_id')),
-            title: $request->validated('title'),
-            court: $request->filled('court_id') ? Court::findOrFail($request->validated('court_id')) : null,
-            instructedAt: $request->date('instructed_at'),
-        );
+        $matter = DB::transaction(function () use ($request, $openMatter, $assignUser): Matter {
+            $matter = $openMatter->open(
+                client: Client::findOrFail($request->validated('client_id')),
+                matterType: MatterType::findOrFail($request->validated('matter_type_id')),
+                title: $request->validated('title'),
+                court: $request->filled('court_id') ? Court::findOrFail($request->validated('court_id')) : null,
+                instructedAt: $request->date('instructed_at'),
+            );
+
+            if ($request->filled('responsible_attorney_id')) {
+                $assignUser->assign($matter, User::findOrFail($request->validated('responsible_attorney_id')), Assignment::Responsible);
+            }
+
+            if ($request->filled('narration')) {
+                $this->openingNarration($matter, $request->user(), $request->validated('narration'));
+            }
+
+            return $matter;
+        });
 
         return redirect()
             ->route('matter.show', $matter)
             ->with('status', 'Matter opened.');
+    }
+
+    /** What the reference of the matter being opened would be, were it opened now. */
+    public function previewReference(Request $request): JsonResponse
+    {
+        Gate::authorize('create', Matter::class);
+
+        $data = $request->validate([
+            'client_id' => ['required', 'uuid', Rule::exists('clients', 'id')->withoutTrashed()],
+            'matter_type_id' => ['required', 'integer', Rule::exists('matter_types', 'id')->withoutTrashed()],
+            'instructed_at' => ['nullable', 'date'],
+        ]);
+
+        $reference = MatterReference::for(
+            Client::findOrFail($data['client_id']),
+            MatterType::findOrFail($data['matter_type_id']),
+            (int) ($request->date('instructed_at') ?? now())->year,
+        );
+
+        return response()->json(['reference' => $reference->getReference()]);
+    }
+
+    /**
+     * The words the matter is opened with go on the ledger as its first entry.
+     * It records no work, so it carries no quantity and bills nothing.
+     */
+    protected function openingNarration(Matter $matter, User $author, string $body): void
+    {
+        $narration = new Narration(['body' => $body, 'quantity' => 0]);
+
+        $narration->matter()->associate($matter);
+        $narration->author()->associate($author);
+        $narration->activityType()->associate(ActivityType::query()->where('code', self::OPENING_ACTIVITY)->firstOrFail());
+
+        $narration->save();
     }
 
     public function update(UpdateMatterRequest $request, Matter $matter): RedirectResponse
