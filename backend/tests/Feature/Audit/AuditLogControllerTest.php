@@ -222,4 +222,27 @@ class AuditLogControllerTest extends TestCase
         $this->assertTrue($detail['subjectDeleted']);
         $this->assertSame('matter#41', $detail['subject']);
     }
+
+    public function test_the_field_an_entry_names_reads_as_words_in_its_detail(): void
+    {
+        $director = $this->userWithRole(RoleEnum::Director);
+        Activity::query()->delete();
+        $this->entry('revealed', $director, ['field' => 'registration_number', 'ip' => '102.132.45.0']);
+
+        $detail = $this->actingAs($director)->get(route('audit-log'))->viewData('details')->first();
+
+        $this->assertSame([['key' => 'field', 'value' => 'registration number']], $detail['properties']);
+        // What the log holds is unchanged; only its reading is.
+        $this->assertSame('registration_number', Activity::query()->firstOrFail()->properties['field']);
+    }
+
+    public function test_the_detail_sheet_has_a_single_close_control_in_its_header(): void
+    {
+        $html = $this->actingAs($this->userWithRole(RoleEnum::Director))->get(route('audit-log'))->getContent();
+
+        $sheet = substr($html, strpos($html, 'data-sheet="audit-entry"'));
+        $header = substr($sheet, 0, strpos($sheet, 'offcanvas-body'));
+
+        $this->assertSame(1, substr_count($header, 'btn-close'));
+    }
 }
