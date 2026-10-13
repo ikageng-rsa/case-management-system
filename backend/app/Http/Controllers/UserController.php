@@ -8,6 +8,7 @@ use App\Enums\Auth\Permission;
 use App\Http\Requests\Role\SaveRoleRequest;
 use App\Http\Requests\User\UpdateUserRolesRequest;
 use App\Models\User;
+use App\Models\UserInvitation;
 use App\Services\Roles\CannotDeleteRoleInUse;
 use App\Services\Roles\CannotRemoveLastAdministrator;
 use App\Services\Roles\DeleteRole;
@@ -43,6 +44,9 @@ class UserController extends Controller
         return view('users', [
             'users' => $users,
             'total' => User::query()->count(),
+            'invitations' => UserInvitation::query()->outstanding()->with('inviter')->latest()->get(),
+            'lifetimes' => UserInvitation::LIFETIMES,
+            'defaultLifetime' => UserInvitation::DEFAULT_LIFETIME,
             'lastActive' => $lastActive,
             'roles' => Role::query()->withCount('users')->with('permissions')->orderBy('name')->get(),
             'permissions' => Permission::cases(),

@@ -252,4 +252,39 @@ class UserControllerTest extends TestCase
             ->assertSee('href="'.route('users').'"', false)
             ->assertSee('href="'.route('audit-log').'"', false);
     }
+
+    public function test_roles_are_assigned_when_their_ids_arrive_as_strings_as_they_do_from_a_form(): void
+    {
+        $director = $this->userWithRole(RoleEnum::Director);
+        $clerk = $this->userWithRole(RoleEnum::Secretary);
+        $custom = Role::create(['name' => 'paralegal', 'guard_name' => 'web']);
+        $attorney = $this->roleId(RoleEnum::Attorney);
+
+        // A browser submits every value as text: roles[]=7&roles[]=3.
+        $this->actingAs($director)
+            ->call('PATCH', route('user.roles.update', $clerk), ['roles' => [(string) $custom->getKey(), (string) $attorney]])
+            ->assertRedirect(route('users'))
+            ->assertSessionHasNoErrors();
+
+        $this->assertEqualsCanonicalizing(['paralegal', 'attorney'], $clerk->fresh()->getRoleNames()->all());
+    }
+
+    public function test_a_role_made_in_the_roles_sheet_can_then_be_given_to_a_user(): void
+    {
+        $director = $this->userWithRole(RoleEnum::Director);
+        $clerk = $this->userWithRole(RoleEnum::Secretary);
+
+        $this->actingAs($director)
+            ->call('POST', route('role.store'), ['name' => 'paralegal', 'permissions' => ['view_clients']])
+            ->assertRedirect(route('users'));
+
+        $role = Role::findByName('paralegal');
+
+        $this->actingAs($director)
+            ->call('PATCH', route('user.roles.update', $clerk), ['roles' => [(string) $role->getKey()]])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(['paralegal'], $clerk->fresh()->getRoleNames()->all());
+        $this->assertTrue($clerk->fresh()->can('view_clients'));
+    }
 }

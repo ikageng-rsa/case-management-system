@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\AcceptInvitationController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\ClientContactController;
 use App\Http\Controllers\ClientController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\ContactPersonController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiaryEntryController;
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\MatterController;
 use App\Http\Controllers\MatterDocumentController;
 use App\Http\Controllers\MatterPartyController;
@@ -22,12 +24,18 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// Where an invitation's link lands. Guests only, and throttled: the token is the whole secret.
+Route::middleware(['guest', 'throttle:invitations'])->group(function () {
+    Route::get('/invitations/{token}', [AcceptInvitationController::class, 'show'])->name('invitation.show');
+    Route::post('/invitations/{token}', [AcceptInvitationController::class, 'store'])->name('invitation.accept');
+});
+
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->middleware('auth')->name('dashboard');
     Route::get('/matters', [MatterController::class, 'index'])->name('matters');
     Route::post('/matters', [MatterController::class, 'store'])->name('matter.store');
 
-    // Likewise, ahead of the matter routes.
+    // add matters* before matter so it doesn't consume the other routes
     Route::get('/matters/search', [MatterController::class, 'search'])->name('matter.search');
     Route::get('/matters/reference-preview', [MatterController::class, 'previewReference'])->name('matter.reference-preview');
     Route::post('/matters/{matter}/close', [MatterController::class, 'close'])->name('matter.close');
@@ -72,6 +80,12 @@ Route::middleware('auth')->group(function () {
 
     // Firm administration: who may do what, and the record of what was done.
     Route::get('/users', [UserController::class, 'index'])->middleware('can:manage_users')->name('users');
+
+    Route::middleware('can:manage_users')->group(function () {
+        Route::post('/invitations', [InvitationController::class, 'store'])->name('invitation.store');
+        Route::post('/invitations/{invitation}/resend', [InvitationController::class, 'resend'])->name('invitation.resend');
+        Route::delete('/invitations/{invitation}', [InvitationController::class, 'destroy'])->name('invitation.destroy');
+    });
 
     Route::middleware('can:assign_roles')->group(function () {
         Route::patch('/users/{user}/roles', [UserController::class, 'updateRoles'])->name('user.roles.update');
