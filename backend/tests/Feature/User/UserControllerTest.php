@@ -222,4 +222,34 @@ class UserControllerTest extends TestCase
         $this->actingAs($attorney)->patch(route('role.update', Role::findByName('messenger')), ['name' => 'x'])->assertForbidden();
         $this->actingAs($attorney)->delete(route('role.destroy', Role::findByName('messenger')))->assertForbidden();
     }
+
+    public function test_the_firm_routes_are_gated_by_permission_before_they_reach_a_controller(): void
+    {
+        $secretary = $this->userWithRole(RoleEnum::Secretary);
+        $role = Role::findByName('messenger');
+        $user = $this->userWithRole(RoleEnum::Attorney);
+
+        $this->actingAs($secretary)->get(route('users'))->assertForbidden();
+        $this->actingAs($secretary)->patch(route('user.roles.update', $user), ['roles' => []])->assertForbidden();
+        $this->actingAs($secretary)->post(route('role.store'), ['name' => 'x'])->assertForbidden();
+        $this->actingAs($secretary)->patch(route('role.update', $role), ['name' => 'x'])->assertForbidden();
+        $this->actingAs($secretary)->delete(route('role.destroy', $role))->assertForbidden();
+        $this->actingAs($secretary)->get(route('audit-log'))->assertForbidden();
+        $this->actingAs($secretary)->get(route('audit-log.export'))->assertForbidden();
+    }
+
+    public function test_the_sidebar_only_links_to_what_the_user_may_open(): void
+    {
+        $this->actingAs($this->userWithRole(RoleEnum::Secretary))
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertDontSee('href="'.route('users').'"', false)
+            ->assertDontSee('href="'.route('audit-log').'"', false)
+            ->assertDontSee('>Firm<', false);
+
+        $this->actingAs($this->userWithRole(RoleEnum::Director))
+            ->get(route('dashboard'))
+            ->assertSee('href="'.route('users').'"', false)
+            ->assertSee('href="'.route('audit-log').'"', false);
+    }
 }

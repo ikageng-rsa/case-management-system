@@ -31,9 +31,15 @@
                 <x-ui.nav-item :href="route('documents')" label="Documents" icon="file-text" :active="request()->routeIs('documents')"/>
                 <x-ui.nav-item href="#" label="Reports" icon="chart-bar"/>
 
-                <x-ui.nav-section>Firm</x-ui.nav-section>
-                <x-ui.nav-item :href="route('users')" label="Users" icon="users" :active="request()->routeIs('users')"/>
-                <x-ui.nav-item :href="route('audit-log')" label="Audit log" icon="history" :active="request()->routeIs('audit-log')"/>
+                @canany(['manage_users', 'view_audit_log'])
+                    <x-ui.nav-section>Firm</x-ui.nav-section>
+                @endcanany
+                @can('manage_users')
+                    <x-ui.nav-item :href="route('users')" label="Users" icon="users" :active="request()->routeIs('users')"/>
+                @endcan
+                @can('view_audit_log')
+                    <x-ui.nav-item :href="route('audit-log')" label="Audit log" icon="history" :active="request()->routeIs('audit-log*')"/>
+                @endcan
 
                 <x-slot:footerActions>
                     <form method="POST" action="{{ route('logout') }}">

@@ -64,11 +64,17 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/documents', [DocumentController::class, 'index'])->name('documents');
     Route::post('/documents', [DocumentController::class, 'store'])->name('documents.store');
-    Route::get('/users', [UserController::class, 'index'])->name('users');
-    Route::patch('/users/{user}/roles', [UserController::class, 'updateRoles'])->name('user.roles.update');
-    Route::post('/roles', [UserController::class, 'storeRole'])->name('role.store');
-    Route::patch('/roles/{role}', [UserController::class, 'updateRole'])->name('role.update');
-    Route::delete('/roles/{role}', [UserController::class, 'destroyRole'])->name('role.destroy');
-    Route::get('/audit-log', [AuditLogController::class, 'index'])->name('audit-log');
-    Route::get('/audit-log/export', [AuditLogController::class, 'export'])->name('audit-log.export');
+
+    // Firm administration: who may do what, and the record of what was done.
+    Route::get('/users', [UserController::class, 'index'])->middleware('can:manage_users')->name('users');
+
+    Route::middleware('can:assign_roles')->group(function () {
+        Route::patch('/users/{user}/roles', [UserController::class, 'updateRoles'])->name('user.roles.update');
+        Route::post('/roles', [UserController::class, 'storeRole'])->name('role.store');
+        Route::patch('/roles/{role}', [UserController::class, 'updateRole'])->name('role.update');
+        Route::delete('/roles/{role}', [UserController::class, 'destroyRole'])->name('role.destroy');
+    });
+
+    Route::get('/audit-log', [AuditLogController::class, 'index'])->middleware('can:view_audit_log')->name('audit-log');
+    Route::get('/audit-log/export', [AuditLogController::class, 'export'])->middleware('can:export_audit_log')->name('audit-log.export');
 });
