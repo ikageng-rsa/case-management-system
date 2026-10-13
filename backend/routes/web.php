@@ -12,6 +12,7 @@ use App\Http\Controllers\DiaryEntryController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\MatterController;
 use App\Http\Controllers\MatterDocumentController;
+use App\Http\Controllers\MatterPartyController;
 use App\Http\Controllers\NarrationController;
 use App\Http\Controllers\PopiaConsentController;
 use App\Http\Controllers\UserController;
@@ -34,6 +35,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('/matters/{matter}/assign', [MatterController::class, 'unassign'])->name('matter.unassign');
     Route::patch('/matters/{matter}', [MatterController::class, 'update'])->name('matter.update');
     Route::get('/matters/{matter}', [MatterController::class, 'show'])->name('matter.show');
+
+    Route::post('/matters/{matter}/parties', [MatterPartyController::class, 'store'])->name('matter.parties.store');
+    Route::patch('/matters/{matter}/parties/{party}', [MatterPartyController::class, 'update'])->name('matter.parties.update');
+    Route::delete('/matters/{matter}/parties/{party}', [MatterPartyController::class, 'destroy'])->name('matter.parties.destroy');
 
     Route::post('/matters/{matter}/narrations', [NarrationController::class, 'store'])->name('matter.narrations.store');
     Route::get('/matters/{matter}/narrations/export', [NarrationController::class, 'export'])->name('matter.narrations.export');

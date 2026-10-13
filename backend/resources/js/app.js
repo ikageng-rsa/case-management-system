@@ -174,6 +174,8 @@ Alpine.data('matterIntake', ({
     types = {},
     typeId = '',
     urls = {},
+    parties = [],
+    defaultRole = 'respondent',
 } = {}) => ({
     step,
     client,
@@ -181,6 +183,8 @@ Alpine.data('matterIntake', ({
     types,
     typeId,
     urls,
+    parties,
+    defaultRole,
 
     query: '',
     results: [],
@@ -193,7 +197,7 @@ Alpine.data('matterIntake', ({
     reference: null,
 
     get steps() {
-        return this.fixedClient ? ['Matter', 'Review'] : ['Client', 'Matter', 'Review'];
+        return this.fixedClient ? ['Matter', 'Parties', 'Review'] : ['Client', 'Matter', 'Parties', 'Review'];
     },
 
     get current() {
@@ -202,6 +206,14 @@ Alpine.data('matterIntake', ({
 
     get litigation() {
         return this.types[this.typeId]?.litigation ?? false;
+    },
+
+    addParty() {
+        this.parties.push({ name: '', role: this.defaultRole, representative: '' });
+    },
+
+    removeParty(index) {
+        this.parties.splice(index, 1);
     },
 
     async search() {
@@ -283,6 +295,13 @@ Alpine.data('matterIntake', ({
             instructed: value('instructed'),
             attorney: this.$refs.attorney?.value ? text('attorney') : 'Not assigned yet',
             narration: this.$refs.narration?.value || '—',
+            parties: this.parties
+                .filter((party) => party.name.trim() !== '')
+                .map((party) => ({
+                    name: party.name.trim(),
+                    role: party.role.replace('_', ' '),
+                    representative: party.representative.trim(),
+                })),
         };
 
         this.previewReference();

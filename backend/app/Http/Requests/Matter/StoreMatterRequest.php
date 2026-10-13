@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Matter;
 
 use App\Enums\Auth\Permission;
+use App\Enums\Matter\PartyRole;
 use App\Models\MatterType;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -46,6 +47,11 @@ class StoreMatterRequest extends FormRequest
                 : ['prohibited'],
             // Becomes the first entry in the ledger.
             'narration' => ['nullable', 'string', 'max:5000'],
+            // Everyone else in the matter, besides the client.
+            'parties' => ['nullable', 'array', 'max:20'],
+            'parties.*.name' => ['required', 'string', 'max:255'],
+            'parties.*.role' => ['required', Rule::enum(PartyRole::class)],
+            'parties.*.representative' => ['nullable', 'string', 'max:255'],
         ];
     }
 

@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\Document\DocumentKind;
 use App\Enums\Matter\Assignment;
+use App\Enums\Matter\PartyRole;
 use App\Http\Requests\Matter\AssignUserRequest;
 use App\Http\Requests\Matter\StoreMatterRequest;
 use App\Http\Requests\Matter\UpdateMatterRequest;
@@ -21,6 +22,7 @@ use App\Services\Matters\CannotAssignToClosedMatter;
 use App\Services\Matters\CloseMatter;
 use App\Services\Matters\MatterReference;
 use App\Services\Matters\OpenMatter;
+use App\Services\Matters\SaveMatterParty;
 use App\Services\Matters\UnassignUserFromMatter;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -160,11 +162,11 @@ class MatterController extends Controller
         });
     }
 
-    public function store(StoreMatterRequest $request, OpenMatter $openMatter, AssignUserToMatter $assignUser): RedirectResponse
+    public function store(StoreMatterRequest $request, OpenMatter $openMatter, AssignUserToMatter $assignUser, SaveMatterParty $saveParty): RedirectResponse
     {
         Gate::authorize('create', Matter::class);
 
-        $matter = DB::transaction(function () use ($request, $openMatter, $assignUser): Matter {
+        $matter = DB::transaction(function () use ($request, $openMatter, $assignUser, $saveParty): Matter {
             $matter = $openMatter->open(
                 client: Client::findOrFail($request->validated('client_id')),
                 matterType: MatterType::findOrFail($request->validated('matter_type_id')),
@@ -179,6 +181,10 @@ class MatterController extends Controller
 
             if ($request->filled('narration')) {
                 $this->openingNarration($matter, $request->user(), $request->validated('narration'));
+            }
+
+            foreach ($request->validated('parties') ?? [] as $party) {
+                $saveParty->save($matter, null, $party);
             }
 
             return $matter;
@@ -370,6 +376,8 @@ class MatterController extends Controller
         $client = $matter->client;
 
         return [
+            'matterParties' => $matter->parties()->orderBy('created_at')->orderBy('id')->get(),
+            'partyRoles' => PartyRole::cases(),
             'contacts' => $user->can('view_client_contacts') && $user->can('view_unmasked_client_data') ? $client->contacts()->get() : collect(),
         ];
     }
@@ -409,6 +417,7 @@ class MatterController extends Controller
             'narration' => $matter->narrations()->pluck('id'),
             'diary_entry' => $matter->diaryEntries()->pluck('id'),
             'matter_assignment' => $matter->assignments()->pluck('id'),
+            'matter_party' => $matter->parties()->pluck('id'),
             'document' => $matter->media()->pluck('id'),
         ];
 

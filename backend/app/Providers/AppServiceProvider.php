@@ -12,6 +12,7 @@ use App\Models\Court;
 use App\Models\DiaryEntry;
 use App\Models\Matter;
 use App\Models\MatterAssignment;
+use App\Models\MatterParty;
 use App\Models\MatterType;
 use App\Models\Media;
 use App\Models\Narration;
@@ -43,6 +44,7 @@ class AppServiceProvider extends ServiceProvider
             'narration' => Narration::class,
             'diary_entry' => DiaryEntry::class,
             'matter_assignment' => MatterAssignment::class,
+            'matter_party' => MatterParty::class,
             'client' => Client::class,
             'client_contact' => ClientContact::class,
             'client_contact_person' => ClientContactPerson::class,
