@@ -46,10 +46,20 @@ class MaskIdentifier
         return Str::mask($local, self::DOT, min(2, max(mb_strlen($local) - 1, 0))).'@'.$domain;
     }
 
-    /** 9001015800088 reads as "9001015······". */
+    /*
+     * 9001015800088 reads as "·········0088": only the last four digits stay.
+     * The first six digits of an ID number are the date of birth, which is
+     * personal in itself, so the front of the number is what is hidden. The tail
+     * is enough to tell two clients apart and gives away nothing about the person.
+     */
     public static function idNumber(string $value): string
     {
-        return Str::mask($value, self::DOT, 7);
+        // A real number is thirteen digits; anything shorter still has to hide most of itself.
+        $keep = min(4, intdiv(mb_strlen($value), 2));
+
+        return $keep === 0
+            ? Str::mask($value, self::DOT, 0)
+            : Str::mask($value, self::DOT, 0, -$keep);
     }
 
     /** 2011/123456/07 reads as "2011/······/07". */
