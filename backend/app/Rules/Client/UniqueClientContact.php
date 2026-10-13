@@ -14,6 +14,8 @@ class UniqueClientContact implements ValidationRule
     public function __construct(
         private readonly Client $client,
         private readonly ContactKind $kind,
+        /** Contact id to leave out, so an update can keep its own value. */
+        private readonly ?int $ignore = null,
     ) {}
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
@@ -26,6 +28,7 @@ class UniqueClientContact implements ValidationRule
         // client, so different clients may share a contact.
         $exists = $this->client->contacts()
             ->matchingValue($value, $this->kind)
+            ->when($this->ignore !== null, fn ($query) => $query->whereKeyNot($this->ignore))
             ->exists();
 
         if ($exists) {

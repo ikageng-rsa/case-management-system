@@ -8,9 +8,10 @@
 
         $tone = fn (?string $event) => match ($event) {
             'created', 'uploaded', 'role_granted' => 'text-success',
-            'updated' => 'text-info',
+            'updated', 'value_changed' => 'text-info',
             'deleted', 'role_revoked' => 'text-danger',
             'exported', 'downloaded' => 'text-primary',
+            'revealed' => 'text-warning',
             default => 'text-secondary',
         };
     @endphp

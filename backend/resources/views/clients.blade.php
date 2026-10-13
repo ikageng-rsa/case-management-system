@@ -84,7 +84,28 @@
                         <span @class(['avatar avatar-rounded text-white', 'bg-dark' => ! $client->isEntity(), 'bg-info' => $client->isEntity()]) style="--tblr-avatar-size: 3rem; font-size: 1rem;">{{ $initials($client) }}</span>
                         <div>
                             <h2 class="mb-1">{{ $client->full_name }}</h2>
-                            <p class="text-meta mb-0">{{ $details($client) }}</p>
+                            @php
+                                $headerItems = collect([
+                                    ...collect([\App\Enums\Client\ContactKind::Mobile, \App\Enums\Client\ContactKind::Email])
+                                        ->map(fn ($kind) => $canSeeContacts ? $client->primaryContact($kind) : null)
+                                        ->filter()
+                                        ->map(fn ($contact) => [
+                                            'masked' => $contact->kind === \App\Enums\Client\ContactKind::Mobile ? $showMobile($contact->value) : $showEmail($contact->value),
+                                            'target' => 'contact:'.$contact->getKey(),
+                                        ]),
+                                    $client->isEntity()
+                                        ? ($client->registration_number ? ['masked' => 'reg '.$showRegistration($client->registration_number), 'target' => 'identifier'] : null)
+                                        : ($client->id_number ? ['masked' => $showId($client->id_number), 'target' => 'identifier'] : null),
+                                ])->filter()->values();
+                            @endphp
+                            <p class="text-meta mb-0 d-flex flex-wrap align-items-center gap-1">
+                                @foreach ($headerItems as $item)
+                                    <x-client.reveal :masked="$item['masked']" :target="$item['target']" :client="$client" :can-reveal="$canReveal" />
+                                    @unless ($loop->last)
+                                        <span>·</span>
+                                    @endunless
+                                @endforeach
+                            </p>
                         </div>
                     </div>
 
@@ -100,131 +121,154 @@
                     </div>
                 </div>
 
-                <div class="row row-cards mb-3">
-                    <div class="col-4">
-                        <x-ui.stat-card label="Open matters" :value="$openMattersCount" />
-                    </div>
-                    {{--
-                    <div class="col-4">
-                        <x-ui.stat-card label="Fees outstanding" value="R 4 200" />
-                    </div>
-                    --}}
-                    <div class="col-4">
-                        <x-ui.stat-card label="Client since" :value="$client->created_at->format('M Y')" />
-                    </div>
-                </div>
+                @php
+                    $tabLinks = ['overview' => 'Overview'];
 
-                <div class="row mb-3">
-                    <div class="col">
-                        <div class="card">
-                            <div class="card-body">
-                                <h3 class="text-meta text-uppercase mb-2">Matters</h3>
-                                <div class="table-responsive">
-                                    <table class="table table-vcenter">
-                                        <tbody>
-                                            @forelse ($matters as $matter)
-                                                <tr>
-                                                    <td class="text-meta text-nowrap"><a href="{{ route('matter.show', $matter) }}">{{ $matter->reference }}</a></td>
-                                                    <td>{{ $matter->title }}</td>
-                                                    <td>
-                                                        @if ($matter->isClosed())
-                                                            <x-ui.stage-badge tone="success">Closed</x-ui.stage-badge>
-                                                        @else
-                                                            <x-ui.stage-badge tone="info">Open</x-ui.stage-badge>
-                                                        @endif
-                                                    </td>
-                                                    <td class="text-meta text-end">{{ $matter->instructed_at?->format('d M y') }}</td>
-                                                </tr>
-                                            @empty
-                                                <tr>
-                                                    <td class="text-center text-secondary py-3">No matters for this client.</td>
-                                                </tr>
-                                            @endforelse
-                                        </tbody>
-                                    </table>
+                    if ($canSeeContacts) {
+                        $tabLinks += ['contacts' => 'Contacts', 'persons' => 'Contact persons'];
+                    }
+                @endphp
+
+                <ul class="nav nav-underline mb-3">
+                    @foreach ($tabLinks as $key => $label)
+                        <li class="nav-item">
+                            <a href="{{ route('client.show', array_filter(['client' => $client, 'tab' => $key === 'overview' ? null : $key, 'q' => $query])) }}"
+                                @class(['nav-link', 'active' => $tab === $key])>{{ $label }}</a>
+                        </li>
+                    @endforeach
+                </ul>
+
+                @if ($tab === 'contacts')
+                    @include('clients.contacts')
+                @elseif ($tab === 'persons')
+                    @include('clients.persons')
+                @else
+                    <div class="row row-cards mb-3">
+                        <div class="col-4">
+                            <x-ui.stat-card label="Open matters" :value="$openMattersCount" />
+                        </div>
+                        {{--
+                        <div class="col-4">
+                            <x-ui.stat-card label="Fees outstanding" value="R 4 200" />
+                        </div>
+                        --}}
+                        <div class="col-4">
+                            <x-ui.stat-card label="Client since" :value="$client->created_at->format('M Y')" />
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h3 class="text-meta text-uppercase mb-2">Matters</h3>
+                                    <div class="table-responsive">
+                                        <table class="table table-vcenter">
+                                            <tbody>
+                                                @forelse ($matters as $matter)
+                                                    <tr>
+                                                        <td class="text-meta text-nowrap"><a href="{{ route('matter.show', $matter) }}">{{ $matter->reference }}</a></td>
+                                                        <td>{{ $matter->title }}</td>
+                                                        <td>
+                                                            @if ($matter->isClosed())
+                                                                <x-ui.stage-badge tone="success">Closed</x-ui.stage-badge>
+                                                            @else
+                                                                <x-ui.stage-badge tone="info">Open</x-ui.stage-badge>
+                                                            @endif
+                                                        </td>
+                                                        <td class="text-meta text-end">{{ $matter->instructed_at?->format('d M y') }}</td>
+                                                    </tr>
+                                                @empty
+                                                    <tr>
+                                                        <td class="text-center text-secondary py-3">No matters for this client.</td>
+                                                    </tr>
+                                                @endforelse
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="row">
-                    @if ($showConsent)
-                        @php
-                            $active = (bool) $consent?->isActive();
-                            $withdrawn = $consent && $consent->granted && ! $active;
-                            $declined = $consent && ! $consent->granted;
-                            $mandate = fn ($record) => $record->mandate()
-                                ? '<a href="'.e(route('client.consent.mandate', [$client, $record])).'">signed mandate</a>'
-                                : null;
-                        @endphp
+                    <div class="row">
+                        @if ($showConsent)
+                            @php
+                                $active = (bool) $consent?->isActive();
+                                $withdrawn = $consent && $consent->granted && ! $active;
+                                $declined = $consent && ! $consent->granted;
+                                $mandate = fn ($record) => $record->mandate()
+                                    ? '<a href="'.e(route('client.consent.mandate', [$client, $record])).'">signed mandate</a>'
+                                    : null;
+                            @endphp
 
-                        <div class="col-md-6" x-data>
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <h3 class="text-meta text-uppercase mb-0">Popia consent</h3>
+                            <div class="col-md-6" x-data>
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <h3 class="text-meta text-uppercase mb-0">Popia consent</h3>
 
-                                {{-- On is only reached by recording consent, and off only by withdrawing it, so the switch
-                                     never flips by itself; it asks. A withdrawn consent stays withdrawn. --}}
-                                <label class="form-check form-switch mb-0"
-                                    @if ($withdrawn) title="Withdrawn consent cannot be switched back on. Record new consent instead." @endif>
-                                    <input class="form-check-input" type="checkbox" role="switch" aria-label="Popia consent"
-                                        @checked($active)
-                                        @disabled($withdrawn || ($active ? ! $canWithdrawConsent : ! $canRecordConsent))
-                                        @if ($active)
-                                            x-on:click.prevent="$refs.withdraw.requestSubmit()"
-                                        @else
-                                            x-on:click.prevent="$dispatch('sheet-open', 'record-consent')"
-                                        @endif>
-                                </label>
+                                    {{-- On is only reached by recording consent, and off only by withdrawing it, so the switch
+                                         never flips by itself; it asks. A withdrawn consent stays withdrawn. --}}
+                                    <label class="form-check form-switch mb-0"
+                                        @if ($withdrawn) title="Withdrawn consent cannot be switched back on. Record new consent instead." @endif>
+                                        <input class="form-check-input" type="checkbox" role="switch" aria-label="Popia consent"
+                                            @checked($active)
+                                            @disabled($withdrawn || ($active ? ! $canWithdrawConsent : ! $canRecordConsent))
+                                            @if ($active)
+                                                x-on:click.prevent="$refs.withdraw.requestSubmit()"
+                                            @else
+                                                x-on:click.prevent="$dispatch('sheet-open', 'record-consent')"
+                                            @endif>
+                                    </label>
+                                </div>
+
+                                @if ($consent === null)
+                                    <p class="mb-0">No consent decision recorded.</p>
+                                @elseif ($active)
+                                    <p class="mb-0">Captured {{ $consent->granted_at->format('d M Y') }} · {{ Str::headline($consent->method->value) }}@if ($link = $mandate($consent)) · {!! $link !!} on file @endif</p>
+                                @elseif ($withdrawn)
+                                    <p class="mb-0">Withdrawn {{ $consent->withdrawn_at->format('d M Y') }} · was captured {{ $consent->granted_at->format('d M Y') }}</p>
+                                @else
+                                    <p class="mb-0">Consent declined · {{ Str::headline($consent->method->value) }}</p>
+                                @endif
+
+                                @if ($canRecordConsent && ($withdrawn || $declined))
+                                    <x-ui.button variant="outline-secondary" size="sm" class="mt-2"
+                                        x-on:click="$dispatch('sheet-open', 'record-consent')">Record new consent</x-ui.button>
+                                @endif
+
+                                @if ($active && $canWithdrawConsent)
+                                    <form x-ref="withdraw" method="POST" action="{{ route('client.consent.withdraw', $client) }}"
+                                        data-confirm="Withdraw this client's consent? It cannot be switched back on; if they consent again, that is recorded as a new consent."
+                                        data-confirm-title="Withdraw consent" data-confirm-action="Withdraw" data-confirm-tone="danger" data-confirm-icon="shield-x">
+                                        @csrf
+                                    </form>
+                                @endif
+
+                                @if ($consents->count() > 1)
+                                    <h4 class="text-meta text-uppercase mt-3 mb-1">History</h4>
+                                    @foreach ($consents as $record)
+                                        <p class="text-meta mb-1">
+                                            @if ($record->isActive())
+                                                Granted {{ $record->granted_at->format('d M Y') }} · in force
+                                            @elseif ($record->granted)
+                                                Granted {{ $record->granted_at->format('d M Y') }} · withdrawn {{ $record->withdrawn_at->format('d M Y') }}
+                                            @else
+                                                Declined {{ $record->created_at->format('d M Y') }}
+                                            @endif
+                                            · {{ Str::headline($record->method->value) }}@if ($link = $mandate($record)) · {!! $link !!} @endif
+                                        </p>
+                                    @endforeach
+                                @endif
                             </div>
-
-                            @if ($consent === null)
-                                <p class="mb-0">No consent decision recorded.</p>
-                            @elseif ($active)
-                                <p class="mb-0">Captured {{ $consent->granted_at->format('d M Y') }} · {{ Str::headline($consent->method->value) }}@if ($link = $mandate($consent)) · {!! $link !!} on file @endif</p>
-                            @elseif ($withdrawn)
-                                <p class="mb-0">Withdrawn {{ $consent->withdrawn_at->format('d M Y') }} · was captured {{ $consent->granted_at->format('d M Y') }}</p>
-                            @else
-                                <p class="mb-0">Consent declined · {{ Str::headline($consent->method->value) }}</p>
-                            @endif
-
-                            @if ($canRecordConsent && ($withdrawn || $declined))
-                                <x-ui.button variant="outline-secondary" size="sm" class="mt-2"
-                                    x-on:click="$dispatch('sheet-open', 'record-consent')">Record new consent</x-ui.button>
-                            @endif
-
-                            @if ($active && $canWithdrawConsent)
-                                <form x-ref="withdraw" method="POST" action="{{ route('client.consent.withdraw', $client) }}"
-                                    data-confirm="Withdraw this client's consent? It cannot be switched back on; if they consent again, that is recorded as a new consent."
-                                    data-confirm-title="Withdraw consent" data-confirm-action="Withdraw" data-confirm-tone="danger" data-confirm-icon="shield-x">
-                                    @csrf
-                                </form>
-                            @endif
-
-                            @if ($consents->count() > 1)
-                                <h4 class="text-meta text-uppercase mt-3 mb-1">History</h4>
-                                @foreach ($consents as $record)
-                                    <p class="text-meta mb-1">
-                                        @if ($record->isActive())
-                                            Granted {{ $record->granted_at->format('d M Y') }} · in force
-                                        @elseif ($record->granted)
-                                            Granted {{ $record->granted_at->format('d M Y') }} · withdrawn {{ $record->withdrawn_at->format('d M Y') }}
-                                        @else
-                                            Declined {{ $record->created_at->format('d M Y') }}
-                                        @endif
-                                        · {{ Str::headline($record->method->value) }}@if ($link = $mandate($record)) · {!! $link !!} @endif
-                                    </p>
-                                @endforeach
-                            @endif
+                        @endif
+                        {{--
+                        <div class="col-md-6">
+                            <h3 class="text-meta text-uppercase mb-2">Conflict check</h3>
+                            <p class="mb-0">Cleared 14 Aug 2026 by L. Radebe · no adverse party match</p>
                         </div>
-                    @endif
-                    {{--
-                    <div class="col-md-6">
-                        <h3 class="text-meta text-uppercase mb-2">Conflict check</h3>
-                        <p class="mb-0">Cleared 14 Aug 2026 by L. Radebe · no adverse party match</p>
+                        --}}
                     </div>
-                    --}}
-                </div>
+                @endif
             @else
                 <p class="text-secondary">Select a client to see their file.</p>
             @endif

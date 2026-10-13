@@ -6,14 +6,16 @@ namespace App\Http\Requests\Client;
 
 use App\Enums\Client\ContactKind;
 use App\Models\Client;
-use App\Rules\UniqueClientContact;
-use App\Rules\ValidContactValue;
+use App\Rules\Client\UniqueClientContact;
+use App\Rules\Client\ValidContactValue;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class StoreClientContactRequest extends FormRequest
 {
+    protected $errorBag = 'contact_new';
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -25,6 +27,7 @@ class StoreClientContactRequest extends FormRequest
     /**
      * The value is checked for shape and for being unique to this client, but
      * only once the kind is known — the kind decides what a valid value is.
+     * People to call are kept apart, as contact persons, with their own details.
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
@@ -33,10 +36,11 @@ class StoreClientContactRequest extends FormRequest
         $kind = ContactKind::tryFrom((string) $this->input('kind'));
 
         return [
-            'kind' => ['required', Rule::enum(ContactKind::class)],
+            'kind' => ['required', Rule::enum(ContactKind::class)->except(ContactKind::ContactPerson)],
             'value' => array_values(array_filter([
                 'required',
                 'string',
+                'max:500',
                 $kind !== null ? new ValidContactValue($kind) : null,
                 $kind !== null ? new UniqueClientContact($this->client(), $kind) : null,
             ])),

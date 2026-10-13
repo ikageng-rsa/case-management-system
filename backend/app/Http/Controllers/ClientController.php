@@ -162,10 +162,21 @@ class ClientController extends Controller
             'query' => (string) $request->query('q'),
             'client' => $client,
             'canSeeContacts' => $user->can('view_client_contacts'),
+            'canReveal' => $user->can('view_unmasked_client_data'),
+            'canEditClient' => $client !== null && $user->can('update', $client),
+            'tab' => $this->tab($request, $user),
             'matterTypes' => $user->can('create', Matter::class) ? MatterType::query()->orderBy('name')->get() : collect(),
             'courts' => $user->can('create', Matter::class) ? Court::query()->orderBy('name')->get() : collect(),
             'attorneys' => $user->can('assign_matters') ? User::query()->orderBy('name')->get() : collect(),
         ] + ($client === null ? [] : $this->detail($client, $user)));
+    }
+
+    /** Contacts and contact persons are only for those cleared to see how a client is reached. */
+    protected function tab(Request $request, User $user): string
+    {
+        $tabs = $user->can('view_client_contacts') ? ['overview', 'contacts', 'persons'] : ['overview'];
+
+        return in_array($request->query('tab'), $tabs, true) ? $request->query('tab') : 'overview';
     }
 
     /** @return array<string, mixed> */
@@ -188,6 +199,7 @@ class ClientController extends Controller
 
         return [
             'canSeeFullIdentifiers' => $user->can('view_unmasked_client_data'),
+            'contactPersons' => $user->can('view_client_contacts') ? $client->contactPersons()->orderByDesc('is_primary')->oldest()->get() : collect(),
             'matters' => $matters,
             'openMattersCount' => $matters->filter->isOpen()->count(),
             'consent' => $consents->first(),

@@ -311,6 +311,61 @@ Alpine.data('matterIntake', ({
 }));
 
 
+/*
+ * A masked value that can be shown in full, briefly. The value is asked for from
+ * the server, which allows it only to those cleared to see it and records that
+ * it was read; it is held here for a few seconds and then dropped, so it does
+ * not linger on the page.
+ */
+Alpine.data('reveal', ({ url, target, masked, seconds = 10 }) => ({
+    masked,
+    value: null,
+    shown: false,
+    loading: false,
+    timer: null,
+
+    async toggle() {
+        if (this.shown) {
+            this.hide();
+
+            return;
+        }
+
+        this.loading = true;
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+                },
+                body: JSON.stringify({ target }),
+            });
+
+            if (! response.ok) {
+                throw new Error('Not allowed');
+            }
+
+            this.value = (await response.json()).value;
+            this.shown = true;
+            this.timer = setTimeout(() => this.hide(), seconds * 1000);
+        } catch {
+            window.toast({ message: 'That could not be shown.', tone: 'danger' });
+        } finally {
+            this.loading = false;
+        }
+    },
+
+    hide() {
+        clearTimeout(this.timer);
+        this.value = null;
+        this.shown = false;
+    },
+}));
+
+
 /* Floating messages config */
 Alpine.data('toasts', (seed = []) => ({
     items: [],
