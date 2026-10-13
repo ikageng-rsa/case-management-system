@@ -298,4 +298,17 @@ class MatterShowTest extends TestCase
             ->assertSee('all 1')
             ->assertDontSee('mine 0');
     }
+
+    public function test_long_activity_type_names_are_cut_short_on_the_ledger_filters_with_the_whole_name_on_hover(): void
+    {
+        $matter = Matter::factory()->create();
+        $type = ActivityType::factory()->create(['code' => 'CALL', 'name' => 'telephone attendance']);
+        Narration::factory()->for($matter)->create(['activity_type_id' => $type->getKey()]);
+
+        $this->actingAs($this->userWithRole(RoleEnum::Director))
+            ->get(route('matter.show', $matter))
+            ->assertSee('telephone atte… 1', false)
+            ->assertSee('title="telephone attendance"', false)
+            ->assertDontSee('telephone attendance 1');
+    }
 }

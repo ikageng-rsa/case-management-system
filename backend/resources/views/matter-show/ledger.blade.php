@@ -17,13 +17,15 @@
 
         {{-- Only what the ledger holds is offered, and a row holding only "all" is just clutter. --}}
         @if ($filters->isNotEmpty() || $mineCount > 0 || $filter === 'mine')
-            <div class="d-flex flex-wrap align-items-center gap-2 bg-light rounded-pill p-1">
+            {{-- Smaller type than a button's usual, so more of the ledger's own words fit. --}}
+            <div class="d-flex flex-wrap align-items-center gap-2 bg-light rounded-pill p-1" style="--tblr-btn-font-size: var(--cms-text-base);">
                 <x-ui.button :variant="blank($filter) ? 'dark' : 'ghost-secondary'" class="rounded-pill" size="sm"
                     :href="$link()">all {{ $allCount }}</x-ui.button>
 
                 @foreach ($filters as $code => $type)
+                    {{-- Type names are the firm's to choose, so long ones are cut short; the title carries the whole name. --}}
                     <x-ui.button :variant="$filter === $code ? 'dark' : 'ghost-secondary'" class="rounded-pill" size="sm"
-                        :href="$link(['filter' => $code])">{{ $type['label'] }} {{ $type['count'] }}</x-ui.button>
+                        :href="$link(['filter' => $code])" :title="$type['label']">{{ Str::limit($type['label'], 14, '…') }} {{ $type['count'] }}</x-ui.button>
                 @endforeach
 
                 @if ($mineCount > 0 || $filter === 'mine')
