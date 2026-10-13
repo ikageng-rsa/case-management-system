@@ -9,11 +9,10 @@ use App\Models\DiaryEntry;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Notification;
 use Illuminate\Queue\Attributes\DeleteWhenMissingModels;
 
 #[DeleteWhenMissingModels]
-class DiaryEntryOverdue extends Notification implements ShouldQueue
+class DiaryEntryOverdue extends PersonalNotification implements ShouldQueue
 {
     use Queueable;
 
@@ -21,15 +20,9 @@ class DiaryEntryOverdue extends Notification implements ShouldQueue
         public readonly DiaryEntry $entry,
     ) {}
 
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
+    public function type(): NotificationType
     {
-        // Always kept in the system; emailed too when the person has asked for that.
-        return $notifiable->wantsEmailFor(NotificationType::DiaryOverdue)
-            ? ['database', 'mail']
-            : ['database'];
+        return NotificationType::DiaryOverdue;
     }
 
     public function toMail(object $notifiable): MailMessage
@@ -61,6 +54,9 @@ class DiaryEntryOverdue extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
+            'type' => $this->type()->value,
+            'message' => sprintf('A diary entry on %s is overdue: %s', $this->entry->matter?->reference, $this->entry->body),
+            'url' => route('matter.show', [$this->entry->matter, 'tab' => 'diary']),
             'diary_entry_id' => $this->entry->getKey(),
             'matter_id' => $this->entry->matter_id,
             'matter_reference' => $this->entry->matter?->reference,

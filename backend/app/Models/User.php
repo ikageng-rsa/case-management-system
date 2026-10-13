@@ -42,6 +42,7 @@ class User extends Authenticatable
             'mobile' => EncryptedContact::class.':mobile',
             'office_phone' => EncryptedContact::class.':mobile',
             'preferences' => 'array',
+            'sign_in_code_enabled' => 'boolean',
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
@@ -71,12 +72,35 @@ class User extends Authenticatable
     }
 
     /**
-     * Whether this person wants the email for a kind of notification, as they
-     * chose it or, failing that, as the system defaults it.
+     * The channels this person gets a kind of notification on: as they chose, or
+     * failing that, as the system defaults it. An empty list is a choice too.
+     *
+     * @return array<int, string>
      */
+    public function channelsFor(NotificationType $type): array
+    {
+        $chosen = $this->preferences['notifications'][$type->value] ?? null;
+
+        if (! is_array($chosen)) {
+            return $type->defaultChannels();
+        }
+
+        return array_values(array_filter(
+            NotificationType::channels(),
+            fn (string $channel) => (bool) ($chosen[$channel] ?? false),
+        ));
+    }
+
     public function wantsEmailFor(NotificationType $type): bool
     {
-        return (bool) ($this->preferences['notifications'][$type->value]['mail'] ?? $type->emailByDefault());
+        return in_array(NotificationType::CHANNEL_EMAIL, $this->channelsFor($type), true);
+    }
+
+    /** Whether signing in asks for a code, which is on until the person turns it off. */
+    public function usesSignInCode(): bool
+    {
+        // A user just created has not been read back, so the column's own default is not on the model yet.
+        return (bool) ($this->sign_in_code_enabled ?? true);
     }
 
     public function auditLabel(): string

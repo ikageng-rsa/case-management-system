@@ -21,15 +21,21 @@ class UpdateNotificationPreferencesRequest extends FormRequest
     }
 
     /**
-     * One yes or no for the email of each kind of notification. A box left
-     * unticked is not sent at all, so an absent key means no.
+     * A yes or no for each channel of each kind of notification. Both off is a
+     * choice, and nothing else can be slipped in beside them.
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
-        return collect(NotificationType::cases())
-            ->mapWithKeys(fn (NotificationType $type) => ['email.'.$type->value => ['sometimes', 'boolean']])
-            ->all();
+        $rules = [];
+
+        foreach (NotificationType::cases() as $type) {
+            foreach (NotificationType::channels() as $channel) {
+                $rules["channels.{$type->value}.{$channel}"] = ['sometimes', 'boolean'];
+            }
+        }
+
+        return $rules;
     }
 }

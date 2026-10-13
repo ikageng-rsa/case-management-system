@@ -209,4 +209,43 @@ class SignInCodeTest extends TestCase
         $this->assertAuthenticatedAs($user);
         Notification::assertNothingSent();
     }
+
+    public function test_a_person_who_turned_it_off_signs_in_with_the_password_alone(): void
+    {
+        $user = User::factory()->create(['sign_in_code_enabled' => false]);
+
+        $this->post('/login', ['email' => $user->email, 'password' => 'password'])->assertRedirect('/dashboard');
+
+        $this->assertAuthenticatedAs($user);
+        Notification::assertNothingSent();
+    }
+
+    public function test_one_persons_choice_does_not_change_anothers(): void
+    {
+        $off = User::factory()->create(['sign_in_code_enabled' => false]);
+        $on = User::factory()->create();
+
+        $this->post('/login', ['email' => $on->email, 'password' => 'password'])->assertRedirect(route('sign-in-code'));
+        $this->assertGuest();
+
+        $this->flushSession();
+
+        $this->post('/login', ['email' => $off->email, 'password' => 'password'])->assertRedirect('/dashboard');
+    }
+
+    public function test_the_firms_switch_overrides_a_persons_choice(): void
+    {
+        config(['security.sign_in_code.required' => false]);
+        $user = User::factory()->create(['sign_in_code_enabled' => true]);
+
+        $this->post('/login', ['email' => $user->email, 'password' => 'password'])->assertRedirect('/dashboard');
+    }
+
+    public function test_the_code_page_names_the_address_in_full(): void
+    {
+        $user = User::factory()->create(['email' => 'sarah.nel@example.co.za']);
+        $this->passPassword($user);
+
+        $this->get(route('sign-in-code'))->assertSee('sarah.nel@example.co.za');
+    }
 }

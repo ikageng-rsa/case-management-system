@@ -28,7 +28,7 @@ class RedirectIfSignInCodeRequired extends RedirectIfTwoFactorAuthenticatable im
     {
         $user = $this->validateCredentials($request);
 
-        if (! $this->codes->required()) {
+        if (! $this->codes->requiredFor($user)) {
             return $next($request);
         }
 

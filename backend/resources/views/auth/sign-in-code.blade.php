@@ -10,7 +10,7 @@
 
                 <h1 class="mb-1 text-white">Check your email</h1>
                 <p class="mb-4" style="color: var(--cms-on-ink-caption);">
-                    We sent a six digit code to {{ \App\Services\Clients\MaskIdentifier::email($email) }}. Enter it to finish signing in.
+                    We sent a six digit code to {{ $email }}. Enter it to finish signing in.
                 </p>
 
                 @if (session('status'))

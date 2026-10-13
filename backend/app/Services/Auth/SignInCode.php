@@ -16,9 +16,10 @@ use Illuminate\Support\Facades\Cache;
  */
 class SignInCode
 {
-    public function required(): bool
+    /** Whether this person is asked for a code: the firm has it on, and so have they. */
+    public function requiredFor(User $user): bool
     {
-        return (bool) config('security.sign_in_code.required');
+        return (bool) config('security.sign_in_code.required') && $user->usesSignInCode();
     }
 
     /** Make a fresh code, replacing any waiting one, and email it. */

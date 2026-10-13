@@ -54,7 +54,17 @@
                 </x-slot:footerActions>
             </x-ui.sidebar>
 
-            <x-ui.header />
+            <x-ui.header>
+                @php($unread = $user->unreadNotifications()->count())
+
+                <a href="{{ route('notifications') }}" class="btn btn-ghost-secondary btn-icon position-relative"
+                   aria-label="Notifications{{ $unread > 0 ? ', '.$unread.' unread' : '' }}" title="Notifications">
+                    <x-ui.icon name="bell" />
+                    @if ($unread > 0)
+                        <span class="badge bg-primary text-dark position-absolute top-0 start-100 translate-middle rounded-pill">{{ $unread > 99 ? '99+' : $unread }}</span>
+                    @endif
+                </a>
+            </x-ui.header>
 
             <div class="page-wrapper">
                 <div class="page-body">

@@ -55,11 +55,15 @@
                     </div>
 
                     @foreach ($notificationTypes as $type)
+                        @php
+                            $where = collect($user->channelsFor($type))
+                                ->map(fn ($channel) => $channel === 'mail' ? 'emailed to you' : 'shown in the system')
+                                ->implode(' and ');
+                        @endphp
+
                         <div @class(['mb-3' => ! $loop->last])>
                             <div class="mb-0">{{ $type->label() }}</div>
-                            <div class="text-meta">
-                                {{ $user->wantsEmailFor($type) ? 'Shown in the system and emailed to you' : 'Shown in the system only' }}
-                            </div>
+                            <div class="text-meta">{{ $where !== '' ? ucfirst($where) : 'Not sent to you' }}</div>
                         </div>
                     @endforeach
                 </div>
@@ -82,33 +86,82 @@
 
             <div class="card mb-3">
                 <div class="card-body">
-                    <h3 class="card-title text-meta text-uppercase mb-3">Signing in</h3>
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h3 class="card-title text-meta text-uppercase mb-0">Signing in</h3>
 
-                    <p class="mb-2">After your password, a six digit code is emailed to <span class="text-meta">{{ \App\Services\Clients\MaskIdentifier::email($user->email) }}</span>. You enter it to finish signing in.</p>
-                    <p class="text-secondary mb-0">The code works once and runs out in {{ config('security.sign_in_code.minutes') }} minutes. If it goes to the wrong place, ask a director to correct your email.</p>
+                        {{-- The switch never flips by itself: either way it opens the dialogue, which asks for the password. --}}
+                        <label class="form-check form-switch mb-0" x-data>
+                            <input class="form-check-input" type="checkbox" role="switch" aria-label="Sign-in code"
+                                @checked($user->usesSignInCode())
+                                x-on:click.prevent="$dispatch('sheet-open', 'sign-in-code')">
+                        </label>
+                    </div>
+
+                    @if ($user->usesSignInCode())
+                        <p class="mb-2">After your password, a six digit code is emailed to <strong>{{ $user->email }}</strong>. You enter it to finish signing in.</p>
+                        <p class="text-secondary mb-0">The code works once and runs out in {{ config('security.sign_in_code.minutes') }} minutes. If it goes to the wrong place, ask a director to correct your email.</p>
+                    @else
+                        <p class="text-secondary mb-0">Your password is the only thing between this account and the firm's files. We recommend turning the code back on.</p>
+                    @endif
                 </div>
             </div>
         </div>
     </div>
 
-    <x-ui.sheet name="notification-choices" title="Notifications" lede="Everything is shown in the system. Choose what is also emailed to you." bag="notifications"
+    <x-ui.sheet name="notification-choices" title="Notifications" lede="Anything that has to do with you. Choose where each is sent." bag="notifications" wide
         method="PATCH" :action="route('account.notifications')">
-        @foreach ($notificationTypes as $type)
-            <label class="form-check mb-3">
-                <input type="hidden" name="email[{{ $type->value }}]" value="0">
-                <input class="form-check-input" type="checkbox" name="email[{{ $type->value }}]" value="1"
-                    @checked($errors->notifications->any() ? old('email.'.$type->value) : $user->wantsEmailFor($type))>
-                <span class="form-check-label">
-                    <span class="d-block">Email me: {{ lcfirst($type->label()) }}</span>
-                    <span class="d-block text-meta">{{ $type->description() }}</span>
-                </span>
-            </label>
-        @endforeach
+        <table class="table table-vcenter">
+            <thead>
+                <tr>
+                    <th>When</th>
+                    <th class="text-center">In the system</th>
+                    <th class="text-center">Email</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($notificationTypes as $type)
+                    <tr>
+                        <td>
+                            <div>{{ $type->label() }}</div>
+                            <div class="text-meta">{{ $type->description() }}</div>
+                        </td>
+                        @foreach ($channels as $channel)
+                            @php
+                                $on = $errors->notifications->any()
+                                    ? (bool) old("channels.{$type->value}.{$channel}")
+                                    : in_array($channel, $user->channelsFor($type), true);
+                            @endphp
+                            <td class="text-center">
+                                <input type="hidden" name="channels[{{ $type->value }}][{{ $channel }}]" value="0">
+                                <input class="form-check-input" type="checkbox" name="channels[{{ $type->value }}][{{ $channel }}]" value="1"
+                                    aria-label="{{ $type->label() }} — {{ $channel === 'mail' ? 'email' : 'in the system' }}" @checked($on)>
+                            </td>
+                        @endforeach
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
 
         <x-slot:footer>
             <div class="d-flex align-items-center justify-content-between">
                 <x-ui.button variant="outline-secondary" x-on:click="close()">Cancel</x-ui.button>
                 <x-ui.button type="submit" variant="primary">Save</x-ui.button>
+            </div>
+        </x-slot:footer>
+    </x-ui.sheet>
+
+    <x-ui.sheet name="sign-in-code" :title="$user->usesSignInCode() ? 'Turn off the sign-in code' : 'Turn on the sign-in code'"
+        :lede="$user->usesSignInCode() ? 'You will sign in with your password alone.' : 'A code will be emailed to '.$user->email.' each time you sign in.'"
+        bag="signInCode" method="PATCH" :action="route('account.sign-in-code')">
+        <input type="hidden" name="enabled" value="{{ $user->usesSignInCode() ? 0 : 1 }}">
+
+        <x-ui.input label="Your password" name="current_password" id="sign_in_code_password" type="password" autocomplete="current-password"
+            hint="Needed to change how you are let in." :error="$errors->signInCode->first('current_password')" />
+
+        <x-slot:footer>
+            <div class="d-flex align-items-center justify-content-between">
+                <x-ui.button variant="outline-secondary" x-on:click="close()">Cancel</x-ui.button>
+                <x-ui.button type="submit" :variant="$user->usesSignInCode() ? 'danger' : 'primary'">{{ $user->usesSignInCode() ? 'Turn off' : 'Turn on' }}</x-ui.button>
             </div>
         </x-slot:footer>
     </x-ui.sheet>

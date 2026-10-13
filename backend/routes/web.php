@@ -17,6 +17,7 @@ use App\Http\Controllers\MatterController;
 use App\Http\Controllers\MatterDocumentController;
 use App\Http\Controllers\MatterPartyController;
 use App\Http\Controllers\NarrationController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PopiaConsentController;
 use App\Http\Controllers\SignInCodeController;
 use App\Http\Controllers\UserController;
@@ -42,6 +43,10 @@ Route::middleware(['guest', 'throttle:invitations'])->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/account', [AccountController::class, 'show'])->name('account');
     Route::patch('/account/notifications', [AccountController::class, 'updateNotifications'])->name('account.notifications');
+    Route::patch('/account/sign-in-code', [AccountController::class, 'updateSignInCode'])->name('account.sign-in-code');
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications');
+    Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'read'])->name('notifications.read');
     Route::get('/dashboard', DashboardController::class)->middleware('auth')->name('dashboard');
     Route::get('/matters', [MatterController::class, 'index'])->name('matters');
     Route::post('/matters', [MatterController::class, 'store'])->name('matter.store');
