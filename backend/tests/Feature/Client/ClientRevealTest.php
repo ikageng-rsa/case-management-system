@@ -140,7 +140,7 @@ class ClientRevealTest extends TestCase
         $this->actingAs($reader)
             ->get(route('client.show', $client))
             ->assertDontSee('x-data="reveal(', false)
-            ->assertSee('9001015······');
+            ->assertSee('·········0088');
     }
 
     public function test_reveals_show_up_in_the_audit_log_page(): void

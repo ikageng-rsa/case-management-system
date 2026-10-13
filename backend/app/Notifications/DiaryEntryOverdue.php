@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace App\Notifications;
 
+use App\Enums\Notification\NotificationType;
 use App\Models\DiaryEntry;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Notification;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Queue\Attributes\DeleteWhenMissingModels;
 
 #[DeleteWhenMissingModels]
-class DiaryEntryOverdue extends Notification implements ShouldQueue
+class DiaryEntryOverdue extends PersonalNotification implements ShouldQueue
 {
     use Queueable;
 
@@ -19,12 +20,23 @@ class DiaryEntryOverdue extends Notification implements ShouldQueue
         public readonly DiaryEntry $entry,
     ) {}
 
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
+    public function type(): NotificationType
     {
-        return ['database'];
+        return NotificationType::DiaryOverdue;
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        $reference = $this->entry->matter?->reference;
+
+        return (new MailMessage)
+            ->subject('Overdue: a diary entry'.($reference ? " on {$reference}" : ''))
+            ->greeting('Hello '.$notifiable->name.',')
+            ->line('A diary entry assigned to you is past its due date and not yet done:')
+            ->line('**'.$this->entry->body.'**')
+            ->line('It was due '.$this->entry->due_at->format('d M Y H:i').'.')
+            ->action('Open the matter', route('matter.show', [$this->entry->matter, 'tab' => 'diary']))
+            ->line('You can stop these emails from your account page.');
     }
 
     /**
@@ -42,6 +54,9 @@ class DiaryEntryOverdue extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
+            'type' => $this->type()->value,
+            'message' => sprintf('A diary entry on %s is overdue: %s', $this->entry->matter?->reference, $this->entry->body),
+            'url' => route('matter.show', [$this->entry->matter, 'tab' => 'diary']),
             'diary_entry_id' => $this->entry->getKey(),
             'matter_id' => $this->entry->matter_id,
             'matter_reference' => $this->entry->matter?->reference,

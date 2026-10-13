@@ -93,6 +93,12 @@ class Matter extends Model implements HasMedia
         return $this->hasMany(MatterAssignment::class);
     }
 
+    /** Everyone else in the matter, besides its client: the other side, counsel, witnesses. */
+    public function parties(): HasMany
+    {
+        return $this->hasMany(MatterParty::class);
+    }
+
     public function narrations(): HasMany
     {
         return $this->hasMany(Narration::class);
@@ -209,7 +215,7 @@ class Matter extends Model implements HasMedia
      * a person would say them: "civ 2026", "armstrong crm", "civ 12". Every word
      * has to match something, but each may match anywhere that fits it: a year
      * word means the year opened, a number means the file number, and any other
-     * word may be part of the reference, the title, the type or the client's name.
+     * word may be part of the reference, the title, the type, the client's name or a party's.
      * Words that only say what is being looked for ("matter") are ignored.
      */
     public function scopeSearch(Builder $query, string $term): void
@@ -239,7 +245,10 @@ class Matter extends Model implements HasMedia
                         ->orWhereHas('client', fn (Builder $client) => $client
                             ->where('first_name', 'like', $like)
                             ->orWhere('last_name', 'like', $like)
-                            ->orWhere('entity_name', 'like', $like));
+                            ->orWhere('entity_name', 'like', $like))
+                        ->orWhereHas('parties', fn (Builder $party) => $party
+                            ->where('name', 'like', $like)
+                            ->orWhere('representative', 'like', $like));
                 }
             });
         }

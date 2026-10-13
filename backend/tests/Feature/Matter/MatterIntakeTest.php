@@ -83,7 +83,7 @@ class MatterIntakeTest extends TestCase
             ->assertExactJson([[
                 'id' => $client->getKey(),
                 'name' => 'Thabo Mokoena',
-                'detail' => '9001015······',
+                'detail' => '·········0088',
                 'matters' => 2,
             ]]);
     }

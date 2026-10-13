@@ -1,3 +1,4 @@
+@can('work', $matter)
 <x-ui.sheet name="new-narration" title="Add a narration" lede="Record the work done on this matter." bag="narration" action="{{ route('matter.narrations.store', $matter) }}">
     <x-ui.select label="Activity" name="activity_type_id" :error="$errors->narration->first('activity_type_id')">
         @foreach ($activityTypes as $type)
@@ -78,7 +79,10 @@
         </div>
     </x-slot:footer>
 </x-ui.sheet>
+@endcan
 
+@if ($matter->isOpen())
+    @can('assign', $matter)
 @php
     // Responsible and supervising are held by one person, so taking the seat
     // replaces whoever has it; the form asks first when that is about to happen.
@@ -124,3 +128,5 @@
         </div>
     </x-slot:footer>
 </x-ui.sheet>
+    @endcan
+@endif

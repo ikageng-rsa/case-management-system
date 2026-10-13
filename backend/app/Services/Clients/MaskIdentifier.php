@@ -28,23 +28,38 @@ class MaskIdentifier
         return mb_substr($masked, 0, 3).' '.mb_substr($masked, 3, -4).' '.mb_substr($masked, -4);
     }
 
-    /** t.mokoena@example.com reads as "t.mokoena@·······.com". */
+    /*
+     * t.mokoena@example.com reads as "t.·······@example.com": the first two letters
+     * stay, so the address can be recognised, and the rest of the name is hidden up
+     * to the @. The domain is left, since it says where someone works, not who they
+     * are. A very short name keeps fewer letters, so something is always hidden.
+     */
     public static function email(string $value): string
     {
-        [$local, $domain] = array_pad(explode('@', $value, 2), 2, '');
-
-        if ($domain === '') {
+        if (! str_contains($value, '@')) {
             return Str::mask($value, self::DOT, 0);
         }
 
-        // The top-level domain stays; it says little and helps recognition.
-        return $local.'@'.Str::mask($domain, self::DOT, 0, mb_strlen(Str::beforeLast($domain, '.')));
+        $local = Str::beforeLast($value, '@');
+        $domain = Str::afterLast($value, '@');
+
+        return Str::mask($local, self::DOT, min(2, max(mb_strlen($local) - 1, 0))).'@'.$domain;
     }
 
-    /** 9001015800088 reads as "9001015······". */
+    /*
+     * 9001015800088 reads as "·········0088": only the last four digits stay.
+     * The first six digits of an ID number are the date of birth, which is
+     * personal in itself, so the front of the number is what is hidden. The tail
+     * is enough to tell two clients apart and gives away nothing about the person.
+     */
     public static function idNumber(string $value): string
     {
-        return Str::mask($value, self::DOT, 7);
+        // A real number is thirteen digits; anything shorter still has to hide most of itself.
+        $keep = min(4, intdiv(mb_strlen($value), 2));
+
+        return $keep === 0
+            ? Str::mask($value, self::DOT, 0)
+            : Str::mask($value, self::DOT, 0, -$keep);
     }
 
     /** 2011/123456/07 reads as "2011/······/07". */

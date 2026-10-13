@@ -50,8 +50,11 @@
                 </div>
             </div>
 
-            <x-ui.button variant="primary" icon="upload" size="sm"
-                x-data x-on:click="$dispatch('sheet-open', 'upload-document')">Upload</x-ui.button>
+            {{-- A document is filed on an open matter the user carries; with none, there is nothing to upload to. --}}
+            @if ($canUpload)
+                <x-ui.button variant="primary" icon="upload" size="sm"
+                    x-data x-on:click="$dispatch('sheet-open', 'upload-document')">Upload</x-ui.button>
+            @endif
         </div>
     </div>
 
@@ -116,24 +119,26 @@
         @endif
     </div>
 
-    <x-ui.sheet name="upload-document" title="Upload a document" lede="File it on a matter you carry." bag="document"
-        :action="route('documents.store')" enctype="multipart/form-data">
-        <x-ui.matter-picker label="Matter" name="matter_id" scope="fileable" :selected="$uploadMatter"
-            :error="$errors->document->first('matter_id')" />
+    @if ($canUpload)
+        <x-ui.sheet name="upload-document" title="Upload a document" lede="File it on a matter you carry." bag="document"
+            :action="route('documents.store')" enctype="multipart/form-data">
+            <x-ui.matter-picker label="Matter" name="matter_id" scope="fileable" :selected="$uploadMatter"
+                :error="$errors->document->first('matter_id')" />
 
-        <x-ui.input label="File" name="file" id="upload_file" type="file" :error="$errors->document->first('file')" hint="Up to 50 MB." />
+            <x-ui.input label="File" name="file" id="upload_file" type="file" :error="$errors->document->first('file')" hint="Up to 50 MB." />
 
-        <x-ui.select label="Kind" name="kind" id="upload_kind" :error="$errors->document->first('kind')">
-            @foreach ($kinds as $option)
-                <option value="{{ $option->value }}" @selected(old('kind') === $option->value)>{{ Str::headline($option->value) }}</option>
-            @endforeach
-        </x-ui.select>
+            <x-ui.select label="Kind" name="kind" id="upload_kind" :error="$errors->document->first('kind')">
+                @foreach ($kinds as $option)
+                    <option value="{{ $option->value }}" @selected(old('kind') === $option->value)>{{ Str::headline($option->value) }}</option>
+                @endforeach
+            </x-ui.select>
 
-        <x-slot:footer>
-            <div class="d-flex align-items-center justify-content-between">
-                <x-ui.button variant="outline-secondary" x-on:click="close()">Cancel</x-ui.button>
-                <x-ui.button type="submit" variant="primary">Upload</x-ui.button>
-            </div>
-        </x-slot:footer>
-    </x-ui.sheet>
+            <x-slot:footer>
+                <div class="d-flex align-items-center justify-content-between">
+                    <x-ui.button variant="outline-secondary" x-on:click="close()">Cancel</x-ui.button>
+                    <x-ui.button type="submit" variant="primary">Upload</x-ui.button>
+                </div>
+            </x-slot:footer>
+        </x-ui.sheet>
+    @endif
 @endsection

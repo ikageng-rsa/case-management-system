@@ -7,6 +7,7 @@ namespace App\Services\Users;
 use App\Models\User;
 use App\Services\Roles\EnsureAdministrationRemains;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Role;
 
 class AssignUserRoles
 {
@@ -21,7 +22,9 @@ class AssignUserRoles
     public function assign(User $user, array $roles): User
     {
         DB::transaction(function () use ($user, $roles): void {
-            $user->syncRoles($roles);
+            // Ids arrive from a form as strings, and a string given to syncRoles is read
+            // as a role's name, so the roles are looked up and handed over as themselves.
+            $user->syncRoles(Role::query()->whereIn('id', $roles)->get());
 
             $this->administration->check();
         });

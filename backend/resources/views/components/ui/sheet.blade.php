@@ -7,6 +7,7 @@
     'bag' => 'default',
     'bags' => [],
     'wide' => false,
+    'width' => null,
     'record' => [],
     'action' => null,
     'method' => 'POST',
@@ -54,7 +55,7 @@
      data-sheet="{{ $name }}">
 
     <div class="offcanvas offcanvas-end" x-ref="panel" tabindex="-1"
-         style="--tblr-offcanvas-width: {{ $wide ? '640px' : '420px' }};"
+         style="--tblr-offcanvas-width: {{ $width ?? ($wide ? '640px' : '420px') }};"
          data-bs-keyboard="false"
          x-on:keydown.escape.window="$store.dialog.open || close()"
          aria-label="{{ $title }}">

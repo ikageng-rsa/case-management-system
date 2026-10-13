@@ -174,6 +174,8 @@ Alpine.data('matterIntake', ({
     types = {},
     typeId = '',
     urls = {},
+    parties = [],
+    defaultRole = 'respondent',
 } = {}) => ({
     step,
     client,
@@ -181,6 +183,8 @@ Alpine.data('matterIntake', ({
     types,
     typeId,
     urls,
+    parties,
+    defaultRole,
 
     query: '',
     results: [],
@@ -193,7 +197,7 @@ Alpine.data('matterIntake', ({
     reference: null,
 
     get steps() {
-        return this.fixedClient ? ['Matter', 'Review'] : ['Client', 'Matter', 'Review'];
+        return this.fixedClient ? ['Matter', 'Parties', 'Review'] : ['Client', 'Matter', 'Parties', 'Review'];
     },
 
     get current() {
@@ -202,6 +206,14 @@ Alpine.data('matterIntake', ({
 
     get litigation() {
         return this.types[this.typeId]?.litigation ?? false;
+    },
+
+    addParty() {
+        this.parties.push({ name: '', role: this.defaultRole, representative: '' });
+    },
+
+    removeParty(index) {
+        this.parties.splice(index, 1);
     },
 
     async search() {
@@ -283,6 +295,13 @@ Alpine.data('matterIntake', ({
             instructed: value('instructed'),
             attorney: this.$refs.attorney?.value ? text('attorney') : 'Not assigned yet',
             narration: this.$refs.narration?.value || '—',
+            parties: this.parties
+                .filter((party) => party.name.trim() !== '')
+                .map((party) => ({
+                    name: party.name.trim(),
+                    role: party.role.replace('_', ' '),
+                    representative: party.representative.trim(),
+                })),
         };
 
         this.previewReference();
@@ -426,6 +445,82 @@ Alpine.data('matterPicker', ({ url, scope = 'visible', selected = null } = {}) =
     clear() {
         this.matter = null;
         this.$nextTick(() => this.$refs.search?.focus());
+    },
+}));
+
+
+/*
+ * The list that drops down from the bell. It is fetched when opened, so the page
+ * itself only has to know how many are unread; reading one or all is a request
+ * that answers with the new count.
+ */
+Alpine.data('notificationMenu', ({ url, unread = 0 } = {}) => ({
+    unread,
+    items: [],
+    open: false,
+    loading: false,
+    loaded: false,
+
+    headers() {
+        return {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+        };
+    },
+
+    async toggle() {
+        this.open = ! this.open;
+
+        if (this.open) {
+            await this.load();
+        }
+    },
+
+    async load() {
+        this.loading = true;
+
+        try {
+            const response = await fetch(url, { headers: this.headers() });
+
+            if (response.ok) {
+                const data = await response.json();
+                this.items = data.items;
+                this.unread = data.unread;
+                this.loaded = true;
+            }
+        } finally {
+            this.loading = false;
+        }
+    },
+
+    async markRead(item) {
+        const response = await fetch(`${url}/${item.id}/read`, { method: 'POST', headers: this.headers() });
+
+        if (response.ok) {
+            item.read = true;
+            this.unread = (await response.json()).unread;
+        }
+    },
+
+    async markAllRead() {
+        const response = await fetch(`${url}/read-all`, { method: 'POST', headers: this.headers() });
+
+        if (response.ok) {
+            this.items.forEach((item) => (item.read = true));
+            this.unread = 0;
+        }
+    },
+
+    // Opening one marks it read, then goes where it points.
+    async go(item) {
+        if (! item.read) {
+            await this.markRead(item);
+        }
+
+        if (item.url) {
+            window.location = item.url;
+        }
     },
 }));
 

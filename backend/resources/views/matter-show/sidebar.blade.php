@@ -2,8 +2,12 @@
     <div class="card-body">
         <div class="d-flex align-items-center justify-content-between mb-3">
             <h3 class="card-title text-meta text-uppercase mb-0">Team</h3>
-            <x-ui.button variant="ghost-secondary" icon="plus" size="sm" aria-label="Add team member"
-                x-data x-on:click="$dispatch('sheet-open', 'assign-member')" />
+            @if ($matter->isOpen())
+                @can('assign', $matter)
+                    <x-ui.button variant="ghost-secondary" icon="plus" size="sm" aria-label="Add team member"
+                        x-data x-on:click="$dispatch('sheet-open', 'assign-member')" />
+                @endcan
+            @endif
         </div>
 
         @forelse ($matter->assignments as $assignment)

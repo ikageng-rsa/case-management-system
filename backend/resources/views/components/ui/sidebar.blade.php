@@ -5,6 +5,7 @@
     'user' => null,
     'role' => null,
     'initials' => null,
+    'accountHref' => null,
     'id' => 'sidebar-menu',
 ])
 
@@ -45,12 +46,18 @@
 
                 @if ($user)
                     <div class="navbar-footer mt-auto d-flex align-items-center gap-2">
+                        @if ($accountHref)
+                            <a href="{{ $accountHref }}" class="d-flex align-items-center gap-2 text-decoration-none" title="Your account">
+                        @endif
                         <span class="sidebar-avatar">{{ $initials }}</span>
 
                         <span>
                             <span class="app-sidebar-user-name d-block">{{ $user }}</span>
                             <span class="app-sidebar-user-role d-block">{{ $role }}</span>
                         </span>
+                        @if ($accountHref)
+                            </a>
+                        @endif
 
                         @isset($footerActions)
                             <span class="ms-auto">{{ $footerActions }}</span>

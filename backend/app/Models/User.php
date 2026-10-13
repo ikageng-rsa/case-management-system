@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Casts\Client\EncryptedContact;
 use App\Concerns\RecordsActivity;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -15,10 +16,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['name', 'email', 'password', 'job_title', 'mobile', 'office_phone', 'employee_number'])]
 #[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
 class User extends Authenticatable
 {
@@ -29,7 +29,6 @@ class User extends Authenticatable
     use HasUuids;
     use Notifiable;
     use RecordsActivity;
-    use TwoFactorAuthenticatable;
 
     /**
      * Get the attributes that should be cast.
@@ -39,10 +38,19 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
+            'mobile' => EncryptedContact::class.':mobile',
+            'office_phone' => EncryptedContact::class.':mobile',
+            'sign_in_code_enabled' => 'boolean',
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
         ];
+    }
+
+    /** What this person has chosen to be told about, and where. Only the choices made: the rest take their defaults. */
+    public function notificationPreferences(): HasMany
+    {
+        return $this->hasMany(NotificationPreference::class);
     }
 
     public function matterAssignments(): HasMany
@@ -67,6 +75,13 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
+    /** Whether signing in asks for a code, which is on until the person turns it off. */
+    public function usesSignInCode(): bool
+    {
+        // A user just created has not been read back, so the column's own default is not on the model yet.
+        return (bool) ($this->sign_in_code_enabled ?? true);
+    }
+
     public function auditLabel(): string
     {
         return 'user '.$this->name;
@@ -77,6 +92,6 @@ class User extends Authenticatable
      */
     protected function auditExcept(): array
     {
-        return ['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'];
+        return ['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes', 'mobile', 'office_phone'];
     }
 }
