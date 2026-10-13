@@ -56,7 +56,7 @@
 
                     @foreach ($notificationTypes as $type)
                         @php
-                            $where = collect($user->channelsFor($type))
+                            $where = collect($channelsByType[$type->value])
                                 ->map(fn ($channel) => $channel === 'mail' ? 'emailed to you' : 'shown in the system')
                                 ->implode(' and ');
                         @endphp
@@ -129,7 +129,7 @@
                             @php
                                 $on = $errors->notifications->any()
                                     ? (bool) old("channels.{$type->value}.{$channel}")
-                                    : in_array($channel, $user->channelsFor($type), true);
+                                    : in_array($channel, $channelsByType[$type->value], true);
                             @endphp
                             <td class="text-center">
                                 <input type="hidden" name="channels[{{ $type->value }}][{{ $channel }}]" value="0">

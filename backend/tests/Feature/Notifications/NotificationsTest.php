@@ -11,6 +11,7 @@ use App\Models\Client;
 use App\Models\Matter;
 use App\Models\MatterAssignment;
 use App\Models\MatterType;
+use App\Models\NotificationPreference;
 use App\Models\User;
 use App\Notifications\DiaryEntryAssigned;
 use App\Notifications\MatterAssigned;
@@ -69,7 +70,8 @@ class NotificationsTest extends TestCase
     {
         Notification::fake();
         $matter = Matter::factory()->create();
-        $person = User::factory()->create(['preferences' => ['notifications' => ['matter_assigned' => ['database' => true, 'mail' => false]]]]);
+        $person = User::factory()->create();
+        NotificationPreference::factory()->for($person)->create(['type' => 'matter_assigned', 'database' => true, 'mail' => false]);
 
         $this->actingAs($this->director())
             ->post(route('matter.assign', $matter), ['user_id' => $person->getKey(), 'capacity' => 'assisting']);
@@ -80,7 +82,8 @@ class NotificationsTest extends TestCase
     public function test_a_person_who_wants_nothing_is_sent_nothing_anywhere(): void
     {
         $matter = Matter::factory()->create();
-        $person = User::factory()->create(['preferences' => ['notifications' => ['matter_assigned' => ['database' => false, 'mail' => false]]]]);
+        $person = User::factory()->create();
+        NotificationPreference::factory()->for($person)->create(['type' => 'matter_assigned', 'database' => false, 'mail' => false]);
 
         $this->actingAs($this->director())
             ->post(route('matter.assign', $matter), ['user_id' => $person->getKey(), 'capacity' => 'assisting']);

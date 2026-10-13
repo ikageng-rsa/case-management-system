@@ -7,8 +7,10 @@ namespace Tests\Feature\User;
 use App\Enums\Auth\Role as RoleEnum;
 use App\Enums\Notification\NotificationType;
 use App\Models\DiaryEntry;
+use App\Models\NotificationPreference;
 use App\Models\User;
 use App\Notifications\DiaryEntryOverdue;
+use App\Services\Notifications\ResolveNotificationChannels;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -253,10 +255,10 @@ class UserAccountTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $this->assertSame(['database', 'mail'], $user->channelsFor(NotificationType::MatterAssigned));
-        $this->assertSame(['database'], $user->channelsFor(NotificationType::MatterUnassigned));
-        $this->assertSame(['database'], $user->channelsFor(NotificationType::DiaryAssigned));
-        $this->assertSame(['database', 'mail'], $user->channelsFor(NotificationType::DiaryOverdue));
+        $this->assertSame(['database', 'mail'], app(ResolveNotificationChannels::class)->for($user, NotificationType::MatterAssigned));
+        $this->assertSame(['database'], app(ResolveNotificationChannels::class)->for($user, NotificationType::MatterUnassigned));
+        $this->assertSame(['database'], app(ResolveNotificationChannels::class)->for($user, NotificationType::DiaryAssigned));
+        $this->assertSame(['database', 'mail'], app(ResolveNotificationChannels::class)->for($user, NotificationType::DiaryOverdue));
     }
 
     public function test_a_person_chooses_the_system_email_both_or_neither_for_each_kind(): void
@@ -275,10 +277,10 @@ class UserAccountTest extends TestCase
 
         $user->refresh();
 
-        $this->assertSame(['database'], $user->channelsFor(NotificationType::MatterAssigned));
-        $this->assertSame(['mail'], $user->channelsFor(NotificationType::MatterUnassigned));
-        $this->assertSame(['database', 'mail'], $user->channelsFor(NotificationType::DiaryAssigned));
-        $this->assertSame([], $user->channelsFor(NotificationType::DiaryOverdue));
+        $this->assertSame(['database'], app(ResolveNotificationChannels::class)->for($user, NotificationType::MatterAssigned));
+        $this->assertSame(['mail'], app(ResolveNotificationChannels::class)->for($user, NotificationType::MatterUnassigned));
+        $this->assertSame(['database', 'mail'], app(ResolveNotificationChannels::class)->for($user, NotificationType::DiaryAssigned));
+        $this->assertSame([], app(ResolveNotificationChannels::class)->for($user, NotificationType::DiaryOverdue));
     }
 
     public function test_an_unticked_box_is_a_no_and_a_kind_not_mentioned_is_a_no(): void
@@ -291,8 +293,8 @@ class UserAccountTest extends TestCase
 
         $user->refresh();
 
-        $this->assertSame(['database'], $user->channelsFor(NotificationType::MatterAssigned));
-        $this->assertSame([], $user->channelsFor(NotificationType::DiaryOverdue));
+        $this->assertSame(['database'], app(ResolveNotificationChannels::class)->for($user, NotificationType::MatterAssigned));
+        $this->assertSame([], app(ResolveNotificationChannels::class)->for($user, NotificationType::DiaryOverdue));
     }
 
     public function test_choosing_notifications_cannot_be_used_to_slip_staff_fields_in(): void
@@ -303,7 +305,7 @@ class UserAccountTest extends TestCase
             ->patch(route('account.notifications'), [
                 'channels' => ['matter_assigned' => ['database' => '1', 'mail' => '1']],
                 'name' => 'Hacked', 'job_title' => 'Director', 'mobile' => '0820000000', 'sign_in_code_enabled' => '0',
-                'preferences' => ['anything' => 'goes'],
+                'notification_preferences' => [['type' => 'made_up', 'database' => 1]],
             ])
             ->assertSessionHasNoErrors();
 
@@ -313,14 +315,17 @@ class UserAccountTest extends TestCase
         $this->assertSame('Candidate', $user->job_title);
         $this->assertNull($user->mobile);
         $this->assertTrue($user->usesSignInCode());
-        $this->assertArrayNotHasKey('anything', $user->preferences ?? []);
+        $this->assertSame(['matter_assigned'], $user->notificationPreferences()->pluck('type')->unique()->intersect(['matter_assigned', 'made_up'])->values()->all());
+        $this->assertDatabaseMissing('notification_preferences', ['type' => 'made_up']);
     }
 
     public function test_an_overdue_alert_goes_where_the_person_chose(): void
     {
         $default = User::factory()->create();
-        $systemOnly = User::factory()->create(['preferences' => ['notifications' => ['diary_overdue' => ['database' => true, 'mail' => false]]]]);
-        $none = User::factory()->create(['preferences' => ['notifications' => ['diary_overdue' => ['database' => false, 'mail' => false]]]]);
+        $systemOnly = User::factory()->create();
+        NotificationPreference::factory()->for($systemOnly)->create(['type' => 'diary_overdue', 'database' => true, 'mail' => false]);
+        $none = User::factory()->create();
+        NotificationPreference::factory()->for($none)->create(['type' => 'diary_overdue', 'database' => false, 'mail' => false]);
         $notification = new DiaryEntryOverdue(DiaryEntry::factory()->overdue()->create());
 
         $this->assertSame(['database', 'mail'], $notification->via($default));
@@ -339,7 +344,8 @@ class UserAccountTest extends TestCase
 
     public function test_the_account_page_shows_where_each_notification_goes(): void
     {
-        $user = $this->userWithRole(RoleEnum::Attorney, ['preferences' => ['notifications' => ['diary_overdue' => ['database' => false, 'mail' => false]]]]);
+        $user = $this->userWithRole(RoleEnum::Attorney);
+        NotificationPreference::factory()->for($user)->create(['type' => 'diary_overdue', 'database' => false, 'mail' => false]);
 
         $this->actingAs($user)
             ->get(route('account'))
@@ -447,5 +453,99 @@ class UserAccountTest extends TestCase
 
         $this->assertMatchesRegularExpression('/role="switch"[^>]*aria-label="Sign-in code"\s*checked/s', $html($this->userWithRole(RoleEnum::Attorney)));
         $this->assertDoesNotMatchRegularExpression('/role="switch"[^>]*aria-label="Sign-in code"\s*checked/s', $html($this->userWithRole(RoleEnum::Attorney, ['sign_in_code_enabled' => false])));
+    }
+
+    // ---- the choices are rows, one per kind ----
+
+    public function test_a_choice_is_one_row_per_person_and_kind_and_saving_again_changes_it_in_place(): void
+    {
+        $user = User::factory()->create();
+        $choose = fn (string $database, string $mail) => $this->actingAs($user)->patch(route('account.notifications'), [
+            'channels' => ['matter_assigned' => ['database' => $database, 'mail' => $mail]],
+        ]);
+
+        $choose('1', '0');
+        $choose('0', '1');
+
+        $rows = $user->notificationPreferences()->where('type', 'matter_assigned')->get();
+
+        $this->assertCount(1, $rows);
+        $this->assertFalse($rows->first()->database);
+        $this->assertTrue($rows->first()->mail);
+    }
+
+    public function test_every_kind_gets_a_row_when_the_choices_are_saved(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->patch(route('account.notifications'), ['channels' => []]);
+
+        $this->assertSame(count(NotificationType::cases()), $user->notificationPreferences()->count());
+        $this->assertSame([], app(ResolveNotificationChannels::class)->for($user->fresh(), NotificationType::MatterAssigned));
+    }
+
+    public function test_a_kind_nobody_has_chosen_for_takes_its_default(): void
+    {
+        $user = User::factory()->create();
+        NotificationPreference::factory()->for($user)->create(['type' => 'diary_overdue', 'database' => false, 'mail' => true]);
+
+        $this->assertSame(['mail'], app(ResolveNotificationChannels::class)->for($user, NotificationType::DiaryOverdue));
+        $this->assertSame(['database', 'mail'], app(ResolveNotificationChannels::class)->for($user, NotificationType::MatterAssigned));
+    }
+
+    public function test_a_persons_choices_are_theirs_alone(): void
+    {
+        $one = User::factory()->create();
+        $other = User::factory()->create();
+
+        $this->actingAs($one)->patch(route('account.notifications'), ['channels' => ['matter_assigned' => ['database' => '0', 'mail' => '0']]]);
+
+        $this->assertSame([], app(ResolveNotificationChannels::class)->for($one->fresh(), NotificationType::MatterAssigned));
+        $this->assertSame(['database', 'mail'], app(ResolveNotificationChannels::class)->for($other->fresh(), NotificationType::MatterAssigned));
+    }
+
+    public function test_changing_a_choice_is_audited_once_by_the_model(): void
+    {
+        $user = User::factory()->create();
+        $preference = NotificationPreference::factory()->for($user)->create(['type' => 'matter_assigned', 'database' => true, 'mail' => true]);
+        Activity::query()->delete();
+
+        $this->actingAs($user)->patch(route('account.notifications'), ['channels' => ['matter_assigned' => ['database' => '1', 'mail' => '0']]]);
+
+        $this->assertSame(1, Activity::forSubject($preference)->where('event', 'updated')->count());
+        $this->assertSame(['mail' => false], Activity::forSubject($preference)->firstOrFail()->attribute_changes['attributes']);
+    }
+
+    public function test_saving_unchanged_choices_records_nothing_for_rows_that_did_not_change(): void
+    {
+        $user = User::factory()->create();
+        $preference = NotificationPreference::factory()->for($user)->create(['type' => 'matter_assigned', 'database' => true, 'mail' => false]);
+        Activity::query()->delete();
+
+        $this->actingAs($user)->patch(route('account.notifications'), ['channels' => ['matter_assigned' => ['database' => '1', 'mail' => '0']]]);
+
+        $this->assertSame(0, Activity::forSubject($preference)->count());
+    }
+
+    public function test_deleting_a_user_takes_their_choices_with_them(): void
+    {
+        $user = User::factory()->create();
+        NotificationPreference::factory()->for($user)->create();
+
+        $user->delete();
+
+        $this->assertDatabaseCount('notification_preferences', 0);
+    }
+
+    public function test_the_choices_can_be_asked_across_people_which_a_json_column_made_awkward(): void
+    {
+        $declines = User::factory()->create();
+        NotificationPreference::factory()->for($declines)->create(['type' => 'diary_overdue', 'mail' => false]);
+        $keeps = User::factory()->create();
+        NotificationPreference::factory()->for($keeps)->create(['type' => 'diary_overdue', 'mail' => true]);
+
+        $who = NotificationPreference::query()->where('type', 'diary_overdue')->where('mail', false)->pluck('user_id');
+
+        $this->assertSame([$declines->getKey()], $who->all());
     }
 }

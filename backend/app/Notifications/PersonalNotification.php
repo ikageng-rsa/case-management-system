@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Notifications;
 
 use App\Enums\Notification\NotificationType;
+use App\Services\Notifications\ResolveNotificationChannels;
 use Illuminate\Notifications\Notification;
 
 /*
@@ -18,6 +19,6 @@ abstract class PersonalNotification extends Notification
     /** @return array<int, string> */
     public function via(object $notifiable): array
     {
-        return $notifiable->channelsFor($this->type());
+        return app(ResolveNotificationChannels::class)->for($notifiable, $this->type());
     }
 }

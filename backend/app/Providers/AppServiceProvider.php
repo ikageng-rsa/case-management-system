@@ -16,6 +16,7 @@ use App\Models\MatterParty;
 use App\Models\MatterType;
 use App\Models\Media;
 use App\Models\Narration;
+use App\Models\NotificationPreference;
 use App\Models\PopiaConsent;
 use App\Models\User;
 use App\Models\UserInvitation;
@@ -56,6 +57,7 @@ class AppServiceProvider extends ServiceProvider
             'activity_type' => ActivityType::class,
             'user' => User::class,
             'user_invitation' => UserInvitation::class,
+            'notification_preference' => NotificationPreference::class,
         ]);
     }
 }

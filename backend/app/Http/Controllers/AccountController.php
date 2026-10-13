@@ -8,6 +8,8 @@ use App\Enums\Notification\NotificationType;
 use App\Http\Requests\Account\UpdateNotificationPreferencesRequest;
 use App\Http\Requests\Account\UpdateSignInCodeRequest;
 use App\Models\User;
+use App\Services\Notifications\ResolveNotificationChannels;
+use App\Services\Notifications\SaveNotificationPreferences;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,34 +21,25 @@ use Illuminate\Http\Request;
  */
 class AccountController extends Controller
 {
-    public function show(Request $request): View
+    public function show(Request $request, ResolveNotificationChannels $channelsFor): View
     {
         /** @var User $user */
         $user = $request->user();
 
         return view('account', [
-            'user' => $user->load('roles'),
+            'user' => $user->load(['roles', 'notificationPreferences']),
             'notificationTypes' => NotificationType::cases(),
             'channels' => NotificationType::channels(),
+            'channelsByType' => $channelsFor->all($user),
         ]);
     }
 
-    public function updateNotifications(UpdateNotificationPreferencesRequest $request): RedirectResponse
+    public function updateNotifications(UpdateNotificationPreferencesRequest $request, SaveNotificationPreferences $saveChoices): RedirectResponse
     {
         /** @var User $user */
         $user = $request->user();
 
-        $notifications = collect(NotificationType::cases())
-            ->mapWithKeys(fn (NotificationType $type) => [
-                $type->value => collect(NotificationType::channels())
-                    ->mapWithKeys(fn (string $channel) => [
-                        $channel => (bool) data_get($request->validated(), "channels.{$type->value}.{$channel}", false),
-                    ])
-                    ->all(),
-            ])
-            ->all();
-
-        $user->forceFill(['preferences' => array_merge($user->preferences ?? [], ['notifications' => $notifications])])->save();
+        $saveChoices->save($user, $request->validated('channels') ?? []);
 
         return redirect()->route('account')->with('status', 'Notification choices saved.');
     }

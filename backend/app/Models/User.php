@@ -7,7 +7,6 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Casts\Client\EncryptedContact;
 use App\Concerns\RecordsActivity;
-use App\Enums\Notification\NotificationType;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -19,7 +18,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password', 'job_title', 'mobile', 'office_phone', 'employee_number', 'preferences'])]
+#[Fillable(['name', 'email', 'password', 'job_title', 'mobile', 'office_phone', 'employee_number'])]
 #[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
 class User extends Authenticatable
 {
@@ -41,12 +40,17 @@ class User extends Authenticatable
         return [
             'mobile' => EncryptedContact::class.':mobile',
             'office_phone' => EncryptedContact::class.':mobile',
-            'preferences' => 'array',
             'sign_in_code_enabled' => 'boolean',
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
         ];
+    }
+
+    /** What this person has chosen to be told about, and where. Only the choices made: the rest take their defaults. */
+    public function notificationPreferences(): HasMany
+    {
+        return $this->hasMany(NotificationPreference::class);
     }
 
     public function matterAssignments(): HasMany
@@ -71,31 +75,6 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
-    /**
-     * The channels this person gets a kind of notification on: as they chose, or
-     * failing that, as the system defaults it. An empty list is a choice too.
-     *
-     * @return array<int, string>
-     */
-    public function channelsFor(NotificationType $type): array
-    {
-        $chosen = $this->preferences['notifications'][$type->value] ?? null;
-
-        if (! is_array($chosen)) {
-            return $type->defaultChannels();
-        }
-
-        return array_values(array_filter(
-            NotificationType::channels(),
-            fn (string $channel) => (bool) ($chosen[$channel] ?? false),
-        ));
-    }
-
-    public function wantsEmailFor(NotificationType $type): bool
-    {
-        return in_array(NotificationType::CHANNEL_EMAIL, $this->channelsFor($type), true);
-    }
-
     /** Whether signing in asks for a code, which is on until the person turns it off. */
     public function usesSignInCode(): bool
     {
@@ -113,6 +92,6 @@ class User extends Authenticatable
      */
     protected function auditExcept(): array
     {
-        return ['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes', 'mobile', 'office_phone', 'preferences'];
+        return ['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes', 'mobile', 'office_phone'];
     }
 }
