@@ -68,10 +68,10 @@
 
                     {{-- Anchored by its right edge to the bell, so it opens leftwards and never off the screen. --}}
                     <div class="dropdown-menu p-0" x-bind:class="{ show: open }" x-cloak
-                         style="right: 0; left: auto; width: 24rem; max-width: calc(100vw - 2rem); max-height: 70vh; overflow-y: auto;">
-                        <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom">
+                         style="right: 0; left: auto; width: 24rem; max-width: calc(100vw - 2rem); max-height: 70vh; overflow-x: hidden; overflow-y: auto;">
+                        <div class="d-flex align-items-center justify-content-between gap-2 px-3 py-2 border-bottom">
                             <span class="text-meta text-uppercase">Notifications</span>
-                            <button type="button" class="btn btn-link btn-sm p-0" x-show="unread > 0" x-cloak x-on:click="markAllRead()">Mark all as read</button>
+                            <button type="button" class="btn btn-ghost-secondary btn-sm" x-show="unread > 0" x-cloak x-on:click="markAllRead()">Mark all as read</button>
                         </div>
 
                         <p class="text-secondary text-center py-4 mb-0" x-show="loading && ! loaded" x-cloak>Loading…</p>
@@ -79,16 +79,19 @@
 
                         <template x-for="item in items" :key="item.id">
                             <div class="d-flex align-items-start gap-2 px-3 py-2 border-bottom" x-bind:class="{ 'bg-light': ! item.read }">
-                                <button type="button" class="btn btn-link text-start text-decoration-none text-body p-0 flex-fill"
+                                {{-- Not a .btn: a button lays its contents out in a row and keeps them on one line, and a
+                                     message is a block of text with the time beneath it. --}}
+                                <button type="button" class="d-block border-0 bg-transparent p-0 text-start flex-fill"
+                                    style="min-width: 0; white-space: normal;"
                                     x-on:click="go(item)" x-bind:style="item.url ? '' : 'cursor: default;'">
-                                    <span class="d-block" x-bind:class="{ 'fw-bold': ! item.read }" x-text="item.message"></span>
-                                    <span class="d-block text-meta" x-text="item.when"></span>
+                                    <span class="d-block text-body" x-bind:class="{ 'fw-bold': ! item.read }" x-text="item.message"></span>
+                                    <span class="d-block text-meta mt-1" x-text="item.when"></span>
                                 </button>
 
                                 <button type="button" class="btn btn-ghost-secondary btn-icon btn-sm flex-shrink-0"
                                     x-show="! item.read" x-cloak x-on:click="markRead(item)"
                                     aria-label="Mark as read" title="Mark as read">
-                                    <i class="ti ti-check"></i>
+                                    <x-ui.icon name="check" />
                                 </button>
                             </div>
                         </template>
