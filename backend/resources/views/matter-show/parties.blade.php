@@ -26,10 +26,12 @@
         <div class="d-flex align-items-center justify-content-between mb-3">
             <h3 class="card-title text-meta text-uppercase mb-0">Parties</h3>
 
-            @can('update', $matter)
-                <x-ui.button variant="ghost-secondary" icon="plus" size="sm" aria-label="Add a party"
-                    x-data x-on:click="$dispatch('sheet-open', 'new-party')" />
-            @endcan
+            @if ($matter->isOpen())
+                @can('update', $matter)
+                    <x-ui.button variant="ghost-secondary" icon="plus" size="sm" aria-label="Add a party"
+                        x-data x-on:click="$dispatch('sheet-open', 'new-party')" />
+                @endcan
+            @endif
         </div>
 
         @forelse ($matterParties as $party)
@@ -39,20 +41,22 @@
                     <div class="text-meta">{{ $party->role->label() }}@if ($party->representative) · represented by {{ $party->representative }}@endif</div>
                 </div>
 
-                @can('update', $matter)
-                    <div class="text-nowrap">
-                        <x-ui.button variant="ghost-secondary" size="sm"
-                            x-data x-on:click="$dispatch('sheet-open', 'edit-party-{{ $party->getKey() }}')">Edit</x-ui.button>
+                @if ($matter->isOpen())
+                    @can('update', $matter)
+                        <div class="text-nowrap">
+                            <x-ui.button variant="ghost-secondary" size="sm"
+                                x-data x-on:click="$dispatch('sheet-open', 'edit-party-{{ $party->getKey() }}')">Edit</x-ui.button>
 
-                        <form method="POST" action="{{ route('matter.parties.destroy', [$matter, $party]) }}" class="d-inline"
-                            data-confirm="Remove {{ $party->name }} from this matter?"
-                            data-confirm-title="Remove party" data-confirm-action="Remove" data-confirm-tone="danger" data-confirm-icon="user-minus">
-                            @csrf
-                            @method('DELETE')
-                            <x-ui.button type="submit" variant="ghost-danger" size="sm">Remove</x-ui.button>
-                        </form>
-                    </div>
-                @endcan
+                            <form method="POST" action="{{ route('matter.parties.destroy', [$matter, $party]) }}" class="d-inline"
+                                data-confirm="Remove {{ $party->name }} from this matter?"
+                                data-confirm-title="Remove party" data-confirm-action="Remove" data-confirm-tone="danger" data-confirm-icon="user-minus">
+                                @csrf
+                                @method('DELETE')
+                                <x-ui.button type="submit" variant="ghost-danger" size="sm">Remove</x-ui.button>
+                            </form>
+                        </div>
+                    @endcan
+                @endif
             </div>
         @empty
             <p class="text-secondary mb-0">No other parties recorded.</p>
@@ -88,6 +92,7 @@
     </div>
 </div>
 
+@if ($matter->isOpen())
 @can('update', $matter)
     @php
         // Another form's failed input must not leak into this one.
@@ -141,3 +146,4 @@
         </x-ui.sheet>
     @endforeach
 @endcan
+@endif

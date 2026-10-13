@@ -19,14 +19,17 @@
             <p class="text-secondary mb-0">{{ $matter->title }}</p>
         </div>
 
-        <div class="d-flex gap-2">
-            <x-ui.button variant="outline-secondary" size="sm"
-                x-data x-on:click="$dispatch('sheet-open', 'new-diary-entry')">Add diary entry</x-ui.button>
-            <x-ui.button variant="outline-secondary" size="sm"
-                x-data x-on:click="$dispatch('sheet-open', 'upload-document')">Upload document</x-ui.button>
-            <x-ui.button variant="primary" icon="plus" size="sm"
-                x-data x-on:click="$dispatch('sheet-open', 'new-narration')">Narration</x-ui.button>
-        </div>
+        {{-- Work on a file belongs to the people assigned to it, while it is open. --}}
+        @can('work', $matter)
+            <div class="d-flex gap-2">
+                <x-ui.button variant="outline-secondary" size="sm"
+                    x-data x-on:click="$dispatch('sheet-open', 'new-diary-entry')">Add diary entry</x-ui.button>
+                <x-ui.button variant="outline-secondary" size="sm"
+                    x-data x-on:click="$dispatch('sheet-open', 'upload-document')">Upload document</x-ui.button>
+                <x-ui.button variant="primary" icon="plus" size="sm"
+                    x-data x-on:click="$dispatch('sheet-open', 'new-narration')">Narration</x-ui.button>
+            </div>
+        @endcan
     </div>
 
     <div class="row mb-3">

@@ -61,6 +61,7 @@ class DocumentController extends Controller
             'kinds' => DocumentKind::cases(),
             'filterMatters' => $this->visibleMatters($user)->orderBy('reference')->get(['matters.id', 'matters.reference']),
             // The matter the upload sheet starts on: the one being filtered by, or the one a failed upload named.
+            'canUpload' => Matter::query()->open()->assignedTo($user)->exists(),
             'uploadMatter' => Matter::query()->open()->assignedTo($user)->find($request->old('matter_id') ?? $matterId),
         ]);
     }
