@@ -26,16 +26,16 @@
         </div>
 
         <div class="d-flex align-items-center gap-2">
-            <x-ui.button variant="outline-secondary" icon="table"
+            <x-ui.button size="sm" variant="outline-secondary" icon="table"
                 x-data x-on:click="$dispatch('sheet-open', 'permission-matrix')">Permission matrix</x-ui.button>
 
             @if ($canShape)
-                <x-ui.button variant="outline-secondary" icon="shield"
+                <x-ui.button size="sm" variant="outline-secondary" icon="shield"
                     x-data x-on:click="$dispatch('sheet-open', 'roles')">Roles</x-ui.button>
             @endif
 
             @if ($canInvite)
-                <x-ui.button variant="dark" icon="plus"
+                <x-ui.button size="sm" variant="dark" icon="plus"
                     x-data x-on:click="$dispatch('sheet-open', 'invite-user')">Invite user</x-ui.button>
             @endif
         </div>
@@ -186,8 +186,8 @@
 
             <x-slot:footer>
                 <div class="d-flex align-items-center justify-content-between">
-                    <x-ui.button variant="outline-secondary" x-on:click="close()">Cancel</x-ui.button>
-                    <x-ui.button type="submit" variant="primary">Send invitation</x-ui.button>
+                    <x-ui.button size="sm" variant="outline-secondary" x-on:click="close()">Cancel</x-ui.button>
+                    <x-ui.button size="sm" type="submit" variant="primary">Send invitation</x-ui.button>
                 </div>
             </x-slot:footer>
         </x-ui.sheet>
@@ -223,8 +223,8 @@
 
                 <x-slot:footer>
                     <div class="d-flex align-items-center justify-content-between">
-                        <x-ui.button variant="outline-secondary" x-on:click="close()">Cancel</x-ui.button>
-                        <x-ui.button type="submit" variant="primary">Save details</x-ui.button>
+                        <x-ui.button size="sm" variant="outline-secondary" x-on:click="close()">Cancel</x-ui.button>
+                        <x-ui.button size="sm" type="submit" variant="primary">Save details</x-ui.button>
                     </div>
                 </x-slot:footer>
             </x-ui.sheet>
@@ -260,7 +260,7 @@
         </div>
 
         <x-slot:footer>
-            <x-ui.button variant="outline-secondary" x-on:click="close()">Close</x-ui.button>
+            <x-ui.button size="sm" variant="outline-secondary" x-on:click="close()">Close</x-ui.button>
         </x-slot:footer>
     </x-ui.sheet>
 
@@ -300,8 +300,8 @@
 
             <x-slot:footer>
                 <div class="d-flex align-items-center justify-content-between">
-                    <x-ui.button variant="outline-secondary" x-on:click="close()">Close</x-ui.button>
-                    <x-ui.button variant="primary" icon="plus" x-data
+                    <x-ui.button size="sm" variant="outline-secondary" x-on:click="close()">Close</x-ui.button>
+                    <x-ui.button size="sm" variant="primary" icon="plus" x-data
                         x-on:click="close(); setTimeout(() => $dispatch('sheet-open', 'new-role'), 350)">New role</x-ui.button>
                 </div>
             </x-slot:footer>
@@ -357,8 +357,8 @@
 
                 <x-slot:footer>
                     <div class="d-flex align-items-center justify-content-between">
-                        <x-ui.button variant="outline-secondary" x-on:click="close()">Cancel</x-ui.button>
-                        <x-ui.button type="submit" variant="primary">{{ $form['submit'] }}</x-ui.button>
+                        <x-ui.button size="sm" variant="outline-secondary" x-on:click="close()">Cancel</x-ui.button>
+                        <x-ui.button size="sm" type="submit" variant="primary">{{ $form['submit'] }}</x-ui.button>
                     </div>
                 </x-slot:footer>
             </x-ui.sheet>
@@ -384,8 +384,8 @@
 
                 <x-slot:footer>
                     <div class="d-flex align-items-center justify-content-between">
-                        <x-ui.button variant="outline-secondary" x-on:click="close()">Cancel</x-ui.button>
-                        <x-ui.button type="submit" variant="primary">Save roles</x-ui.button>
+                        <x-ui.button size="sm" variant="outline-secondary" x-on:click="close()">Cancel</x-ui.button>
+                        <x-ui.button size="sm" type="submit" variant="primary">Save roles</x-ui.button>
                     </div>
                 </x-slot:footer>
             </x-ui.sheet>
