@@ -4,6 +4,7 @@
     'id' => null,
     'type' => 'text',
     'tone' => null,
+    'before' => null,
     'hint' => null,
     'error' => null,
     'wrapper' => null,
@@ -19,6 +20,10 @@
         <label @class(['form-label', 'form-label-mono', 'form-label-mono-dark' => $isDark]) for="{{ $inputId }}">
             {{ $label }}
         </label>
+    @endif
+
+    @if ($before)
+        <div class="form-hint">{{ $before }}</div>
     @endif
 
     <input

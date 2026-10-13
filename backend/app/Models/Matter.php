@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Collections\MediaCollection;
@@ -53,6 +54,22 @@ class Matter extends Model implements HasMedia
             'prescribes_at' => 'datetime',
             'closed_at' => 'datetime',
         ];
+    }
+
+    /*
+     * References contain slashes (IOT/CIV/105/2026), which make awkward URLs,
+     * so the route key swaps them for hyphens: IOT-CIV-105-2026.
+     */
+    public function getRouteKey(): string
+    {
+        return Str::replace('/', '-', $this->reference);
+    }
+
+    public function resolveRouteBinding($value, $field = null): ?Model
+    {
+        return $this->where('reference', Str::replace('-', '/', $value))->first()
+            // A hyphen inside a client's initials or a type code would not survive the swap.
+            ?? $this->whereRaw("replace(reference, '/', '-') = ?", [$value])->first();
     }
 
     public function client(): BelongsTo

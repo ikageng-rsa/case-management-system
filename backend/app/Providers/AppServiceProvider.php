@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Listeners\RecordRoleChange;
 use App\Models\ActivityType;
 use App\Models\Client;
 use App\Models\ClientContact;
@@ -18,10 +17,7 @@ use App\Models\Narration;
 use App\Models\PopiaConsent;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
-use Spatie\Permission\Events\RoleAttachedEvent;
-use Spatie\Permission\Events\RoleDetachedEvent;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -55,7 +51,5 @@ class AppServiceProvider extends ServiceProvider
             'activity_type' => ActivityType::class,
             'user' => User::class,
         ]);
-
-        Event::listen([RoleAttachedEvent::class, RoleDetachedEvent::class], RecordRoleChange::class);
     }
 }

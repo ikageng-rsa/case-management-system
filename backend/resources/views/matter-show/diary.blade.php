@@ -1,0 +1,63 @@
+@php
+    $link = fn (array $params = []) => route('matter.show', [$matter, 'tab' => 'diary'] + $params);
+@endphp
+
+<div class="card">
+    <div class="card-header d-block">
+        <div class="mb-2">
+            <h3 class="card-title mb-0">Diary</h3>
+            <p class="text-meta mb-0">{{ $diaryCounts['pending'] }} pending · {{ $diaryCounts['overdue'] }} overdue</p>
+        </div>
+
+        <div class="d-flex flex-wrap align-items-center gap-2 bg-light rounded-pill p-1">
+            @foreach (['pending', 'overdue', 'mine', 'completed'] as $option)
+                <x-ui.button :variant="$show === $option ? 'dark' : 'ghost-secondary'" class="rounded-pill" size="sm"
+                    :href="$link(['show' => $option])">{{ $option }} {{ $diaryCounts[$option] }}</x-ui.button>
+            @endforeach
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+                <tr>
+                    <th>Due</th>
+                    <th>Entry</th>
+                    <th>Assigned to</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($entries as $entry)
+                    <tr>
+                        <td @class(['text-meta text-nowrap', 'text-danger' => $entry->isOverdue()])>{{ $entry->due_at->format('d M Y H:i') }}</td>
+                        <td>{{ $entry->body }}</td>
+                        <td>{{ $entry->assignee->name }}</td>
+                        <td>
+                            @if ($entry->isComplete())
+                                <x-ui.stage-badge tone="success">Done {{ $entry->completed_at->format('d M') }}</x-ui.stage-badge>
+                            @elseif ($entry->isOverdue())
+                                <x-ui.stage-badge tone="danger">Overdue</x-ui.stage-badge>
+                            @else
+                                <x-ui.stage-badge tone="info">Pending</x-ui.stage-badge>
+                            @endif
+                        </td>
+                        <td class="text-end">
+                            @if ($canWork && $entry->isPending())
+                                <form method="POST" action="{{ route('matter.diary.complete', [$matter, $entry]) }}">
+                                    @csrf
+                                    <x-ui.button type="submit" variant="ghost-secondary" size="sm">Mark done</x-ui.button>
+                                </form>
+                            @endif
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="5" class="text-center text-secondary py-4">No diary entries to show.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>

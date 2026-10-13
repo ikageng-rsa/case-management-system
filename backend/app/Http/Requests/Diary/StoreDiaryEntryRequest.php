@@ -10,6 +10,8 @@ use Illuminate\Validation\Rule;
 
 class StoreDiaryEntryRequest extends FormRequest
 {
+    protected $errorBag = 'diary';
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -26,9 +28,9 @@ class StoreDiaryEntryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'assigned_to' => ['required', 'uuid', Rule::exists('users', 'id')],
-            'body' => ['required', 'string'],
-            'due_at' => ['required', 'date', 'after_or_equal:today'],
+            'body' => ['required', 'string', 'max:2000'],
+            'due_at' => ['required', 'date'],
+            'assigned_to' => ['nullable', Rule::exists('users', 'id')],
         ];
     }
 }
