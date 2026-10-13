@@ -19,9 +19,6 @@ return new class extends Migration
             $table->text('mobile')->nullable()->after('job_title');
             $table->text('office_phone')->nullable()->after('mobile');
             $table->string('employee_number')->nullable()->unique()->after('office_phone');
-
-            // What the person chooses for themselves, as a small set of named settings.
-            $table->json('preferences')->nullable()->after('employee_number');
         });
     }
 
@@ -32,7 +29,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->dropUnique(['employee_number']);
-            $table->dropColumn(['job_title', 'mobile', 'office_phone', 'employee_number', 'preferences']);
+            $table->dropColumn(['job_title', 'mobile', 'office_phone', 'employee_number']);
         });
     }
 };

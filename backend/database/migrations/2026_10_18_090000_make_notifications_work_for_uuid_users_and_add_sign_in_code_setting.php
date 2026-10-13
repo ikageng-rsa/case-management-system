@@ -23,7 +23,7 @@ return new class extends Migration
 
         Schema::table('users', function (Blueprint $table) {
             // On for everyone until they turn it off themselves.
-            $table->boolean('sign_in_code_enabled')->default(true)->after('preferences');
+            $table->boolean('sign_in_code_enabled')->default(true)->after('employee_number');
         });
     }
 
