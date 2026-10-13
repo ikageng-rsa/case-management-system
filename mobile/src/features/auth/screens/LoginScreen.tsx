@@ -9,7 +9,7 @@ import { useLogin } from '@/features/auth/hooks/useLogin';
 export default function LoginScreen() {
   const router = useRouter();
   const { email, setEmail, password, setPassword, submit, loading, error } = useLogin();
-
+  console.log(`values: email-> ${email}, password -> ${password}, error -> ${error}`)
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.header}>

@@ -2,7 +2,7 @@ import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { login as loginRequest, LoginResponse } from '@/api/endpoint/auth.api';
 import { setAuthToken, clearAuthToken } from '@/api/client';
 import { User } from '@/models/index';
-import { DEMO_TOKEN,DEMO_USER,isDemoLogin } from '@/constants/demoUser';
+import { DEMO_TOKEN,DEMO_USER,isDemoLogin,isDemoLoginEnabled,DEMO_CREDENTIALS } from '@/constants/demoUser';
 
 interface AuthState {
   user: User | null;
@@ -19,12 +19,10 @@ const initialState: AuthState = {
 export const login = createAsyncThunk<LoginResponse, { email: string; password: string }>(
   'auth/login',
   async ({ email, password }) => {
-    //Demo account: authenticate locally, no network call (dev builds / opt-in only).
-    if(isDemoLogin(email,password)){
-      await setAuthToken(DEMO_TOKEN);
-      return {token: DEMO_TOKEN, user: DEMO_USER}
-    }
+    //Authenticate through Express for both demo and regular accounts
     const response = await loginRequest(email, password);
+
+    //Persist the server-issued token before completing login.
     await setAuthToken(response.token);
     return response;
   },
