@@ -56,8 +56,11 @@ enum Role: string
             self::Manager => [
                 Permission::ViewAllMatters,
                 Permission::ViewClients,
-                Permission::ManageUsers,
+                Permission::ViewUsers,
+                Permission::EditUsers,
+                Permission::InviteUsers,
                 Permission::AssignRoles,
+                Permission::ManageRoles,
                 Permission::ManageMatterTypes,
                 Permission::ManageActivityTypes,
                 Permission::ManageCourts,

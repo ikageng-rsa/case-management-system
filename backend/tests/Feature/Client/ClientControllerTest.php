@@ -146,8 +146,8 @@ class ClientControllerTest extends TestCase
         $this->actingAs($reader)
             ->get(route('client.show', $client))
             ->assertSee('072 ··· 4418')
-            ->assertSee('thabo@·······.com')
-            ->assertSee('9001015······')
+            ->assertSee('th···@example.com')
+            ->assertSee('·········0088')
             ->assertDontSee('0721234418')
             ->assertDontSee('+27721234418')
             ->assertDontSee('thabo@example.com')
@@ -240,8 +240,16 @@ class ClientControllerTest extends TestCase
     public function test_identifiers_are_masked_enough_to_recognise_but_not_reuse(): void
     {
         $this->assertSame('072 ··· 4418', MaskIdentifier::mobile('+27721234418'));
-        $this->assertSame('t.mokoena@·······.com', MaskIdentifier::email('t.mokoena@example.com'));
-        $this->assertSame('9001015······', MaskIdentifier::idNumber(self::ID_NUMBER));
+        $this->assertSame('t.·······@example.com', MaskIdentifier::email('t.mokoena@example.com'));
+        $this->assertSame('ab·····@example.com', MaskIdentifier::email('abcdefg@example.com'));
+        $this->assertSame('a·@example.com', MaskIdentifier::email('ab@example.com'));
+        $this->assertSame('·@example.com', MaskIdentifier::email('a@example.com'));
+        $this->assertSame('·····', MaskIdentifier::email('hello'));
+        $this->assertSame('·········0088', MaskIdentifier::idNumber(self::ID_NUMBER));
+        $this->assertSame('····172', MaskIdentifier::idNumber('1596172'));
+        $this->assertSame('··45', MaskIdentifier::idNumber('1245'));
+        $this->assertSame('·3', MaskIdentifier::idNumber('23'));
+        $this->assertSame('·', MaskIdentifier::idNumber('2'));
         $this->assertSame('2011/······/07', MaskIdentifier::registrationNumber('2011/123456/07'));
     }
 
@@ -330,7 +338,7 @@ class ClientControllerTest extends TestCase
             ->get(route('client.show', $client))
             ->assertSee('edit_id_number', false)
             ->assertDontSee(self::ID_NUMBER)
-            ->assertSee('9001015······', false);
+            ->assertSee('·········0088', false);
 
         $this->actingAs($this->userWithRole(RoleEnum::Secretary))
             ->get(route('client.show', $client))

@@ -47,7 +47,7 @@ class ContactPersonsTest extends TestCase
             ->assertOk()
             ->assertSeeInOrder(['Sipho Dlamini', 'Managing director', 'First contact', 'Anele Khoza', 'Alternative'])
             ->assertSee('072 ··· 4418')
-            ->assertSee('sipho@·······.com')
+            ->assertSee('si···@example.com')
             ->assertDontSee('0721234418')
             ->assertDontSee('sipho@example.com');
     }

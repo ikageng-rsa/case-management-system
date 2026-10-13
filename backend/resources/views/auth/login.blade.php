@@ -16,6 +16,10 @@
                     Example Firm Attorneys Inc. · staff access only
                 </p>
 
+                @if (session('status'))
+                    <div class="alert alert-success" role="status">{{ session('status') }}</div>
+                @endif
+
                 <form method="POST" action="{{ route('login') }}">
                     @csrf
 

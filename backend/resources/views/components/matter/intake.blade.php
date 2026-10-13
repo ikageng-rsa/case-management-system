@@ -19,16 +19,25 @@
     out. Otherwise the client is found by searching, and a client who is not on
     file yet is registered from the clients page first.
 
-    Planned: a step for the parties to the matter, once there is somewhere to
-    keep them.
+    The parties step is for everyone else in the matter besides the client: the
+    other side, their representatives, witnesses. It can be left empty and filled
+    in later from the matter's Parties tab.
 --}}
 @php
     $errorBag = $errors->getBag($bag);
     $chosen = $client ?? $selectedClient;
     $matterStep = $client ? 1 : 2;
+    $partiesStep = $matterStep + 1;
+
+    $partyErrors = collect($errorBag->keys())->contains(fn ($key) => str_starts_with($key, 'parties'));
 
     $config = [
-        'step' => $errorBag->has('client_id') && ! $client ? 1 : ($errorBag->any() ? $matterStep : 1),
+        'step' => match (true) {
+            $errorBag->has('client_id') && ! $client => 1,
+            $partyErrors => $partiesStep,
+            $errorBag->any() => $matterStep,
+            default => 1,
+        },
         'fixedClient' => $client !== null,
         'client' => $chosen ? ['id' => $chosen->getKey(), 'name' => $chosen->full_name] : null,
         'types' => $matterTypes->mapWithKeys(fn ($type) => [
@@ -36,6 +45,12 @@
         ]),
         'typeId' => (string) old('matter_type_id', ''),
         'urls' => ['lookup' => route('client.lookup'), 'reference' => route('matter.reference-preview')],
+        'parties' => collect(old('parties', []))->map(fn ($party) => [
+            'name' => (string) ($party['name'] ?? ''),
+            'role' => (string) ($party['role'] ?? \App\Enums\Matter\PartyRole::Respondent->value),
+            'representative' => (string) ($party['representative'] ?? ''),
+        ])->values(),
+        'defaultRole' => \App\Enums\Matter\PartyRole::Respondent->value,
     ];
 @endphp
 
@@ -161,7 +176,48 @@
         </div>
     </div>
 
-    <div x-ref="step{{ $matterStep + 1 }}" x-show="current === 'Review'" x-cloak>
+    <div x-ref="step{{ $partiesStep }}" x-show="current === 'Parties'" x-cloak>
+        <p class="text-secondary">Anyone else in this matter besides {{ $client ? $client->full_name : 'the client' }}. You can leave this empty and add them later.</p>
+
+        @if ($partyErrors)
+            <div class="text-danger mb-3">{{ $errorBag->first(collect($errorBag->keys())->first(fn ($key) => str_starts_with($key, 'parties'))) }}</div>
+        @endif
+
+        <template x-for="(party, index) in parties" :key="index">
+            <div class="border rounded p-3 mb-3">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-meta text-uppercase" x-text="'Party ' + (index + 1)"></span>
+                    <button type="button" class="btn btn-link btn-sm p-0 text-danger" x-on:click="removeParty(index)">Remove</button>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label form-label-mono">Name</label>
+                    <input type="text" class="form-control" maxlength="255" required
+                        x-model="party.name" x-bind:name="`parties[${index}][name]`">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label form-label-mono">Role</label>
+                    <select class="form-select" x-model="party.role" x-bind:name="`parties[${index}][role]`">
+                        @foreach (\App\Enums\Matter\PartyRole::cases() as $role)
+                            <option value="{{ $role->value }}">{{ $role->label() }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="mb-0">
+                    <label class="form-label form-label-mono">Represented by</label>
+                    <div class="form-hint">Optional</div>
+                    <input type="text" class="form-control" maxlength="255"
+                        x-model="party.representative" x-bind:name="`parties[${index}][representative]`">
+                </div>
+            </div>
+        </template>
+
+        <x-ui.button variant="outline-secondary" size="sm" icon="plus" x-on:click="addParty()">Add a party</x-ui.button>
+    </div>
+
+    <div x-ref="step{{ $partiesStep + 1 }}" x-show="current === 'Review'" x-cloak>
         <div class="p-3 mb-4 rounded" style="background-color: var(--cms-ink-900);">
             <p class="text-uppercase mb-1" style="font-family: var(--cms-font-mono); font-size: var(--cms-text-2xs); letter-spacing: var(--cms-tracking-label-wide); color: var(--cms-gold-500);">
                 Reference
@@ -196,6 +252,17 @@
 
             <dt class="form-label form-label-mono">Opening narration</dt>
             <dd x-text="review.narration"></dd>
+
+            <dt class="form-label form-label-mono">Parties</dt>
+            <dd>
+                <span x-show="! review.parties || review.parties.length === 0">None recorded yet</span>
+                <template x-for="party in review.parties" :key="party.name + party.role">
+                    <span class="d-block">
+                        <span x-text="party.name"></span>
+                        <span class="text-meta" x-text="'· ' + party.role + (party.representative ? ' · represented by ' + party.representative : '')"></span>
+                    </span>
+                </template>
+            </dd>
         </dl>
     </div>
 

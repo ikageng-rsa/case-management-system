@@ -12,11 +12,14 @@ use App\Models\Court;
 use App\Models\DiaryEntry;
 use App\Models\Matter;
 use App\Models\MatterAssignment;
+use App\Models\MatterParty;
 use App\Models\MatterType;
 use App\Models\Media;
 use App\Models\Narration;
+use App\Models\NotificationPreference;
 use App\Models\PopiaConsent;
 use App\Models\User;
+use App\Models\UserInvitation;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
 
@@ -43,6 +46,7 @@ class AppServiceProvider extends ServiceProvider
             'narration' => Narration::class,
             'diary_entry' => DiaryEntry::class,
             'matter_assignment' => MatterAssignment::class,
+            'matter_party' => MatterParty::class,
             'client' => Client::class,
             'client_contact' => ClientContact::class,
             'client_contact_person' => ClientContactPerson::class,
@@ -52,6 +56,8 @@ class AppServiceProvider extends ServiceProvider
             'matter_type' => MatterType::class,
             'activity_type' => ActivityType::class,
             'user' => User::class,
+            'user_invitation' => UserInvitation::class,
+            'notification_preference' => NotificationPreference::class,
         ]);
     }
 }

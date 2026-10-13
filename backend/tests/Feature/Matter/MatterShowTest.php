@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Matter;
 
 use App\Enums\Auth\Role as RoleEnum;
+use App\Enums\Document\DocumentKind;
 use App\Enums\Matter\Assignment;
 use App\Models\ActivityType;
 use App\Models\DiaryEntry;
@@ -14,6 +15,8 @@ use App\Models\Narration;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class MatterShowTest extends TestCase
@@ -210,5 +213,122 @@ class MatterShowTest extends TestCase
             // the holder of an exclusive capacity is handed to the form; a shared capacity is not
             ->assertSee($holder->getKey(), false)
             ->assertDontSee('\u0022assisting\u0022:{', false);
+    }
+
+    public function test_the_documents_filter_only_offers_kinds_that_have_documents(): void
+    {
+        Storage::fake(config('media-library.disk_name'));
+        $matter = Matter::factory()->create();
+        $matter->addDocument(UploadedFile::fake()->create('mandate.pdf', 5, 'application/pdf'), DocumentKind::Mandate);
+        $matter->addDocument(UploadedFile::fake()->create('letter.pdf', 5, 'application/pdf'), DocumentKind::Correspondence);
+
+        $html = $this->actingAs($this->userWithRole(RoleEnum::Director))
+            ->get(route('matter.show', [$matter, 'tab' => 'documents']))
+            ->assertOk()
+            ->assertSee('all 2')
+            ->assertSee('mandate 1')
+            ->assertSee('correspondence 1')
+            ->assertDontSee('bundle 0')
+            ->assertDontSee('court order 0')
+            ->assertDontSee('report 0')
+            ->getContent();
+
+        $this->assertStringNotContainsString(' 0</a>', $html);
+    }
+
+    public function test_a_kind_being_looked_at_stays_even_when_it_is_empty(): void
+    {
+        $matter = Matter::factory()->create();
+
+        $this->actingAs($this->userWithRole(RoleEnum::Director))
+            ->get(route('matter.show', [$matter, 'tab' => 'documents', 'kind' => 'bundle']))
+            ->assertSee('bundle 0');
+    }
+
+    public function test_no_filter_row_is_shown_when_there_are_no_documents(): void
+    {
+        $matter = Matter::factory()->create();
+
+        $this->actingAs($this->userWithRole(RoleEnum::Director))
+            ->get(route('matter.show', [$matter, 'tab' => 'documents']))
+            ->assertOk()
+            ->assertDontSee('rounded-pill p-1', false);
+    }
+
+    public function test_the_diary_only_offers_views_that_have_entries(): void
+    {
+        $matter = Matter::factory()->create();
+        $director = $this->userWithRole(RoleEnum::Director);
+        DiaryEntry::factory()->for($matter)->count(2)->create();
+        DiaryEntry::factory()->for($matter)->overdue()->create();
+
+        $this->actingAs($director)
+            ->get(route('matter.show', [$matter, 'tab' => 'diary']))
+            ->assertSee('pending 3')
+            ->assertSee('overdue 1')
+            ->assertDontSee('completed 0')
+            ->assertDontSee('mine 0');
+    }
+
+    public function test_the_diary_shows_no_switcher_when_there_is_only_one_view(): void
+    {
+        $matter = Matter::factory()->create();
+
+        $this->actingAs($this->userWithRole(RoleEnum::Director))
+            ->get(route('matter.show', [$matter, 'tab' => 'diary']))
+            ->assertOk()
+            ->assertDontSee('rounded-pill p-1', false)
+            ->assertSee('No diary entries to show.');
+    }
+
+    public function test_the_ledger_hides_mine_when_it_is_empty_and_the_row_when_the_ledger_is(): void
+    {
+        $matter = Matter::factory()->create();
+        $director = $this->userWithRole(RoleEnum::Director);
+
+        $this->actingAs($director)
+            ->get(route('matter.show', $matter))
+            ->assertOk()
+            ->assertDontSee('rounded-pill p-1', false);
+
+        Narration::factory()->for($matter)->create();
+
+        $this->actingAs($director)
+            ->get(route('matter.show', $matter))
+            ->assertSee('all 1')
+            ->assertDontSee('mine 0');
+    }
+
+    public function test_the_ledger_offers_its_kinds_of_work_as_a_list_with_their_whole_names(): void
+    {
+        $matter = Matter::factory()->create();
+        $call = ActivityType::factory()->create(['code' => 'CALL', 'name' => 'telephone attendance']);
+        $admin = ActivityType::factory()->create(['code' => 'ADMIN', 'name' => 'file administration']);
+        Narration::factory()->for($matter)->count(2)->create(['activity_type_id' => $call->getKey()]);
+        Narration::factory()->for($matter)->create(['activity_type_id' => $admin->getKey()]);
+
+        $html = $this->actingAs($this->userWithRole(RoleEnum::Director))
+            ->get(route('matter.show', $matter))
+            ->assertOk()
+            ->assertSee('dropdown-item', false)
+            ->assertSee('telephone attendance')
+            ->assertSee('file administration')
+            ->getContent();
+
+        // Each kind is a link in the list, with how many; none is a button of its own in the row.
+        $this->assertStringContainsString('filter=CALL', $html);
+        $this->assertStringContainsString('filter=ADMIN', $html);
+        $this->assertStringNotContainsString('telephone atte…', $html);
+    }
+
+    public function test_the_chosen_kind_is_named_on_the_dropdown_button(): void
+    {
+        $matter = Matter::factory()->create();
+        $call = ActivityType::factory()->create(['code' => 'CALL', 'name' => 'telephone attendance']);
+        Narration::factory()->for($matter)->count(2)->create(['activity_type_id' => $call->getKey()]);
+
+        $this->actingAs($this->userWithRole(RoleEnum::Director))
+            ->get(route('matter.show', [$matter, 'filter' => 'CALL']))
+            ->assertSee('telephone attendance 2');
     }
 }

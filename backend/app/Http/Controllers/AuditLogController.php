@@ -8,6 +8,7 @@ use App\Enums\Auth\Permission;
 use App\Models\DiaryEntry;
 use App\Models\Matter;
 use App\Models\MatterAssignment;
+use App\Models\MatterParty;
 use App\Models\Media;
 use App\Models\Narration;
 use App\Models\User;
@@ -37,6 +38,7 @@ class AuditLogController extends Controller
             Narration::class => ['matter'],
             DiaryEntry::class => ['matter'],
             MatterAssignment::class => ['matter'],
+            MatterParty::class => ['matter'],
             Media::class => ['model'],
         ]);
 
@@ -152,7 +154,7 @@ class AuditLogController extends Controller
     {
         return match (true) {
             $subject instanceof Matter => $subject,
-            $subject instanceof Narration, $subject instanceof DiaryEntry, $subject instanceof MatterAssignment => $subject->matter,
+            $subject instanceof Narration, $subject instanceof DiaryEntry, $subject instanceof MatterAssignment, $subject instanceof MatterParty => $subject->matter,
             $subject instanceof Media => $subject->model instanceof Matter ? $subject->model : null,
             default => null,
         };

@@ -39,7 +39,7 @@ class UserControllerTest extends TestCase
         return Role::findByName($role->value)->getKey();
     }
 
-    public function test_the_page_is_gated_behind_manage_users(): void
+    public function test_the_page_is_gated_behind_view_users(): void
     {
         $this->actingAs($this->userWithRole(RoleEnum::Secretary))->get(route('users'))->assertForbidden();
         $this->actingAs($this->userWithRole(RoleEnum::Manager))->get(route('users'))->assertOk();
@@ -55,7 +55,7 @@ class UserControllerTest extends TestCase
             ->assertOk()
             ->assertSee('L. Radebe')
             ->assertSee('Director · Attorney')
-            ->assertSee('l.radebe@'.str_repeat('·', 10).'.za')
+            ->assertSee('l.'.str_repeat('·', 6).'@example.co.za')
             ->assertDontSee('l.radebe@example.co.za');
     }
 
@@ -221,5 +221,212 @@ class UserControllerTest extends TestCase
         $this->actingAs($attorney)->post(route('role.store'), ['name' => 'x'])->assertForbidden();
         $this->actingAs($attorney)->patch(route('role.update', Role::findByName('messenger')), ['name' => 'x'])->assertForbidden();
         $this->actingAs($attorney)->delete(route('role.destroy', Role::findByName('messenger')))->assertForbidden();
+    }
+
+    public function test_the_firm_routes_are_gated_by_permission_before_they_reach_a_controller(): void
+    {
+        $secretary = $this->userWithRole(RoleEnum::Secretary);
+        $role = Role::findByName('messenger');
+        $user = $this->userWithRole(RoleEnum::Attorney);
+
+        $this->actingAs($secretary)->get(route('users'))->assertForbidden();
+        $this->actingAs($secretary)->patch(route('user.details.update', $user), ['name' => 'X'])->assertForbidden();
+        $this->actingAs($secretary)->post(route('invitation.store'), ['name' => 'A', 'email' => 'a@example.com', 'lifetime_days' => 7])->assertForbidden();
+        $this->actingAs($secretary)->patch(route('user.roles.update', $user), ['roles' => []])->assertForbidden();
+        $this->actingAs($secretary)->post(route('role.store'), ['name' => 'x'])->assertForbidden();
+        $this->actingAs($secretary)->patch(route('role.update', $role), ['name' => 'x'])->assertForbidden();
+        $this->actingAs($secretary)->delete(route('role.destroy', $role))->assertForbidden();
+        $this->actingAs($secretary)->get(route('audit-log'))->assertForbidden();
+        $this->actingAs($secretary)->get(route('audit-log.export'))->assertForbidden();
+    }
+
+    public function test_the_sidebar_only_links_to_what_the_user_may_open(): void
+    {
+        $this->actingAs($this->userWithRole(RoleEnum::Secretary))
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertDontSee('href="'.route('users').'"', false)
+            ->assertDontSee('href="'.route('audit-log').'"', false)
+            ->assertDontSee('>Firm<', false);
+
+        $this->actingAs($this->userWithRole(RoleEnum::Director))
+            ->get(route('dashboard'))
+            ->assertSee('href="'.route('users').'"', false)
+            ->assertSee('href="'.route('audit-log').'"', false);
+    }
+
+    public function test_roles_are_assigned_when_their_ids_arrive_as_strings_as_they_do_from_a_form(): void
+    {
+        $director = $this->userWithRole(RoleEnum::Director);
+        $clerk = $this->userWithRole(RoleEnum::Secretary);
+        $custom = Role::create(['name' => 'paralegal', 'guard_name' => 'web']);
+        $attorney = $this->roleId(RoleEnum::Attorney);
+
+        // A browser submits every value as text: roles[]=7&roles[]=3.
+        $this->actingAs($director)
+            ->call('PATCH', route('user.roles.update', $clerk), ['roles' => [(string) $custom->getKey(), (string) $attorney]])
+            ->assertRedirect(route('users'))
+            ->assertSessionHasNoErrors();
+
+        $this->assertEqualsCanonicalizing(['paralegal', 'attorney'], $clerk->fresh()->getRoleNames()->all());
+    }
+
+    public function test_a_role_made_in_the_roles_sheet_can_then_be_given_to_a_user(): void
+    {
+        $director = $this->userWithRole(RoleEnum::Director);
+        $clerk = $this->userWithRole(RoleEnum::Secretary);
+
+        $this->actingAs($director)
+            ->call('POST', route('role.store'), ['name' => 'paralegal', 'permissions' => ['view_clients']])
+            ->assertRedirect(route('users'));
+
+        $role = Role::findByName('paralegal');
+
+        $this->actingAs($director)
+            ->call('PATCH', route('user.roles.update', $clerk), ['roles' => [(string) $role->getKey()]])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(['paralegal'], $clerk->fresh()->getRoleNames()->all());
+        $this->assertTrue($clerk->fresh()->can('view_clients'));
+    }
+
+    // ---- each power on its own ----
+
+    protected function userWith(string ...$permissions): User
+    {
+        $user = User::factory()->create();
+        $user->givePermissionTo($permissions);
+
+        return $user;
+    }
+
+    public function test_someone_who_may_only_view_users_sees_the_page_and_no_way_to_act_on_it(): void
+    {
+        $viewer = $this->userWith('view_users');
+        $person = $this->userWithRole(RoleEnum::Attorney);
+
+        $html = $this->actingAs($viewer)->get(route('users'))->assertOk()->assertSee('Permission matrix')->getContent();
+
+        foreach (['Invite user', 'sheet-open\', \'roles\'', 'edit-user-', 'user-roles-'] as $control) {
+            $this->assertStringNotContainsString($control, $html);
+        }
+
+        $this->actingAs($viewer)->patch(route('user.details.update', $person), ['name' => 'X'])->assertForbidden();
+        $this->actingAs($viewer)->post(route('invitation.store'), ['name' => 'A', 'email' => 'a@example.com', 'lifetime_days' => 7])->assertForbidden();
+        $this->actingAs($viewer)->patch(route('user.roles.update', $person), ['roles' => []])->assertForbidden();
+        $this->actingAs($viewer)->post(route('role.store'), ['name' => 'x'])->assertForbidden();
+    }
+
+    public function test_the_users_page_needs_view_users_not_the_other_powers(): void
+    {
+        foreach (['edit_users', 'invite_users', 'assign_roles', 'manage_roles'] as $permission) {
+            $this->actingAs($this->userWith($permission))->get(route('users'))->assertForbidden();
+        }
+    }
+
+    public function test_editing_a_staff_record_is_its_own_power(): void
+    {
+        $editor = $this->userWith('view_users', 'edit_users');
+        $person = $this->userWithRole(RoleEnum::Attorney);
+
+        $this->actingAs($editor)->patch(route('user.details.update', $person), ['name' => 'Renamed'])->assertSessionHasNoErrors();
+        $this->assertSame('Renamed', $person->fresh()->name);
+
+        $this->actingAs($editor)->get(route('users'))
+            ->assertSee('edit-user-'.$person->getKey())
+            ->assertDontSee('Invite user')
+            ->assertDontSee('user-roles-'.$person->getKey());
+
+        $this->actingAs($editor)->patch(route('user.roles.update', $person), ['roles' => []])->assertForbidden();
+    }
+
+    public function test_inviting_is_its_own_power(): void
+    {
+        $inviter = $this->userWith('view_users', 'invite_users');
+
+        $this->actingAs($inviter)->get(route('users'))
+            ->assertSee('Invite user')
+            ->assertDontSee('edit-user-');
+
+        $this->actingAs($inviter)
+            ->patch(route('user.details.update', $this->userWithRole(RoleEnum::Attorney)), ['name' => 'X'])
+            ->assertForbidden();
+    }
+
+    public function test_giving_people_roles_is_separate_from_shaping_what_a_role_is(): void
+    {
+        $this->userWithRole(RoleEnum::Director); // somebody always holds the whole set
+        $assigner = $this->userWith('view_users', 'assign_roles');
+        $person = $this->userWithRole(RoleEnum::Secretary);
+        $attorney = $this->roleId(RoleEnum::Attorney);
+
+        $this->actingAs($assigner)
+            ->patch(route('user.roles.update', $person), ['roles' => [$attorney]])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(['attorney'], $person->fresh()->getRoleNames()->all());
+
+        // The roles that exist can be handed out, but not rewritten.
+        $this->actingAs($assigner)->post(route('role.store'), ['name' => 'power', 'permissions' => ['view_clients']])->assertForbidden();
+        $this->actingAs($assigner)->patch(route('role.update', Role::findByName('attorney')), ['name' => 'attorney', 'permissions' => []])->assertForbidden();
+        $this->actingAs($assigner)->delete(route('role.destroy', Role::findByName('messenger')))->assertForbidden();
+
+        $this->actingAs($assigner)->get(route('users'))
+            ->assertSee('user-roles-'.$person->getKey())
+            ->assertDontSee('edit-role-');
+    }
+
+    public function test_shaping_roles_is_separate_from_giving_them_to_people(): void
+    {
+        $this->userWithRole(RoleEnum::Director); // somebody always holds the whole set
+        $shaper = $this->userWith('view_users', 'manage_roles');
+        $person = $this->userWithRole(RoleEnum::Secretary);
+
+        $this->actingAs($shaper)->post(route('role.store'), ['name' => 'paralegal', 'permissions' => ['view_clients']])->assertSessionHasNoErrors();
+        $this->assertNotNull(Role::query()->where('name', 'paralegal')->first());
+
+        $this->actingAs($shaper)
+            ->patch(route('user.roles.update', $person), ['roles' => [$this->roleId(RoleEnum::Director)]])
+            ->assertForbidden();
+
+        $this->actingAs($shaper)->get(route('users'))
+            ->assertSee('edit-role-')
+            ->assertDontSee('user-roles-'.$person->getKey());
+    }
+
+    public function test_the_guard_keeps_somebody_able_to_assign_roles_and_to_shape_them(): void
+    {
+        $director = $this->userWithRole(RoleEnum::Director);
+        $role = Role::findByName(RoleEnum::Director->value);
+
+        // Taking the power to shape roles from the only role that has it would strand the firm.
+        $this->actingAs($director)
+            ->patch(route('role.update', $role), ['name' => 'director', 'permissions' => ['view_users', 'edit_users', 'invite_users', 'assign_roles']])
+            ->assertSessionHasErrorsIn('role_'.$role->getKey(), 'permissions');
+
+        $this->assertTrue($role->fresh()->hasPermissionTo('manage_roles'));
+    }
+
+    public function test_the_manager_and_director_hold_the_whole_set_by_default(): void
+    {
+        $set = ['view_users', 'edit_users', 'invite_users', 'assign_roles', 'manage_roles'];
+
+        foreach ([RoleEnum::Director, RoleEnum::Manager] as $role) {
+            $held = Role::findByName($role->value)->permissions->pluck('name')->all();
+
+            $this->assertEmpty(array_diff($set, $held), "{$role->value} is missing part of the set");
+        }
+    }
+
+    public function test_the_old_all_in_one_permission_is_gone(): void
+    {
+        $this->assertNull(\Spatie\Permission\Models\Permission::query()->where('name', 'manage_users')->first());
+    }
+
+    public function test_the_permission_matrix_has_room_to_breathe(): void
+    {
+        $this->actingAs($this->userWith('view_users'))
+            ->get(route('users'))
+            ->assertSee('--tblr-offcanvas-width: min(1180px, 96vw);', false);
     }
 }

@@ -8,12 +8,14 @@ use App\Http\Requests\Diary\StoreDiaryEntryRequest;
 use App\Models\DiaryEntry;
 use App\Models\Matter;
 use App\Models\User;
+use App\Notifications\DiaryEntryAssigned;
+use App\Services\Notifications\NotifyUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 
 class DiaryEntryController extends Controller
 {
-    public function store(StoreDiaryEntryRequest $request, Matter $matter): RedirectResponse
+    public function store(StoreDiaryEntryRequest $request, Matter $matter, NotifyUser $notify): RedirectResponse
     {
         Gate::authorize('work', $matter);
 
@@ -25,6 +27,11 @@ class DiaryEntryController extends Controller
         );
 
         $entry->save();
+
+        // Told only when someone else has put it on their plate.
+        if (! $entry->assignee->is($request->user())) {
+            $notify->about($entry->assignee, new DiaryEntryAssigned($entry, $request->user()));
+        }
 
         return redirect()
             ->route('matter.show', [$matter, 'tab' => 'diary'])
