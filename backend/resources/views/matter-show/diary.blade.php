@@ -45,7 +45,10 @@
                         </td>
                         <td class="text-end">
                             @if ($canWork && $entry->isPending())
-                                <form method="POST" action="{{ route('matter.diary.complete', [$matter, $entry]) }}">
+                                <form method="POST" action="{{ route('matter.diary.complete', [$matter, $entry]) }}"
+                                    data-confirm="Mark this diary entry as done? It cannot be marked pending again."
+                                    data-confirm-title="Complete diary entry" data-confirm-action="Mark done"
+                                    data-confirm-tone="primary" data-confirm-icon="circle-check">
                                     @csrf
                                     <x-ui.button type="submit" variant="ghost-secondary" size="sm">Mark done</x-ui.button>
                                 </form>

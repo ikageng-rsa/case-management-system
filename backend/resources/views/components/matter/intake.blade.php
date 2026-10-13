@@ -1,45 +1,52 @@
 @props([
     'name',
-    'client',
     'matterTypes',
     'courts',
     'action',
+    'client' => null,
+    'selectedClient' => null,
+    'attorneys' => collect(),
     'bag' => 'matter',
 ])
 
 {{--
-    Opening a matter takes three steps — what kind of matter, its details, then
-    a last look — walked through client side and submitted as one ordinary form.
-    Every field is validated again on the server, so a step can never be skipped
-    by going around the page.
+    Opening a matter takes a few steps — who it is for, what it is, then a last
+    look — walked through client side and submitted as one ordinary form. Every
+    field is validated again on the server, so a step can never be skipped by
+    going around the page.
 
-    The client is fixed here. Where the intake is opened without one, a step for
-    choosing a client goes in front of these.
+    Given a client (opening from their page) the step for choosing one is left
+    out. Otherwise the client is found by searching, and a client who is not on
+    file yet is registered from the clients page first.
+
+    Planned: a step for the parties to the matter, once there is somewhere to
+    keep them.
 --}}
 @php
     $errorBag = $errors->getBag($bag);
+    $chosen = $client ?? $selectedClient;
+    $matterStep = $client ? 1 : 2;
 
     $config = [
-        'step' => match (true) {
-            $errorBag->hasAny(['matter_type_id', 'court_id', 'client_id']) => 1,
-            $errorBag->any() => 2,
-            default => 1,
-        },
+        'step' => $errorBag->has('client_id') && ! $client ? 1 : ($errorBag->any() ? $matterStep : 1),
+        'fixedClient' => $client !== null,
+        'client' => $chosen ? ['id' => $chosen->getKey(), 'name' => $chosen->full_name] : null,
         'types' => $matterTypes->mapWithKeys(fn ($type) => [
             $type->getKey() => ['name' => $type->name, 'litigation' => (bool) $type->is_litigation],
         ]),
         'typeId' => (string) old('matter_type_id', ''),
+        'urls' => ['lookup' => route('client.lookup'), 'reference' => route('matter.reference-preview')],
     ];
 @endphp
 
-<x-ui.sheet :name="$name" title="Open a new matter" :lede="'For '.$client->full_name" :bag="$bag" wide
+<x-ui.sheet :name="$name" title="Open a new matter" :lede="$client ? 'For '.$client->full_name : 'Choose a client, then describe the matter.'" :bag="$bag" wide
     :action="$action" :form-data="'matterIntake('.\Illuminate\Support\Js::from($config).')'">
-    <input type="hidden" name="client_id" value="{{ $client->getKey() }}">
+    <input type="hidden" name="client_id" x-bind:value="client?.id ?? ''">
 
     <div class="d-flex align-items-center justify-content-between mb-4">
         <p class="text-meta mb-0">
             step <span x-text="step"></span> of <span x-text="steps.length"></span> ·
-            <span x-text="steps[step - 1]"></span>
+            <span x-text="current"></span>
         </p>
 
         <div class="d-flex gap-1">
@@ -51,11 +58,62 @@
         </div>
     </div>
 
-    <div x-ref="step1" x-show="step === 1">
-        <div class="mb-3">
-            <div class="form-label form-label-mono">Client</div>
-            <div>{{ $client->full_name }}</div>
+    @unless ($client)
+        <div x-ref="step1" x-show="current === 'Client'">
+            <div x-show="client === null">
+                <div class="mb-3">
+                    <label class="form-label form-label-mono" for="{{ $bag }}_client_search">Client</label>
+                    <div class="form-hint">Search by name, ID number or phone</div>
+                    <input type="search" class="form-control" id="{{ $bag }}_client_search" autocomplete="off"
+                        x-model="query" x-on:input.debounce.300ms="search()"
+                        x-bind:class="{ 'is-invalid': clientMissing || {{ $errorBag->has('client_id') ? 'true' : 'false' }} }">
+                    <div class="invalid-feedback">Choose the client this matter is for.</div>
+                </div>
+
+                <div class="list-group list-group-flush mb-3">
+                    <template x-for="result in results" :key="result.id">
+                        <button type="button" class="list-group-item list-group-item-action d-flex align-items-start justify-content-between gap-2 px-3 py-2 text-start"
+                            x-on:click="choose(result)">
+                            <span>
+                                <span class="d-block fw-bold" x-text="result.name"></span>
+                                <span class="d-block text-meta" x-text="result.detail"></span>
+                            </span>
+                            <span class="text-meta text-end flex-shrink-0">
+                                <span x-text="result.matters"></span>
+                                <span x-text="result.matters === 1 ? 'matter' : 'matters'"></span>
+                            </span>
+                        </button>
+                    </template>
+                </div>
+
+                <p class="text-secondary" x-show="searched && results.length === 0" x-cloak>No client matches that.</p>
+
+                <p class="text-meta">
+                    Not on file yet? <a href="{{ route('clients') }}">Register the client</a> first.
+                </p>
+            </div>
+
+            <div x-show="client !== null" x-cloak>
+                <div class="form-label form-label-mono">Client</div>
+                <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                    <span class="fw-bold" x-text="client?.name"></span>
+                    <x-ui.button variant="ghost-secondary" size="sm" x-on:click="clear()">Change</x-ui.button>
+                </div>
+                <p class="text-meta" x-show="client?.matters > 0" x-cloak>
+                    <span x-text="client?.matters"></span>
+                    <span x-text="client?.matters === 1 ? 'existing matter' : 'existing matters'"></span> — check for duplicates.
+                </p>
+            </div>
         </div>
+    @endunless
+
+    <div x-ref="step{{ $matterStep }}" x-show="current === 'Matter'" {{ $client ? '' : 'x-cloak' }}>
+        @if ($client)
+            <div class="mb-3">
+                <div class="form-label form-label-mono">Client</div>
+                <div>{{ $client->full_name }}</div>
+            </div>
+        @endif
 
         <x-ui.select label="Matter type" name="matter_type_id" id="{{ $bag }}_matter_type_id" before="Drives the reference code"
             x-model="typeId" x-ref="type" required :error="$errorBag->first('matter_type_id')">
@@ -74,21 +132,50 @@
                 @endforeach
             </x-ui.select>
         </div>
-    </div>
 
-    <div x-ref="step2" x-show="step === 2" x-cloak>
         <x-ui.input label="Matter title" name="title" id="{{ $bag }}_title" before="Appears on the file cover"
             x-ref="title" maxlength="255" :value="old('title')" :error="$errorBag->first('title')" />
+
+        @if ($attorneys->isNotEmpty())
+            <x-ui.select label="Responsible attorney" name="responsible_attorney_id" id="{{ $bag }}_attorney" before="Who owns the file"
+                x-ref="attorney" :error="$errorBag->first('responsible_attorney_id')">
+                <option value="">Assign later</option>
+                @foreach ($attorneys as $attorney)
+                    <option value="{{ $attorney->getKey() }}" @selected(old('responsible_attorney_id') === $attorney->getKey())>{{ $attorney->name }}</option>
+                @endforeach
+            </x-ui.select>
+        @endif
 
         <x-ui.input label="Date of instruction" name="instructed_at" id="{{ $bag }}_instructed_at" type="date"
             before="The prescription clock starts here" x-ref="instructed" required
             :value="old('instructed_at', now()->toDateString())" :error="$errorBag->first('instructed_at')" />
+
+        <div class="mb-3">
+            <label class="form-label form-label-mono" for="{{ $bag }}_narration">Opening narration</label>
+            <div class="form-hint">Optional first ledger entry</div>
+            <textarea class="form-control @if ($errorBag->has('narration')) is-invalid @endif" id="{{ $bag }}_narration"
+                name="narration" rows="3" maxlength="5000" x-ref="narration">{{ old('narration') }}</textarea>
+            @if ($errorBag->has('narration'))
+                <div class="invalid-feedback">{{ $errorBag->first('narration') }}</div>
+            @endif
+        </div>
     </div>
 
-    <div x-ref="step3" x-show="step === 3" x-cloak>
-        <dl class="mb-4">
+    <div x-ref="step{{ $matterStep + 1 }}" x-show="current === 'Review'" x-cloak>
+        <div class="p-3 mb-4 rounded" style="background-color: var(--cms-ink-900);">
+            <p class="text-uppercase mb-1" style="font-family: var(--cms-font-mono); font-size: var(--cms-text-2xs); letter-spacing: var(--cms-tracking-label-wide); color: var(--cms-gold-500);">
+                Reference
+            </p>
+            <p class="mb-0" style="font-family: var(--cms-font-mono); font-size: var(--cms-text-xl); color: #fff;"
+                x-text="reference ?? 'issued when opened'"></p>
+            <p class="mb-0 fst-italic" style="font-size: var(--cms-text-xs); color: var(--cms-on-ink-caption);">
+                Provisional: the sequence is reserved when the matter is opened.
+            </p>
+        </div>
+
+        <dl class="mb-0">
             <dt class="form-label form-label-mono">Client</dt>
-            <dd>{{ $client->full_name }}</dd>
+            <dd x-text="client?.name"></dd>
 
             <dt class="form-label form-label-mono">Matter type</dt>
             <dd x-text="review.type"></dd>
@@ -99,11 +186,17 @@
             <dt class="form-label form-label-mono">Title</dt>
             <dd x-text="review.title"></dd>
 
+            @if ($attorneys->isNotEmpty())
+                <dt class="form-label form-label-mono">Responsible attorney</dt>
+                <dd x-text="review.attorney"></dd>
+            @endif
+
             <dt class="form-label form-label-mono">Instructed</dt>
             <dd x-text="review.instructed"></dd>
-        </dl>
 
-        <p class="text-meta fst-italic">The file reference is issued when the matter is opened.</p>
+            <dt class="form-label form-label-mono">Opening narration</dt>
+            <dd x-text="review.narration"></dd>
+        </dl>
     </div>
 
     <x-slot:footer>
@@ -116,8 +209,8 @@
             </div>
 
             <div>
-                <x-ui.button variant="primary" x-show="step < 3" x-on:click="next()">Continue →</x-ui.button>
-                <x-ui.button type="submit" variant="primary" x-show="step === 3" x-cloak>Open matter</x-ui.button>
+                <x-ui.button variant="primary" x-show="current !== 'Review'" x-on:click="next()">Continue →</x-ui.button>
+                <x-ui.button type="submit" variant="primary" x-show="current === 'Review'" x-cloak>Open matter</x-ui.button>
             </div>
         </div>
     </x-slot:footer>

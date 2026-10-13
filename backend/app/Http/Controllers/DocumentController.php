@@ -60,11 +60,8 @@ class DocumentController extends Controller
             'kind' => $kind,
             'kinds' => DocumentKind::cases(),
             'filterMatters' => $this->visibleMatters($user)->orderBy('reference')->get(['matters.id', 'matters.reference']),
-            // Work on a file belongs to the people assigned to it, while it is open.
-            'fileableMatters' => Matter::query()->open()
-                ->assignedTo($user)
-                ->orderBy('reference')
-                ->get(['matters.id', 'matters.reference']),
+            // The matter the upload sheet starts on: the one being filtered by, or the one a failed upload named.
+            'uploadMatter' => Matter::query()->open()->assignedTo($user)->find($request->old('matter_id') ?? $matterId),
         ]);
     }
 

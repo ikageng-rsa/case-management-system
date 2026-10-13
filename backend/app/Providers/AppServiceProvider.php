@@ -7,6 +7,7 @@ namespace App\Providers;
 use App\Models\ActivityType;
 use App\Models\Client;
 use App\Models\ClientContact;
+use App\Models\ClientContactPerson;
 use App\Models\Court;
 use App\Models\DiaryEntry;
 use App\Models\Matter;
@@ -44,6 +45,7 @@ class AppServiceProvider extends ServiceProvider
             'matter_assignment' => MatterAssignment::class,
             'client' => Client::class,
             'client_contact' => ClientContact::class,
+            'client_contact_person' => ClientContactPerson::class,
             'popia_consent' => PopiaConsent::class,
             'document' => Media::class,
             'court' => Court::class,

@@ -128,7 +128,11 @@ class AuditLogController extends Controller
                 ->values()
                 ->all(),
             'properties' => $properties
-                ->map(fn (mixed $value, string $key) => ['key' => str_replace('_', ' ', $key), 'value' => $this->display($value)])
+                ->map(fn (mixed $value, string $key) => [
+                    'key' => str_replace('_', ' ', $key),
+                    // The log keeps the name of a field as the system knows it; here it reads as words.
+                    'value' => $key === 'field' ? str_replace(['_', '-'], ' ', $this->display($value)) : $this->display($value),
+                ])
                 ->values()
                 ->all(),
         ];

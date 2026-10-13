@@ -27,6 +27,10 @@
     submit button in the footer submits what is in the body. formData is an
     Alpine x-data expression for that form, shared by body and footer alike.
 
+    The form can ask before it submits: data-confirm attributes given to the
+    sheet are passed on to it, and x-bind:data-confirm makes the question depend
+    on what has been filled in (an empty value means no question).
+
 --}}
 <div x-data="{
         name: '{{ $name }}',
@@ -79,6 +83,7 @@
             <form method="{{ strtoupper($method) === 'GET' ? 'GET' : 'POST' }}" action="{{ $action }}"
                   @if ($enctype) enctype="{{ $enctype }}" @endif
                   @if ($formData) x-data="{{ $formData }}" @endif
+                  {{ $attributes->whereStartsWith(['data-confirm', 'x-bind:data-confirm']) }}
                   class="d-flex flex-column flex-grow-1 overflow-hidden" novalidate>
                 @csrf
                 @if (! in_array(strtoupper($method), ['GET', 'POST'], true))

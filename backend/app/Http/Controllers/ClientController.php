@@ -16,6 +16,7 @@ use App\Models\MatterType;
 use App\Models\User;
 use App\Services\Clients\AddClientContact;
 use App\Services\Clients\DuplicateClientException;
+use App\Services\Clients\MaskIdentifier;
 use App\Services\Clients\NormaliseIdentifier;
 use App\Services\Clients\RecordPopiaConsent;
 use App\Services\Clients\RegisterClient;
@@ -23,6 +24,7 @@ use App\Services\Clients\UpdateClient;
 use App\Services\Matters\OpenMatter;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -122,6 +124,27 @@ class ClientController extends Controller
             ->with('status', 'Client updated.');
     }
 
+    /** Matching clients for the picker in a form, with enough to tell two of the same name apart. */
+    public function lookup(Request $request): JsonResponse
+    {
+        Gate::authorize('viewAny', Client::class);
+
+        return response()->json(
+            $this->search($request)
+                ->withCount('matters')
+                ->limit(8)
+                ->get()
+                ->map(fn (Client $client) => [
+                    'id' => $client->getKey(),
+                    'name' => $client->full_name,
+                    'detail' => $client->isEntity()
+                        ? ($client->registration_number ? 'reg '.MaskIdentifier::registrationNumber($client->registration_number) : '')
+                        : ($client->id_number ? MaskIdentifier::idNumber($client->id_number) : ''),
+                    'matters' => $client->matters_count,
+                ]),
+        );
+    }
+
     protected function render(Request $request, ?Client $client): View
     {
         /** @var User $user */
@@ -139,9 +162,21 @@ class ClientController extends Controller
             'query' => (string) $request->query('q'),
             'client' => $client,
             'canSeeContacts' => $user->can('view_client_contacts'),
+            'canReveal' => $user->can('view_unmasked_client_data'),
+            'canEditClient' => $client !== null && $user->can('update', $client),
+            'tab' => $this->tab($request, $user),
             'matterTypes' => $user->can('create', Matter::class) ? MatterType::query()->orderBy('name')->get() : collect(),
             'courts' => $user->can('create', Matter::class) ? Court::query()->orderBy('name')->get() : collect(),
+            'attorneys' => $user->can('assign_matters') ? User::query()->orderBy('name')->get() : collect(),
         ] + ($client === null ? [] : $this->detail($client, $user)));
+    }
+
+    /** Contacts and contact persons are only for those cleared to see how a client is reached. */
+    protected function tab(Request $request, User $user): string
+    {
+        $tabs = $user->can('view_client_contacts') ? ['overview', 'contacts', 'persons'] : ['overview'];
+
+        return in_array($request->query('tab'), $tabs, true) ? $request->query('tab') : 'overview';
     }
 
     /** @return array<string, mixed> */
@@ -155,16 +190,23 @@ class ClientController extends Controller
             ->latest('instructed_at')
             ->get();
 
-        $consent = $user->can('view_popia_consents')
-            ? $client->popiaConsent()->first()
-            : null;
+        $showConsent = $user->can('view_popia_consents');
+
+        // Every decision the client has made, newest first; the first is the one in force.
+        $consents = $showConsent
+            ? $client->popiaConsents()->with('media')->latest('id')->get()
+            : collect();
 
         return [
             'canSeeFullIdentifiers' => $user->can('view_unmasked_client_data'),
+            'contactPersons' => $user->can('view_client_contacts') ? $client->contactPersons()->orderByDesc('is_primary')->oldest()->get() : collect(),
             'matters' => $matters,
             'openMattersCount' => $matters->filter->isOpen()->count(),
-            'consent' => $consent,
-            'showConsent' => $user->can('view_popia_consents'),
+            'consent' => $consents->first(),
+            'consents' => $consents,
+            'showConsent' => $showConsent,
+            'canRecordConsent' => $user->can('record_popia_consent'),
+            'canWithdrawConsent' => $user->can('withdraw_popia_consent'),
         ];
     }
 

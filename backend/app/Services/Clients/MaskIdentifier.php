@@ -58,4 +58,10 @@ class MaskIdentifier
 
         return $parts[0].'/'.Str::mask($parts[1], self::DOT, 0).'/'.$parts[2];
     }
+
+    /** 1142 Boitekong Ext 4, Rustenburg reads as "1142 Boi···". Enough to recognise, not to find. */
+    public static function address(string $value): string
+    {
+        return Str::mask($value, self::DOT, min(8, max(mb_strlen($value) - 3, 0)));
+    }
 }

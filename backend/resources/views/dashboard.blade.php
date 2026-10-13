@@ -53,7 +53,7 @@
             <div class="card">
                 <div class="card-header d-flex align-items-center">
                     <h3 class="card-title mb-0">Matters needing attention</h3>
-                    <a href="#" class="ms-auto text-meta">view all</a>
+                    <a href="{{ route('matters') }}" class="ms-auto text-meta">view all</a>
                 </div>
                 <div class="table-responsive">
                     <table class="table table-vcenter card-table">

@@ -104,4 +104,15 @@ class DashboardControllerTest extends TestCase
                 return $row !== null && $row['label'] === 'On track' && $row['tone'] === 'success';
             });
     }
+
+    public function test_view_all_leads_to_the_matters_list(): void
+    {
+        $director = User::factory()->create();
+        $director->assignRole(RoleEnum::Director->value);
+
+        $this->actingAs($director)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('href="'.route('matters').'" class="ms-auto text-meta">view all', false);
+    }
 }

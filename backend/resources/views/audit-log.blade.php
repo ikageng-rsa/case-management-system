@@ -8,9 +8,10 @@
 
         $tone = fn (?string $event) => match ($event) {
             'created', 'uploaded', 'role_granted' => 'text-success',
-            'updated' => 'text-info',
+            'updated', 'value_changed' => 'text-info',
             'deleted', 'role_revoked' => 'text-danger',
             'exported', 'downloaded' => 'text-primary',
+            'revealed' => 'text-warning',
             default => 'text-secondary',
         };
     @endphp
@@ -121,7 +122,6 @@
                 <h2 class="offcanvas-title mb-1">Audit entry</h2>
                 <p class="text-meta mb-0" x-text="record.when"></p>
             </div>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </x-slot:header>
 
         <template x-if="record.when">
