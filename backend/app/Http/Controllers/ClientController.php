@@ -179,16 +179,22 @@ class ClientController extends Controller
             ->latest('instructed_at')
             ->get();
 
-        $consent = $user->can('view_popia_consents')
-            ? $client->popiaConsent()->first()
-            : null;
+        $showConsent = $user->can('view_popia_consents');
+
+        // Every decision the client has made, newest first; the first is the one in force.
+        $consents = $showConsent
+            ? $client->popiaConsents()->with('media')->latest('id')->get()
+            : collect();
 
         return [
             'canSeeFullIdentifiers' => $user->can('view_unmasked_client_data'),
             'matters' => $matters,
             'openMattersCount' => $matters->filter->isOpen()->count(),
-            'consent' => $consent,
-            'showConsent' => $user->can('view_popia_consents'),
+            'consent' => $consents->first(),
+            'consents' => $consents,
+            'showConsent' => $showConsent,
+            'canRecordConsent' => $user->can('record_popia_consent'),
+            'canWithdrawConsent' => $user->can('withdraw_popia_consent'),
         ];
     }
 

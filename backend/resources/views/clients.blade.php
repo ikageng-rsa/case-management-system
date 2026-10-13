@@ -150,16 +150,71 @@
 
                 <div class="row">
                     @if ($showConsent)
-                        <div class="col-md-6">
-                            <h3 class="text-meta text-uppercase mb-2">Popia consent</h3>
+                        @php
+                            $active = (bool) $consent?->isActive();
+                            $withdrawn = $consent && $consent->granted && ! $active;
+                            $declined = $consent && ! $consent->granted;
+                            $mandate = fn ($record) => $record->mandate()
+                                ? '<a href="'.e(route('client.consent.mandate', [$client, $record])).'">signed mandate</a>'
+                                : null;
+                        @endphp
+
+                        <div class="col-md-6" x-data>
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <h3 class="text-meta text-uppercase mb-0">Popia consent</h3>
+
+                                {{-- On is only reached by recording consent, and off only by withdrawing it, so the switch
+                                     never flips by itself; it asks. A withdrawn consent stays withdrawn. --}}
+                                <label class="form-check form-switch mb-0"
+                                    @if ($withdrawn) title="Withdrawn consent cannot be switched back on. Record new consent instead." @endif>
+                                    <input class="form-check-input" type="checkbox" role="switch" aria-label="Popia consent"
+                                        @checked($active)
+                                        @disabled($withdrawn || ($active ? ! $canWithdrawConsent : ! $canRecordConsent))
+                                        @if ($active)
+                                            x-on:click.prevent="$refs.withdraw.requestSubmit()"
+                                        @else
+                                            x-on:click.prevent="$dispatch('sheet-open', 'record-consent')"
+                                        @endif>
+                                </label>
+                            </div>
+
                             @if ($consent === null)
                                 <p class="mb-0">No consent decision recorded.</p>
-                            @elseif ($consent->isActive())
-                                <p class="mb-0">Captured {{ $consent->granted_at->format('d M Y') }} · {{ Str::headline($consent->method->value) }}{{ $consent->mandate() ? ' · signed mandate on file' : '' }}</p>
-                            @elseif ($consent->granted)
+                            @elseif ($active)
+                                <p class="mb-0">Captured {{ $consent->granted_at->format('d M Y') }} · {{ Str::headline($consent->method->value) }}@if ($link = $mandate($consent)) · {!! $link !!} on file @endif</p>
+                            @elseif ($withdrawn)
                                 <p class="mb-0">Withdrawn {{ $consent->withdrawn_at->format('d M Y') }} · was captured {{ $consent->granted_at->format('d M Y') }}</p>
                             @else
                                 <p class="mb-0">Consent declined · {{ Str::headline($consent->method->value) }}</p>
+                            @endif
+
+                            @if ($canRecordConsent && ($withdrawn || $declined))
+                                <x-ui.button variant="outline-secondary" size="sm" class="mt-2"
+                                    x-on:click="$dispatch('sheet-open', 'record-consent')">Record new consent</x-ui.button>
+                            @endif
+
+                            @if ($active && $canWithdrawConsent)
+                                <form x-ref="withdraw" method="POST" action="{{ route('client.consent.withdraw', $client) }}"
+                                    data-confirm="Withdraw this client's consent? It cannot be switched back on; if they consent again, that is recorded as a new consent."
+                                    data-confirm-title="Withdraw consent" data-confirm-action="Withdraw" data-confirm-tone="danger">
+                                    @csrf
+                                </form>
+                            @endif
+
+                            @if ($consents->count() > 1)
+                                <h4 class="text-meta text-uppercase mt-3 mb-1">History</h4>
+                                @foreach ($consents as $record)
+                                    <p class="text-meta mb-1">
+                                        @if ($record->isActive())
+                                            Granted {{ $record->granted_at->format('d M Y') }} · in force
+                                        @elseif ($record->granted)
+                                            Granted {{ $record->granted_at->format('d M Y') }} · withdrawn {{ $record->withdrawn_at->format('d M Y') }}
+                                        @else
+                                            Declined {{ $record->created_at->format('d M Y') }}
+                                        @endif
+                                        · {{ Str::headline($record->method->value) }}@if ($link = $mandate($record)) · {!! $link !!} @endif
+                                    </p>
+                                @endforeach
                             @endif
                         </div>
                     @endif
@@ -217,6 +272,34 @@
                 </x-slot:footer>
             </x-ui.sheet>
         @endcan
+
+        @if ($showConsent && $canRecordConsent)
+            <x-ui.sheet name="record-consent" title="Record consent" lede="Record how {{ $client->full_name }} gave their POPIA consent." bag="popia"
+                :action="route('client.consent.store', $client)" enctype="multipart/form-data"
+                :form-data="'{ method: '.\Illuminate\Support\Js::from(old('method', 'signed_mandate')).' }'">
+                <x-ui.select label="How consent was given" name="method" id="consent_method" x-model="method" :error="$errors->popia->first('method')">
+                    @foreach (\App\Enums\Client\PopiaConsentMethod::cases() as $method)
+                        <option value="{{ $method->value }}">{{ Str::headline($method->value) }}</option>
+                    @endforeach
+                </x-ui.select>
+
+                <x-ui.input label="Date consent was given" name="consented_on" id="consent_date" type="date"
+                    :value="old('consented_on', now()->toDateString())" max="{{ now()->toDateString() }}" :error="$errors->popia->first('consented_on')" />
+
+                <x-ui.input label="Signed mandate" name="mandate" id="consent_mandate" type="file" accept=".pdf,.jpg,.jpeg,.png"
+                    :error="$errors->popia->first('mandate')">
+                </x-ui.input>
+                <p class="form-hint" x-show="method === 'signed_mandate'">A signed mandate is required. PDF or image, up to 20 MB.</p>
+                <p class="form-hint" x-show="method !== 'signed_mandate'" x-cloak>Optional. PDF or image, up to 20 MB.</p>
+
+                <x-slot:footer>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <x-ui.button variant="outline-secondary" x-on:click="close()">Cancel</x-ui.button>
+                        <x-ui.button type="submit" variant="primary">Record consent</x-ui.button>
+                    </div>
+                </x-slot:footer>
+            </x-ui.sheet>
+        @endif
 
         @can('create', \App\Models\Matter::class)
             <x-matter.intake name="new-client-matter" :client="$client" :matter-types="$matterTypes" :courts="$courts" :attorneys="$attorneys" :action="route('matter.store')" />

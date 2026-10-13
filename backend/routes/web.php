@@ -10,6 +10,7 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\MatterController;
 use App\Http\Controllers\MatterDocumentController;
 use App\Http\Controllers\NarrationController;
+use App\Http\Controllers\PopiaConsentController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -46,6 +47,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/clients/lookup', [ClientController::class, 'lookup'])->name('client.lookup');
     Route::get('/clients/{client}', [ClientController::class, 'show'])->name('client.show');
     Route::patch('/clients/{client}', [ClientController::class, 'update'])->name('client.update');
+    Route::post('/clients/{client}/popia-consent', [PopiaConsentController::class, 'store'])->name('client.consent.store');
+    Route::post('/clients/{client}/popia-consent/withdraw', [PopiaConsentController::class, 'withdraw'])->name('client.consent.withdraw');
+    Route::get('/clients/{client}/popia-consent/{popiaConsent}/mandate', [PopiaConsentController::class, 'mandate'])->name('client.consent.mandate');
 
     Route::get('/documents', [DocumentController::class, 'index'])->name('documents');
     Route::post('/documents', [DocumentController::class, 'store'])->name('documents.store');
