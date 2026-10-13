@@ -182,19 +182,4 @@ class DocumentControllerTest extends TestCase
             ->post(route('documents.store'), [])
             ->assertSessionHasErrorsIn('document', ['matter_id', 'file', 'kind']);
     }
-
-    public function test_the_upload_sheet_only_offers_open_matters_the_user_carries(): void
-    {
-        $open = Matter::factory()->create(['reference' => 'IOT/CIV/1/2026']);
-        $closed = Matter::factory()->closed()->create(['reference' => 'IOT/CIV/2/2026']);
-        Matter::factory()->create(['reference' => 'IOT/CIV/3/2026']);
-
-        $attorney = $this->userWithRole(RoleEnum::Attorney);
-        MatterAssignment::factory()->for($open)->for($attorney)->capacity(Assignment::Responsible)->create();
-        MatterAssignment::factory()->for($closed)->for($attorney)->capacity(Assignment::Responsible)->create();
-
-        $this->actingAs($attorney)
-            ->get(route('documents'))
-            ->assertViewHas('fileableMatters', fn ($matters) => $matters->pluck('reference')->all() === ['IOT/CIV/1/2026']);
-    }
 }

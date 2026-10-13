@@ -43,6 +43,22 @@ trait RecordsActivity
             ->log($this->describeActivity($verb));
     }
 
+    /**
+     * Record something that happened to this record which the model's own logging
+     * cannot say: a change to an attribute kept out of the log, such as a contact
+     * value. The sentence and properties name what changed, never the value.
+     *
+     * @param  array<string, mixed>  $properties
+     */
+    public function recordEvent(string $event, string $description, array $properties = []): void
+    {
+        activity($this->auditLogName())
+            ->performedOn($this)
+            ->withProperties($properties)
+            ->event($event)
+            ->log($description);
+    }
+
     /*
      * A read is recorded once per person per record for the length of the
      * window, however often the page is reloaded in it. The cache entry is

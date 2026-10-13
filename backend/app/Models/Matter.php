@@ -204,6 +204,56 @@ class Matter extends Model implements HasMedia
         $query->whereNotNull('prescribes_at')->where('prescribes_at', '<', now());
     }
 
+    /*
+     * Finds matters word by word, so a few loose fragments narrow it down the way
+     * a person would say them: "civ 2026", "armstrong crm", "civ 12". Every word
+     * has to match something, but each may match anywhere that fits it: a year
+     * word means the year opened, a number means the file number, and any other
+     * word may be part of the reference, the title, the type or the client's name.
+     * Words that only say what is being looked for ("matter") are ignored.
+     */
+    public function scopeSearch(Builder $query, string $term): void
+    {
+        $words = collect(preg_split('/[\s\/\-\.,]+/', mb_strtolower(trim($term))) ?: [])
+            ->reject(fn (string $word) => $word === '' || in_array($word, ['matter', 'matters', 'file', 'files'], true))
+            ->values();
+
+        foreach ($words as $word) {
+            $like = '%'.addcslashes($word, '%_\\').'%';
+
+            $query->where(function (Builder $query) use ($word, $like): void {
+                $query->where('title', 'like', $like);
+
+                if (ctype_digit($word) && strlen($word) === 4 && $word >= '1900' && $word <= '2100') {
+                    $query->orWhere('opened_year', (int) $word);
+                } elseif (ctype_digit($word)) {
+                    // Files are numbered 1, 2, 3 … though some are written 0001.
+                    $number = ltrim($word, '0');
+
+                    if ($number !== '') {
+                        $query->orWhereRaw('CAST(sequence_number AS CHAR) like ?', [$number.'%']);
+                    }
+                } else {
+                    $query->orWhere('reference', 'like', $like)
+                        ->orWhereHas('matterType', fn (Builder $type) => $type->where('name', 'like', $like))
+                        ->orWhereHas('client', fn (Builder $client) => $client
+                            ->where('first_name', 'like', $like)
+                            ->orWhere('last_name', 'like', $like)
+                            ->orWhere('entity_name', 'like', $like));
+                }
+            });
+        }
+
+        // Matches that start with what was typed come first, then the most recent.
+        $first = $words->first();
+
+        if ($first !== null) {
+            $query->orderByRaw('case when lower(reference) like ? then 0 else 1 end', [addcslashes($first, '%_\\').'%']);
+        }
+
+        $query->latest('instructed_at');
+    }
+
     /** Matters the given user currently carries, in any capacity. */
     public function scopeAssignedTo(Builder $query, User $user): void
     {

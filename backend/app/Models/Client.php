@@ -57,6 +57,12 @@ class Client extends Model
         return $this->hasMany(ClientContact::class);
     }
 
+    /** The people to call at an entity, the first contact then alternatives. */
+    public function contactPersons(): HasMany
+    {
+        return $this->hasMany(ClientContactPerson::class);
+    }
+
     public function matters(): HasMany
     {
         return $this->hasMany(Matter::class);

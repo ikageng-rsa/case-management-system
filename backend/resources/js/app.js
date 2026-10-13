@@ -20,6 +20,7 @@ Alpine.data('confirmDialog', () => ({
     actionLabel: 'Confirm',
     cancelLabel: 'Cancel',
     tone: 'danger',
+    icon: 'alert-triangle',
     promptLabel: null,
     reason: '',
     resolve: null,
@@ -30,6 +31,7 @@ Alpine.data('confirmDialog', () => ({
         this.actionLabel = options.actionLabel ?? 'Confirm';
         this.cancelLabel = options.cancelLabel ?? 'Cancel';
         this.tone = options.tone ?? 'danger';
+        this.icon = options.icon ?? (this.tone === 'danger' ? 'alert-triangle' : 'help-circle');
         this.promptLabel = options.promptLabel ?? null;
         this.reason = '';
         this.resolve = options.resolve ?? null;
@@ -82,6 +84,7 @@ const confirmOptionsFrom = (element) => ({
     actionLabel: element.dataset.confirmAction,
     cancelLabel: element.dataset.confirmCancel,
     tone: element.dataset.confirmTone,
+    icon: element.dataset.confirmIcon,
     promptLabel: element.dataset.confirmPromptLabel,
 });
 
@@ -160,19 +163,96 @@ Alpine.data('clientIntake', ({ type = 'individual', matterTypeId = '', matterTyp
  * The steps of opening a matter, walked client side and submitted as one
  * ordinary form. The server validates every field again, so a step cannot be
  * skipped by going around the page.
+ *
+ * Where the client is already known (opening from their page) the step for
+ * choosing one is left out.
  */
-Alpine.data('matterIntake', ({ step = 1, types = {}, typeId = '' } = {}) => ({
+Alpine.data('matterIntake', ({
+    step = 1,
+    client = null,
+    fixedClient = false,
+    types = {},
+    typeId = '',
+    urls = {},
+} = {}) => ({
     step,
+    client,
+    fixedClient,
     types,
     typeId,
-    steps: ['Matter type', 'Details', 'Review'],
+    urls,
+
+    query: '',
+    results: [],
+    searching: false,
+    searched: false,
+    clientMissing: false,
+    lookups: 0,
+
     review: {},
+    reference: null,
+
+    get steps() {
+        return this.fixedClient ? ['Matter', 'Review'] : ['Client', 'Matter', 'Review'];
+    },
+
+    get current() {
+        return this.steps[this.step - 1];
+    },
 
     get litigation() {
         return this.types[this.typeId]?.litigation ?? false;
     },
 
+    async search() {
+        const term = this.query.trim();
+        const lookup = ++this.lookups;
+
+        if (term.length < 2) {
+            this.results = [];
+            this.searched = false;
+
+            return;
+        }
+
+        this.searching = true;
+
+        try {
+            const response = await fetch(`${this.urls.lookup}?q=${encodeURIComponent(term)}`, {
+                headers: { Accept: 'application/json' },
+            });
+
+            // Only the latest search may answer.
+            if (lookup === this.lookups && response.ok) {
+                this.results = await response.json();
+                this.searched = true;
+            }
+        } finally {
+            if (lookup === this.lookups) {
+                this.searching = false;
+            }
+        }
+    },
+
+    choose(result) {
+        this.client = result;
+        this.clientMissing = false;
+        this.results = [];
+        this.query = '';
+        this.searched = false;
+    },
+
+    clear() {
+        this.client = null;
+    },
+
     next() {
+        if (this.current === 'Client' && this.client === null) {
+            this.clientMissing = true;
+
+            return;
+        }
+
         const fields = this.$refs['step' + this.step].querySelectorAll('input, select, textarea');
 
         for (const field of fields) {
@@ -181,11 +261,11 @@ Alpine.data('matterIntake', ({ step = 1, types = {}, typeId = '' } = {}) => ({
             }
         }
 
-        if (this.step === 2) {
+        this.step++;
+
+        if (this.current === 'Review') {
             this.summarise();
         }
-
-        this.step++;
     },
 
     back() {
@@ -194,13 +274,158 @@ Alpine.data('matterIntake', ({ step = 1, types = {}, typeId = '' } = {}) => ({
 
     summarise() {
         const value = (ref) => this.$refs[ref]?.value || '—';
+        const text = (ref) => this.$refs[ref]?.selectedOptions[0]?.text || '—';
 
         this.review = {
             type: this.types[this.typeId]?.name ?? '—',
-            court: this.litigation ? (this.$refs.court.selectedOptions[0]?.text ?? '—') : 'Not before a court',
+            court: this.litigation ? text('court') : 'Not before a court',
             title: value('title'),
             instructed: value('instructed'),
+            attorney: this.$refs.attorney?.value ? text('attorney') : 'Not assigned yet',
+            narration: this.$refs.narration?.value || '—',
         };
+
+        this.previewReference();
+    },
+
+    // The sequence is only reserved when the matter is opened, so this is a preview.
+    async previewReference() {
+        this.reference = null;
+
+        const params = new URLSearchParams({
+            client_id: this.client.id,
+            matter_type_id: this.typeId,
+            instructed_at: this.$refs.instructed?.value ?? '',
+        });
+
+        try {
+            const response = await fetch(`${this.urls.reference}?${params}`, { headers: { Accept: 'application/json' } });
+
+            if (response.ok) {
+                this.reference = (await response.json()).reference;
+            }
+        } catch {
+            this.reference = null;
+        }
+    },
+}));
+
+
+/*
+ * A masked value that can be shown in full, briefly. The value is asked for from
+ * the server, which allows it only to those cleared to see it and records that
+ * it was read; it is held here for a few seconds and then dropped, so it does
+ * not linger on the page.
+ */
+Alpine.data('reveal', ({ url, target, masked, seconds = 10 }) => ({
+    masked,
+    value: null,
+    shown: false,
+    loading: false,
+    timer: null,
+
+    async toggle() {
+        if (this.shown) {
+            this.hide();
+
+            return;
+        }
+
+        this.loading = true;
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+                },
+                body: JSON.stringify({ target }),
+            });
+
+            if (! response.ok) {
+                throw new Error('Not allowed');
+            }
+
+            this.value = (await response.json()).value;
+            this.shown = true;
+            this.timer = setTimeout(() => this.hide(), seconds * 1000);
+        } catch {
+            window.toast({ message: 'That could not be shown.', tone: 'danger' });
+        } finally {
+            this.loading = false;
+        }
+    },
+
+    hide() {
+        clearTimeout(this.timer);
+        this.value = null;
+        this.shown = false;
+    },
+}));
+
+
+/*
+ * Choosing one matter out of many: the few that best fit what has been typed are
+ * fetched from the server, and the choice is carried in an ordinary form field.
+ */
+Alpine.data('matterPicker', ({ url, scope = 'visible', selected = null } = {}) => ({
+    url,
+    scope,
+    matter: selected,
+    query: '',
+    results: [],
+    open: false,
+    searched: false,
+    active: -1,
+    lookups: 0,
+
+    focus() {
+        this.open = true;
+        this.search();
+    },
+
+    async search() {
+        const lookup = ++this.lookups;
+
+        const response = await fetch(`${this.url}?${new URLSearchParams({ q: this.query, scope: this.scope })}`, {
+            headers: { Accept: 'application/json' },
+        });
+
+        // Only the latest search may answer.
+        if (lookup === this.lookups && response.ok) {
+            this.results = await response.json();
+            this.searched = true;
+            this.active = this.results.length > 0 ? 0 : -1;
+        }
+    },
+
+    move(step) {
+        if (this.results.length === 0) {
+            return;
+        }
+
+        this.active = (this.active + step + this.results.length) % this.results.length;
+    },
+
+    choose() {
+        if (this.active >= 0) {
+            this.pick(this.results[this.active]);
+        }
+    },
+
+    pick(result) {
+        this.matter = result;
+        this.query = '';
+        this.results = [];
+        this.open = false;
+        this.searched = false;
+    },
+
+    clear() {
+        this.matter = null;
+        this.$nextTick(() => this.$refs.search?.focus());
     },
 }));
 

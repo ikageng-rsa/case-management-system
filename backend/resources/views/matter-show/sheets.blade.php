@@ -79,14 +79,38 @@
     </x-slot:footer>
 </x-ui.sheet>
 
-<x-ui.sheet name="assign-member" title="Add a team member" lede="Assign someone to this matter." bag="assignment" action="{{ route('matter.assign', $matter) }}">
-    <x-ui.select label="Person" name="user_id" :error="$errors->assignment->first('user_id')">
+@php
+    // Responsible and supervising are held by one person, so taking the seat
+    // replaces whoever has it; the form asks first when that is about to happen.
+    $holders = collect($capacities)
+        ->filter(fn ($capacity) => $capacity->isExclusive())
+        ->mapWithKeys(function ($capacity) use ($matter) {
+            $holder = $matter->assignments->first(fn ($assignment) => $assignment->capacity === $capacity)?->user;
+
+            return [$capacity->value => $holder ? ['id' => $holder->getKey(), 'name' => $holder->name] : null];
+        })
+        ->filter();
+
+    $assignState = [
+        'userId' => (string) old('user_id', $assignable->first()?->getKey()),
+        'capacity' => (string) old('capacity', $capacities[0]->value ?? ''),
+        'holders' => $holders,
+    ];
+@endphp
+
+<x-ui.sheet name="assign-member" title="Add a team member" lede="Assign someone to this matter." bag="assignment" action="{{ route('matter.assign', $matter) }}"
+    :form-data="(string) \Illuminate\Support\Js::from($assignState)"
+    data-confirm-title="Replace current holder" data-confirm-action="Replace" data-confirm-tone="primary" data-confirm-icon="users"
+    x-bind:data-confirm="holders[capacity] && holders[capacity].id !== userId
+        ? holders[capacity].name + ' is currently ' + capacity + ' on this matter. Assigning this person replaces them.'
+        : null">
+    <x-ui.select label="Person" name="user_id" x-model="userId" :error="$errors->assignment->first('user_id')">
         @foreach ($assignable as $person)
             <option value="{{ $person->getKey() }}" @selected(old('user_id') === $person->getKey())>{{ $person->name }}</option>
         @endforeach
     </x-ui.select>
 
-    <x-ui.select label="Capacity" name="capacity" :error="$errors->assignment->first('capacity')"
+    <x-ui.select label="Capacity" name="capacity" x-model="capacity" :error="$errors->assignment->first('capacity')"
         hint="Responsible and supervising are held by one person; taking the seat replaces the current holder.">
         @foreach ($capacities as $capacity)
             <option value="{{ $capacity->value }}" @selected(old('capacity') === $capacity->value)>{{ ucfirst($capacity->value) }}</option>
