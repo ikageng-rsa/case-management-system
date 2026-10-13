@@ -66,8 +66,9 @@
                               x-show="unread > 0" x-cloak x-text="unread > 99 ? '99+' : unread"></span>
                     </button>
 
-                    <div class="dropdown-menu dropdown-menu-end p-0" x-bind:class="{ show: open }" x-cloak
-                         style="width: 24rem; max-width: 92vw; max-height: 70vh; overflow-y: auto;">
+                    {{-- Anchored by its right edge to the bell, so it opens leftwards and never off the screen. --}}
+                    <div class="dropdown-menu p-0" x-bind:class="{ show: open }" x-cloak
+                         style="right: 0; left: auto; width: 24rem; max-width: calc(100vw - 2rem); max-height: 70vh; overflow-y: auto;">
                         <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom">
                             <span class="text-meta text-uppercase">Notifications</span>
                             <button type="button" class="btn btn-link btn-sm p-0" x-show="unread > 0" x-cloak x-on:click="markAllRead()">Mark all as read</button>
