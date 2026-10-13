@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\AcceptInvitationController;
+use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\ClientContactController;
 use App\Http\Controllers\ClientController;
@@ -17,11 +18,19 @@ use App\Http\Controllers\MatterDocumentController;
 use App\Http\Controllers\MatterPartyController;
 use App\Http\Controllers\NarrationController;
 use App\Http\Controllers\PopiaConsentController;
+use App\Http\Controllers\SignInCodeController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
+});
+
+// The second step of signing in: the code that was emailed. Reached only after the password.
+Route::middleware(['guest', 'throttle:two-factor'])->group(function () {
+    Route::get('/sign-in/code', [SignInCodeController::class, 'show'])->name('sign-in-code');
+    Route::post('/sign-in/code', [SignInCodeController::class, 'verify'])->name('sign-in-code.verify');
+    Route::post('/sign-in/code/resend', [SignInCodeController::class, 'resend'])->name('sign-in-code.resend');
 });
 
 // Where an invitation's link lands. Guests only, and throttled: the token is the whole secret.
@@ -31,6 +40,8 @@ Route::middleware(['guest', 'throttle:invitations'])->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    Route::get('/account', [AccountController::class, 'show'])->name('account');
+    Route::patch('/account/notifications', [AccountController::class, 'updateNotifications'])->name('account.notifications');
     Route::get('/dashboard', DashboardController::class)->middleware('auth')->name('dashboard');
     Route::get('/matters', [MatterController::class, 'index'])->name('matters');
     Route::post('/matters', [MatterController::class, 'store'])->name('matter.store');
@@ -80,6 +91,7 @@ Route::middleware('auth')->group(function () {
 
     // Firm administration: who may do what, and the record of what was done.
     Route::get('/users', [UserController::class, 'index'])->middleware('can:manage_users')->name('users');
+    Route::patch('/users/{user}', [UserController::class, 'updateDetails'])->middleware('can:manage_users')->name('user.details.update');
 
     Route::middleware('can:manage_users')->group(function () {
         Route::post('/invitations', [InvitationController::class, 'store'])->name('invitation.store');

@@ -44,9 +44,7 @@
                         <th>Role</th>
                         <th>Last active</th>
                         <th>Status</th>
-                        @if ($canAssign)
-                            <th></th>
-                        @endif
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -57,19 +55,22 @@
                                     <span @class(['avatar avatar-rounded', 'bg-primary text-dark' => $user->is(auth()->user()), 'bg-secondary-lt' => ! $user->is(auth()->user())])>{{ mb_substr(Str::initials($user->name, capitalize: true), 0, 2) }}</span>
                                     <div>
                                         <div class="fw-bold">{{ $user->name }}</div>
-                                        <div class="text-meta">{{ \App\Services\Clients\MaskIdentifier::email($user->email) }}</div>
+                                        <div class="text-meta">{{ \App\Services\Clients\MaskIdentifier::email($user->email) }}@if ($user->job_title) · {{ $user->job_title }}@endif</div>
                                     </div>
                                 </div>
                             </td>
                             <td>{{ $user->roles->pluck('name')->map($label)->implode(' · ') ?: '—' }}</td>
                             <td class="text-secondary">{{ ($lastActive[$user->getKey()] ?? null)?->diffForHumans() ?? '—' }}</td>
                             <td><x-ui.stage-badge tone="success">Active</x-ui.stage-badge></td>
-                            @if ($canAssign)
-                                <td class="text-end">
+                            <td class="text-end text-nowrap">
+                                <x-ui.button variant="ghost-secondary" size="sm"
+                                    x-data x-on:click="$dispatch('sheet-open', 'edit-user-{{ $user->getKey() }}')">Details</x-ui.button>
+
+                                @if ($canAssign)
                                     <x-ui.button variant="ghost-secondary" size="sm"
                                         x-data x-on:click="$dispatch('sheet-open', 'user-roles-{{ $user->getKey() }}')">Roles</x-ui.button>
-                                </td>
-                            @endif
+                                @endif
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -179,6 +180,42 @@
             </div>
         </x-slot:footer>
     </x-ui.sheet>
+
+    @foreach ($users as $person)
+        @php
+            $detailsBag = 'user_details_'.$person->getKey();
+            $detail = fn (string $field, mixed $current) => $errors->getBag($detailsBag)->any() ? old($field, $current) : $current;
+        @endphp
+
+        <x-ui.sheet name="edit-user-{{ $person->getKey() }}" title="Staff details" :lede="$person->name" :bag="$detailsBag" method="PATCH"
+            :action="route('user.details.update', $person)">
+            <p class="text-secondary">These are kept by the firm. The person can see them on their account page but cannot change them.</p>
+
+            <x-ui.input label="Name" name="name" id="user_name_{{ $person->getKey() }}" :value="$detail('name', $person->name)"
+                :error="$errors->getBag($detailsBag)->first('name')" />
+            <x-ui.input label="Email" name="email" id="user_email_{{ $person->getKey() }}" type="email" :value="$detail('email', '')"
+                :placeholder="\App\Services\Clients\MaskIdentifier::email($person->email)"
+                hint="Leave empty to keep the current address. Changing it signs the person out of their other sessions."
+                :error="$errors->getBag($detailsBag)->first('email')" />
+            <x-ui.input label="Job title" name="job_title" id="user_title_{{ $person->getKey() }}" :value="$detail('job_title', $person->job_title)"
+                :error="$errors->getBag($detailsBag)->first('job_title')" />
+            <x-ui.input label="Mobile" name="mobile" id="user_mobile_{{ $person->getKey() }}" type="tel" :value="$detail('mobile', '')"
+                :placeholder="$person->mobile ? \App\Services\Clients\MaskIdentifier::mobile($person->mobile) : null"
+                :hint="$person->mobile ? 'Leave empty to keep the current number.' : null" :error="$errors->getBag($detailsBag)->first('mobile')" />
+            <x-ui.input label="Office phone" name="office_phone" id="user_office_{{ $person->getKey() }}" type="tel" :value="$detail('office_phone', '')"
+                :placeholder="$person->office_phone ? \App\Services\Clients\MaskIdentifier::mobile($person->office_phone) : null"
+                :hint="$person->office_phone ? 'Leave empty to keep the current number.' : null" :error="$errors->getBag($detailsBag)->first('office_phone')" />
+            <x-ui.input label="Employee number" name="employee_number" id="user_number_{{ $person->getKey() }}" :value="$detail('employee_number', $person->employee_number)"
+                :error="$errors->getBag($detailsBag)->first('employee_number')" />
+
+            <x-slot:footer>
+                <div class="d-flex align-items-center justify-content-between">
+                    <x-ui.button variant="outline-secondary" x-on:click="close()">Cancel</x-ui.button>
+                    <x-ui.button type="submit" variant="primary">Save details</x-ui.button>
+                </div>
+            </x-slot:footer>
+        </x-ui.sheet>
+    @endforeach
 
     <x-ui.sheet name="permission-matrix" title="Permission matrix" lede="What each role may do. Permissions are fixed by the system; roles choose among them." wide>
         <div class="table-responsive">

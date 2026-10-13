@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Notifications;
 
+use App\Enums\Notification\NotificationType;
 use App\Models\DiaryEntry;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Queue\Attributes\DeleteWhenMissingModels;
 
@@ -24,7 +26,24 @@ class DiaryEntryOverdue extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        // Always kept in the system; emailed too when the person has asked for that.
+        return $notifiable->wantsEmailFor(NotificationType::DiaryOverdue)
+            ? ['database', 'mail']
+            : ['database'];
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        $reference = $this->entry->matter?->reference;
+
+        return (new MailMessage)
+            ->subject('Overdue: a diary entry'.($reference ? " on {$reference}" : ''))
+            ->greeting('Hello '.$notifiable->name.',')
+            ->line('A diary entry assigned to you is past its due date and not yet done:')
+            ->line('**'.$this->entry->body.'**')
+            ->line('It was due '.$this->entry->due_at->format('d M Y H:i').'.')
+            ->action('Open the matter', route('matter.show', [$this->entry->matter, 'tab' => 'diary']))
+            ->line('You can stop these emails from your account page.');
     }
 
     /**

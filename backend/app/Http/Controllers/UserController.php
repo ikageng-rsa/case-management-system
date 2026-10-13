@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\Auth\Permission;
 use App\Http\Requests\Role\SaveRoleRequest;
+use App\Http\Requests\User\UpdateUserDetailsRequest;
 use App\Http\Requests\User\UpdateUserRolesRequest;
 use App\Models\User;
 use App\Models\UserInvitation;
@@ -14,6 +15,7 @@ use App\Services\Roles\CannotRemoveLastAdministrator;
 use App\Services\Roles\DeleteRole;
 use App\Services\Roles\SaveRole;
 use App\Services\Users\AssignUserRoles;
+use App\Services\Users\UpdateUserDetails;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Carbon;
@@ -51,6 +53,15 @@ class UserController extends Controller
             'roles' => Role::query()->withCount('users')->with('permissions')->orderBy('name')->get(),
             'permissions' => Permission::cases(),
         ]);
+    }
+
+    public function updateDetails(UpdateUserDetailsRequest $request, User $user, UpdateUserDetails $updateDetails): RedirectResponse
+    {
+        Gate::authorize(Permission::ManageUsers->value);
+
+        $updateDetails->update($user, $request->validated());
+
+        return redirect()->route('users')->with('status', 'Details updated.');
     }
 
     public function updateRoles(UpdateUserRolesRequest $request, User $user, AssignUserRoles $assignRoles): RedirectResponse

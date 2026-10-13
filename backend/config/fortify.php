@@ -168,13 +168,13 @@ return [
         // Features::registration(),
         // Features::resetPasswords(),
         // Features::emailVerification(),
-        Features::updateProfileInformation(),
+        // Name, email and the rest of the staff record are kept by the firm's
+        // directors, so there is no self-service way to change them.
+        // Features::updateProfileInformation(),
         Features::updatePasswords(),
-        Features::twoFactorAuthentication([
-            'confirm' => true,
-            'confirmPassword' => true,
-            // 'window' => 0,
-        ]),
+        // Signing in uses a code emailed to the person (see config/security.php),
+        // not an authenticator app.
+        // Features::twoFactorAuthentication(),
         // Features::passkeys([
         //     'confirmPassword' => true,
         // ]),
