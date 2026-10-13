@@ -189,6 +189,40 @@ class MatterController extends Controller
             ->with('status', 'Matter opened.');
     }
 
+    /**
+     * Matters for a picker in a form: the few that best fit what has been typed.
+     * "fileable" narrows them to the open matters the user may put work on.
+     */
+    public function search(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $fileable = $request->query('scope') === 'fileable';
+
+        return response()->json(
+            Matter::query()
+                ->when(
+                    $fileable,
+                    fn (Builder $query) => $query->open()->assignedTo($user),
+                    fn (Builder $query) => $query->when(! $user->can('viewAny', Matter::class), fn (Builder $query) => $query->assignedTo($user)),
+                )
+                ->search((string) $request->query('q'))
+                ->with(['client', 'matterType'])
+                ->limit(5)
+                ->get()
+                ->map(fn (Matter $matter) => [
+                    'id' => $matter->getKey(),
+                    'reference' => $matter->reference,
+                    'title' => $matter->title,
+                    'client' => $matter->client->full_name,
+                    'type' => $matter->matterType->name,
+                    'year' => $matter->opened_year,
+                    'closed' => $matter->isClosed(),
+                ]),
+        );
+    }
+
     /** What the reference of the matter being opened would be, were it opened now. */
     public function previewReference(Request $request): JsonResponse
     {

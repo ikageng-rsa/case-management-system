@@ -118,12 +118,8 @@
 
     <x-ui.sheet name="upload-document" title="Upload a document" lede="File it on a matter you carry." bag="document"
         :action="route('documents.store')" enctype="multipart/form-data">
-        <x-ui.select label="Matter" name="matter_id" id="upload_matter_id" :error="$errors->document->first('matter_id')"
-            :hint="$fileableMatters->isEmpty() ? 'You are not assigned to any open matter.' : null">
-            @foreach ($fileableMatters as $matter)
-                <option value="{{ $matter->getKey() }}" @selected((old('matter_id') ?? $matterId) === $matter->getKey())>{{ $matter->reference }}</option>
-            @endforeach
-        </x-ui.select>
+        <x-ui.matter-picker label="Matter" name="matter_id" scope="fileable" :selected="$uploadMatter"
+            :error="$errors->document->first('matter_id')" />
 
         <x-ui.input label="File" name="file" id="upload_file" type="file" :error="$errors->document->first('file')" hint="Up to 50 MB." />
 

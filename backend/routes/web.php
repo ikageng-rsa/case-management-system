@@ -27,6 +27,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/matters', [MatterController::class, 'store'])->name('matter.store');
 
     // Likewise, ahead of the matter routes.
+    Route::get('/matters/search', [MatterController::class, 'search'])->name('matter.search');
     Route::get('/matters/reference-preview', [MatterController::class, 'previewReference'])->name('matter.reference-preview');
     Route::post('/matters/{matter}/close', [MatterController::class, 'close'])->name('matter.close');
     Route::post('/matters/{matter}/assign', [MatterController::class, 'assign'])->name('matter.assign');

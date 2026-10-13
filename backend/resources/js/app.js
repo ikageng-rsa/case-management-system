@@ -366,6 +366,70 @@ Alpine.data('reveal', ({ url, target, masked, seconds = 10 }) => ({
 }));
 
 
+/*
+ * Choosing one matter out of many: the few that best fit what has been typed are
+ * fetched from the server, and the choice is carried in an ordinary form field.
+ */
+Alpine.data('matterPicker', ({ url, scope = 'visible', selected = null } = {}) => ({
+    url,
+    scope,
+    matter: selected,
+    query: '',
+    results: [],
+    open: false,
+    searched: false,
+    active: -1,
+    lookups: 0,
+
+    focus() {
+        this.open = true;
+        this.search();
+    },
+
+    async search() {
+        const lookup = ++this.lookups;
+
+        const response = await fetch(`${this.url}?${new URLSearchParams({ q: this.query, scope: this.scope })}`, {
+            headers: { Accept: 'application/json' },
+        });
+
+        // Only the latest search may answer.
+        if (lookup === this.lookups && response.ok) {
+            this.results = await response.json();
+            this.searched = true;
+            this.active = this.results.length > 0 ? 0 : -1;
+        }
+    },
+
+    move(step) {
+        if (this.results.length === 0) {
+            return;
+        }
+
+        this.active = (this.active + step + this.results.length) % this.results.length;
+    },
+
+    choose() {
+        if (this.active >= 0) {
+            this.pick(this.results[this.active]);
+        }
+    },
+
+    pick(result) {
+        this.matter = result;
+        this.query = '';
+        this.results = [];
+        this.open = false;
+        this.searched = false;
+    },
+
+    clear() {
+        this.matter = null;
+        this.$nextTick(() => this.$refs.search?.focus());
+    },
+}));
+
+
 /* Floating messages config */
 Alpine.data('toasts', (seed = []) => ({
     items: [],
