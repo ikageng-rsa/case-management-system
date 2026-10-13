@@ -7,6 +7,7 @@ namespace Tests\Feature\Matter;
 use App\Enums\Auth\Role as RoleEnum;
 use App\Enums\Matter\Assignment;
 use App\Models\ActivityType;
+use App\Models\DiaryEntry;
 use App\Models\Matter;
 use App\Models\MatterAssignment;
 use App\Models\Narration;
@@ -181,5 +182,33 @@ class MatterShowTest extends TestCase
         $this->actingAs($this->userWithRole(RoleEnum::CandidateAttorney)->fresh())
             ->get(route('matter.show', $matter))
             ->assertForbidden();
+    }
+
+    public function test_completing_a_diary_entry_asks_for_confirmation(): void
+    {
+        $matter = Matter::factory()->create();
+        $attorney = $this->userWithRole(RoleEnum::Attorney);
+        MatterAssignment::factory()->for($matter)->for($attorney)->capacity(Assignment::Responsible)->create();
+        DiaryEntry::factory()->for($matter)->create();
+
+        $this->actingAs($attorney)
+            ->get(route('matter.show', [$matter, 'tab' => 'diary']))
+            ->assertSee('data-confirm-title="Complete diary entry"', false)
+            ->assertSee('data-confirm-icon="circle-check"', false);
+    }
+
+    public function test_the_assign_form_knows_who_would_be_replaced_so_it_can_ask_first(): void
+    {
+        $matter = Matter::factory()->create();
+        $holder = $this->userWithRole(RoleEnum::Attorney);
+        MatterAssignment::factory()->for($matter)->for($holder)->capacity(Assignment::Responsible)->create();
+
+        $this->actingAs($this->userWithRole(RoleEnum::Director))
+            ->get(route('matter.show', $matter))
+            ->assertSee('x-bind:data-confirm', false)
+            ->assertSee('data-confirm-icon="users"', false)
+            // the holder of an exclusive capacity is handed to the form; a shared capacity is not
+            ->assertSee($holder->getKey(), false)
+            ->assertDontSee('\u0022assisting\u0022:{', false);
     }
 }
