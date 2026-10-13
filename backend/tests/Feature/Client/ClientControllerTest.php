@@ -146,7 +146,7 @@ class ClientControllerTest extends TestCase
         $this->actingAs($reader)
             ->get(route('client.show', $client))
             ->assertSee('072 ··· 4418')
-            ->assertSee('thabo@·······.com')
+            ->assertSee('th···@example.com')
             ->assertSee('9001015······')
             ->assertDontSee('0721234418')
             ->assertDontSee('+27721234418')
@@ -240,7 +240,11 @@ class ClientControllerTest extends TestCase
     public function test_identifiers_are_masked_enough_to_recognise_but_not_reuse(): void
     {
         $this->assertSame('072 ··· 4418', MaskIdentifier::mobile('+27721234418'));
-        $this->assertSame('t.mokoena@·······.com', MaskIdentifier::email('t.mokoena@example.com'));
+        $this->assertSame('t.·······@example.com', MaskIdentifier::email('t.mokoena@example.com'));
+        $this->assertSame('ab·····@example.com', MaskIdentifier::email('abcdefg@example.com'));
+        $this->assertSame('a·@example.com', MaskIdentifier::email('ab@example.com'));
+        $this->assertSame('·@example.com', MaskIdentifier::email('a@example.com'));
+        $this->assertSame('·····', MaskIdentifier::email('hello'));
         $this->assertSame('9001015······', MaskIdentifier::idNumber(self::ID_NUMBER));
         $this->assertSame('2011/······/07', MaskIdentifier::registrationNumber('2011/123456/07'));
     }

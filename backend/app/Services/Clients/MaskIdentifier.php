@@ -28,17 +28,22 @@ class MaskIdentifier
         return mb_substr($masked, 0, 3).' '.mb_substr($masked, 3, -4).' '.mb_substr($masked, -4);
     }
 
-    /** t.mokoena@example.com reads as "t.mokoena@·······.com". */
+    /*
+     * t.mokoena@example.com reads as "t.·······@example.com": the first two letters
+     * stay, so the address can be recognised, and the rest of the name is hidden up
+     * to the @. The domain is left, since it says where someone works, not who they
+     * are. A very short name keeps fewer letters, so something is always hidden.
+     */
     public static function email(string $value): string
     {
-        [$local, $domain] = array_pad(explode('@', $value, 2), 2, '');
-
-        if ($domain === '') {
+        if (! str_contains($value, '@')) {
             return Str::mask($value, self::DOT, 0);
         }
 
-        // The top-level domain stays; it says little and helps recognition.
-        return $local.'@'.Str::mask($domain, self::DOT, 0, mb_strlen(Str::beforeLast($domain, '.')));
+        $local = Str::beforeLast($value, '@');
+        $domain = Str::afterLast($value, '@');
+
+        return Str::mask($local, self::DOT, min(2, max(mb_strlen($local) - 1, 0))).'@'.$domain;
     }
 
     /** 9001015800088 reads as "9001015······". */

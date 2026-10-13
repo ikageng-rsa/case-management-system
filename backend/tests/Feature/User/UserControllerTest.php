@@ -55,7 +55,7 @@ class UserControllerTest extends TestCase
             ->assertOk()
             ->assertSee('L. Radebe')
             ->assertSee('Director · Attorney')
-            ->assertSee('l.radebe@'.str_repeat('·', 10).'.za')
+            ->assertSee('l.'.str_repeat('·', 6).'@example.co.za')
             ->assertDontSee('l.radebe@example.co.za');
     }
 
