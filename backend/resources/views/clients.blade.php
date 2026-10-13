@@ -27,23 +27,24 @@
 
     <div class="row g-0">
         <div class="col-12 col-lg-4 border-end pe-lg-4">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between mb-3">
+            {{-- The heading, search and intake button stay put while the clients scroll beneath them. --}}
+            <div class="card" style="max-height: calc(100vh - 9rem);">
+                <div class="card-body d-flex flex-column overflow-hidden">
+                    <div class="d-flex align-items-center justify-content-between mb-3 flex-shrink-0">
                         <h1 class="mb-0">Clients</h1>
                         <span class="text-meta">{{ $total }}</span>
                     </div>
 
-                    <form method="GET" action="{{ route('clients') }}">
+                    <form method="GET" action="{{ route('clients') }}" class="flex-shrink-0">
                         <x-ui.search-field name="q" :value="$query" placeholder="Name, ID number, phone…" :shortcut="false" wrapper="mb-3" class="w-100" />
                     </form>
 
                     @can('create', \App\Models\Client::class)
-                        <x-ui.button variant="primary" icon="plus" class="w-100 mb-3"
+                        <x-ui.button variant="primary" icon="plus" class="w-100 mb-3 flex-shrink-0"
                             x-data x-on:click="$dispatch('sheet-open', 'new-client')">New client intake</x-ui.button>
                     @endcan
 
-                    <div class="list-group list-group-flush">
+                    <div class="list-group list-group-flush overflow-y-auto flex-grow-1">
                         @forelse ($clients as $person)
                             <a href="{{ route('client.show', array_filter(['client' => $person, 'q' => $query])) }}"
                                @class(['list-group-item list-group-item-action d-flex align-items-start gap-2 px-3 py-2 text-decoration-none', 'active' => $client?->is($person)])
@@ -61,7 +62,7 @@
                     </div>
 
                     @if ($clients->hasPages())
-                        <div class="d-flex align-items-center justify-content-between mt-3">
+                        <div class="d-flex align-items-center justify-content-between mt-3 flex-shrink-0">
                             @if ($clients->onFirstPage())
                                 <span></span>
                             @else
