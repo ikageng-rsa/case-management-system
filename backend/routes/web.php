@@ -95,17 +95,18 @@ Route::middleware('auth')->group(function () {
     Route::post('/documents', [DocumentController::class, 'store'])->name('documents.store');
 
     // Firm administration: who may do what, and the record of what was done.
-    Route::get('/users', [UserController::class, 'index'])->middleware('can:manage_users')->name('users');
-    Route::patch('/users/{user}', [UserController::class, 'updateDetails'])->middleware('can:manage_users')->name('user.details.update');
+    Route::get('/users', [UserController::class, 'index'])->middleware('can:view_users')->name('users');
+    Route::patch('/users/{user}', [UserController::class, 'updateDetails'])->middleware('can:edit_users')->name('user.details.update');
 
-    Route::middleware('can:manage_users')->group(function () {
+    Route::middleware('can:invite_users')->group(function () {
         Route::post('/invitations', [InvitationController::class, 'store'])->name('invitation.store');
         Route::post('/invitations/{invitation}/resend', [InvitationController::class, 'resend'])->name('invitation.resend');
         Route::delete('/invitations/{invitation}', [InvitationController::class, 'destroy'])->name('invitation.destroy');
     });
 
-    Route::middleware('can:assign_roles')->group(function () {
-        Route::patch('/users/{user}/roles', [UserController::class, 'updateRoles'])->name('user.roles.update');
+    Route::patch('/users/{user}/roles', [UserController::class, 'updateRoles'])->middleware('can:assign_roles')->name('user.roles.update');
+
+    Route::middleware('can:manage_roles')->group(function () {
         Route::post('/roles', [UserController::class, 'storeRole'])->name('role.store');
         Route::patch('/roles/{role}', [UserController::class, 'updateRole'])->name('role.update');
         Route::delete('/roles/{role}', [UserController::class, 'destroyRole'])->name('role.destroy');

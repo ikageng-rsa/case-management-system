@@ -41,8 +41,14 @@ enum Permission: string
 
     case AmendLedgerEntries = 'amend_ledger_entries';
 
-    case ManageUsers = 'manage_users';
+    // The people of the firm, one power at a time: seeing them, keeping their
+    // record, inviting them, giving them roles, and shaping what a role is.
+    case ViewUsers = 'view_users';
+    case EditUsers = 'edit_users';
+    case InviteUsers = 'invite_users';
     case AssignRoles = 'assign_roles';
+    case ManageRoles = 'manage_roles';
+
     case ManageMatterTypes = 'manage_matter_types';
     case ManageActivityTypes = 'manage_activity_types';
     case ManageCourts = 'manage_courts';

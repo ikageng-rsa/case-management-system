@@ -124,7 +124,7 @@ class InvitationTest extends TestCase
         Notification::fake();
 
         $inviter = User::factory()->create();
-        $inviter->givePermissionTo('manage_users');
+        $inviter->givePermissionTo('view_users', 'invite_users');
 
         $this->actingAs($inviter)
             ->post(route('invitation.store'), [
@@ -173,7 +173,7 @@ class InvitationTest extends TestCase
         }
     }
 
-    public function test_inviting_needs_manage_users(): void
+    public function test_inviting_needs_invite_users(): void
     {
         Notification::fake();
 
@@ -248,7 +248,7 @@ class InvitationTest extends TestCase
         $this->get(route('invitation.show', 'the-token'))->assertStatus(410);
     }
 
-    public function test_resending_and_withdrawing_need_manage_users(): void
+    public function test_resending_and_withdrawing_need_invite_users(): void
     {
         $invitation = UserInvitation::factory()->create();
         $secretary = $this->userWithRole(RoleEnum::Secretary);
@@ -386,7 +386,7 @@ class InvitationTest extends TestCase
     public function test_the_invite_form_only_offers_roles_to_those_who_may_give_them(): void
     {
         $inviter = User::factory()->create();
-        $inviter->givePermissionTo('manage_users');
+        $inviter->givePermissionTo('view_users', 'invite_users');
 
         $this->actingAs($inviter)->get(route('users'))
             ->assertSee('Send invitation')

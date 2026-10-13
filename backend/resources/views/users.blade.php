@@ -4,7 +4,11 @@
 
 @section('content')
     @php
+        // What this person may do on the page is each its own permission, so each control follows its own.
+        $canEdit = auth()->user()->can('edit_users');
+        $canInvite = auth()->user()->can('invite_users');
         $canAssign = auth()->user()->can('assign_roles');
+        $canShape = auth()->user()->can('manage_roles');
         $label = fn (string $value) => Str::headline($value);
 
         // A sheet reopens on its own errors, and only those; another form's
@@ -25,13 +29,15 @@
             <x-ui.button variant="outline-secondary" icon="table"
                 x-data x-on:click="$dispatch('sheet-open', 'permission-matrix')">Permission matrix</x-ui.button>
 
-            @if ($canAssign)
+            @if ($canShape)
                 <x-ui.button variant="outline-secondary" icon="shield"
                     x-data x-on:click="$dispatch('sheet-open', 'roles')">Roles</x-ui.button>
             @endif
 
-            <x-ui.button variant="dark" icon="plus"
-                x-data x-on:click="$dispatch('sheet-open', 'invite-user')">Invite user</x-ui.button>
+            @if ($canInvite)
+                <x-ui.button variant="dark" icon="plus"
+                    x-data x-on:click="$dispatch('sheet-open', 'invite-user')">Invite user</x-ui.button>
+            @endif
         </div>
     </div>
 
@@ -63,8 +69,10 @@
                             <td class="text-secondary">{{ ($lastActive[$user->getKey()] ?? null)?->diffForHumans() ?? '—' }}</td>
                             <td><x-ui.stage-badge tone="success">Active</x-ui.stage-badge></td>
                             <td class="text-end text-nowrap">
-                                <x-ui.button variant="ghost-secondary" size="sm"
-                                    x-data x-on:click="$dispatch('sheet-open', 'edit-user-{{ $user->getKey() }}')">Details</x-ui.button>
+                                @if ($canEdit)
+                                    <x-ui.button variant="ghost-secondary" size="sm"
+                                        x-data x-on:click="$dispatch('sheet-open', 'edit-user-{{ $user->getKey() }}')">Details</x-ui.button>
+                                @endif
 
                                 @if ($canAssign)
                                     <x-ui.button variant="ghost-secondary" size="sm"
@@ -126,18 +134,20 @@
                                     @endif
                                 </td>
                                 <td class="text-end text-nowrap">
-                                    <form method="POST" action="{{ route('invitation.resend', $invitation) }}" class="d-inline">
-                                        @csrf
-                                        <x-ui.button type="submit" variant="ghost-secondary" size="sm">Resend</x-ui.button>
-                                    </form>
+                                    @if ($canInvite)
+                                        <form method="POST" action="{{ route('invitation.resend', $invitation) }}" class="d-inline">
+                                            @csrf
+                                            <x-ui.button type="submit" variant="ghost-secondary" size="sm">Resend</x-ui.button>
+                                        </form>
 
-                                    <form method="POST" action="{{ route('invitation.destroy', $invitation) }}" class="d-inline"
-                                        data-confirm="Withdraw the invitation for {{ $invitation->name }}? The link stops working."
-                                        data-confirm-title="Withdraw invitation" data-confirm-action="Withdraw" data-confirm-tone="danger" data-confirm-icon="mail-off">
-                                        @csrf
-                                        @method('DELETE')
-                                        <x-ui.button type="submit" variant="ghost-danger" size="sm">Withdraw</x-ui.button>
-                                    </form>
+                                        <form method="POST" action="{{ route('invitation.destroy', $invitation) }}" class="d-inline"
+                                            data-confirm="Withdraw the invitation for {{ $invitation->name }}? The link stops working."
+                                            data-confirm-title="Withdraw invitation" data-confirm-action="Withdraw" data-confirm-tone="danger" data-confirm-icon="mail-off">
+                                            @csrf
+                                            @method('DELETE')
+                                            <x-ui.button type="submit" variant="ghost-danger" size="sm">Withdraw</x-ui.button>
+                                        </form>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach
@@ -147,79 +157,83 @@
         </div>
     @endif
 
-    <x-ui.sheet name="invite-user" title="Invite a user" lede="They set their own password from the link we email them." bag="invite"
-        :action="route('invitation.store')">
-        <x-ui.input label="Name" name="name" id="invite_name" :value="old('name')" :error="$errors->invite->first('name')" />
-        <x-ui.input label="Email" name="email" id="invite_email" type="email" :value="old('email')" :error="$errors->invite->first('email')" />
+    @if ($canInvite)
+        <x-ui.sheet name="invite-user" title="Invite a user" lede="They set their own password from the link we email them." bag="invite"
+            :action="route('invitation.store')">
+            <x-ui.input label="Name" name="name" id="invite_name" :value="old('name')" :error="$errors->invite->first('name')" />
+            <x-ui.input label="Email" name="email" id="invite_email" type="email" :value="old('email')" :error="$errors->invite->first('email')" />
 
-        <x-ui.select label="Link expires after" name="lifetime_days" id="invite_lifetime" :error="$errors->invite->first('lifetime_days')"
-            hint="After this the link stops working; it can be sent again.">
-            @foreach ($lifetimes as $days)
-                <option value="{{ $days }}" @selected((int) old('lifetime_days', $defaultLifetime) === $days)>{{ $days }} {{ Str::plural('day', $days) }}</option>
-            @endforeach
-        </x-ui.select>
+            <x-ui.select label="Link expires after" name="lifetime_days" id="invite_lifetime" :error="$errors->invite->first('lifetime_days')"
+                hint="After this the link stops working; it can be sent again.">
+                @foreach ($lifetimes as $days)
+                    <option value="{{ $days }}" @selected((int) old('lifetime_days', $defaultLifetime) === $days)>{{ $days }} {{ Str::plural('day', $days) }}</option>
+                @endforeach
+            </x-ui.select>
 
-        @if ($canAssign)
-            <div class="form-label form-label-mono">Roles</div>
-            @foreach ($roles as $role)
-                <label class="form-check mb-2">
-                    <input class="form-check-input" type="checkbox" name="roles[]" value="{{ $role->getKey() }}"
-                        @checked(in_array($role->getKey(), array_map('intval', (array) old('roles', [])), true))>
-                    <span class="form-check-label">{{ $label($role->name) }}</span>
-                </label>
-            @endforeach
-            @if ($errors->invite->has('roles'))
-                <div class="text-danger">{{ $errors->invite->first('roles') }}</div>
+            @if ($canAssign)
+                <div class="form-label form-label-mono">Roles</div>
+                @foreach ($roles as $role)
+                    <label class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" name="roles[]" value="{{ $role->getKey() }}"
+                            @checked(in_array($role->getKey(), array_map('intval', (array) old('roles', [])), true))>
+                        <span class="form-check-label">{{ $label($role->name) }}</span>
+                    </label>
+                @endforeach
+                @if ($errors->invite->has('roles'))
+                    <div class="text-danger">{{ $errors->invite->first('roles') }}</div>
+                @endif
             @endif
-        @endif
-
-        <x-slot:footer>
-            <div class="d-flex align-items-center justify-content-between">
-                <x-ui.button variant="outline-secondary" x-on:click="close()">Cancel</x-ui.button>
-                <x-ui.button type="submit" variant="primary">Send invitation</x-ui.button>
-            </div>
-        </x-slot:footer>
-    </x-ui.sheet>
-
-    @foreach ($users as $person)
-        @php
-            $detailsBag = 'user_details_'.$person->getKey();
-            $detail = fn (string $field, mixed $current) => $errors->getBag($detailsBag)->any() ? old($field, $current) : $current;
-        @endphp
-
-        <x-ui.sheet name="edit-user-{{ $person->getKey() }}" title="Staff details" :lede="$person->name" :bag="$detailsBag" method="PATCH"
-            :action="route('user.details.update', $person)">
-            <p class="text-secondary">These are kept by the firm. The person can see them on their account page but cannot change them.</p>
-
-            <x-ui.input label="Name" name="name" id="user_name_{{ $person->getKey() }}" :value="$detail('name', $person->name)"
-                :error="$errors->getBag($detailsBag)->first('name')" />
-            <x-ui.input label="Email" name="email" id="user_email_{{ $person->getKey() }}" type="email" :value="$detail('email', '')"
-                :placeholder="\App\Services\Clients\MaskIdentifier::email($person->email)"
-                hint="Leave empty to keep the current address. Changing it signs the person out of their other sessions."
-                :error="$errors->getBag($detailsBag)->first('email')" />
-            <x-ui.input label="Job title" name="job_title" id="user_title_{{ $person->getKey() }}" :value="$detail('job_title', $person->job_title)"
-                :error="$errors->getBag($detailsBag)->first('job_title')" />
-            <x-ui.input label="Mobile" name="mobile" id="user_mobile_{{ $person->getKey() }}" type="tel" :value="$detail('mobile', '')"
-                :placeholder="$person->mobile ? \App\Services\Clients\MaskIdentifier::mobile($person->mobile) : null"
-                :hint="$person->mobile ? 'Leave empty to keep the current number.' : null" :error="$errors->getBag($detailsBag)->first('mobile')" />
-            <x-ui.input label="Office phone" name="office_phone" id="user_office_{{ $person->getKey() }}" type="tel" :value="$detail('office_phone', '')"
-                :placeholder="$person->office_phone ? \App\Services\Clients\MaskIdentifier::mobile($person->office_phone) : null"
-                :hint="$person->office_phone ? 'Leave empty to keep the current number.' : null" :error="$errors->getBag($detailsBag)->first('office_phone')" />
-            <x-ui.input label="Employee number" name="employee_number" id="user_number_{{ $person->getKey() }}" :value="$detail('employee_number', $person->employee_number)"
-                :error="$errors->getBag($detailsBag)->first('employee_number')" />
 
             <x-slot:footer>
                 <div class="d-flex align-items-center justify-content-between">
                     <x-ui.button variant="outline-secondary" x-on:click="close()">Cancel</x-ui.button>
-                    <x-ui.button type="submit" variant="primary">Save details</x-ui.button>
+                    <x-ui.button type="submit" variant="primary">Send invitation</x-ui.button>
                 </div>
             </x-slot:footer>
         </x-ui.sheet>
-    @endforeach
+    @endif
 
-    <x-ui.sheet name="permission-matrix" title="Permission matrix" lede="What each role may do. Permissions are fixed by the system; roles choose among them." wide>
+    @if ($canEdit)
+        @foreach ($users as $person)
+            @php
+                $detailsBag = 'user_details_'.$person->getKey();
+                $detail = fn (string $field, mixed $current) => $errors->getBag($detailsBag)->any() ? old($field, $current) : $current;
+            @endphp
+
+            <x-ui.sheet name="edit-user-{{ $person->getKey() }}" title="Staff details" :lede="$person->name" :bag="$detailsBag" method="PATCH"
+                :action="route('user.details.update', $person)">
+                <p class="text-secondary">These are kept by the firm. The person can see them on their account page but cannot change them.</p>
+
+                <x-ui.input label="Name" name="name" id="user_name_{{ $person->getKey() }}" :value="$detail('name', $person->name)"
+                    :error="$errors->getBag($detailsBag)->first('name')" />
+                <x-ui.input label="Email" name="email" id="user_email_{{ $person->getKey() }}" type="email" :value="$detail('email', '')"
+                    :placeholder="\App\Services\Clients\MaskIdentifier::email($person->email)"
+                    hint="Leave empty to keep the current address. Changing it signs the person out of their other sessions."
+                    :error="$errors->getBag($detailsBag)->first('email')" />
+                <x-ui.input label="Job title" name="job_title" id="user_title_{{ $person->getKey() }}" :value="$detail('job_title', $person->job_title)"
+                    :error="$errors->getBag($detailsBag)->first('job_title')" />
+                <x-ui.input label="Mobile" name="mobile" id="user_mobile_{{ $person->getKey() }}" type="tel" :value="$detail('mobile', '')"
+                    :placeholder="$person->mobile ? \App\Services\Clients\MaskIdentifier::mobile($person->mobile) : null"
+                    :hint="$person->mobile ? 'Leave empty to keep the current number.' : null" :error="$errors->getBag($detailsBag)->first('mobile')" />
+                <x-ui.input label="Office phone" name="office_phone" id="user_office_{{ $person->getKey() }}" type="tel" :value="$detail('office_phone', '')"
+                    :placeholder="$person->office_phone ? \App\Services\Clients\MaskIdentifier::mobile($person->office_phone) : null"
+                    :hint="$person->office_phone ? 'Leave empty to keep the current number.' : null" :error="$errors->getBag($detailsBag)->first('office_phone')" />
+                <x-ui.input label="Employee number" name="employee_number" id="user_number_{{ $person->getKey() }}" :value="$detail('employee_number', $person->employee_number)"
+                    :error="$errors->getBag($detailsBag)->first('employee_number')" />
+
+                <x-slot:footer>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <x-ui.button variant="outline-secondary" x-on:click="close()">Cancel</x-ui.button>
+                        <x-ui.button type="submit" variant="primary">Save details</x-ui.button>
+                    </div>
+                </x-slot:footer>
+            </x-ui.sheet>
+        @endforeach
+    @endif
+
+    <x-ui.sheet name="permission-matrix" title="Permission matrix" lede="What each role may do. Permissions are fixed by the system; roles choose among them." width="min(1180px, 96vw)">
         <div class="table-responsive">
-            <table class="table table-vcenter table-sm">
+            <table class="table table-vcenter">
                 <thead>
                     <tr>
                         <th>Capability</th>
@@ -250,7 +264,7 @@
         </x-slot:footer>
     </x-ui.sheet>
 
-    @if ($canAssign)
+    @if ($canShape)
         <x-ui.sheet name="roles" title="Roles" lede="Rename, add or remove roles. Users keep the permissions their roles carry." bag="roles">
             <table class="table table-vcenter">
                 <thead>
@@ -349,7 +363,9 @@
                 </x-slot:footer>
             </x-ui.sheet>
         @endforeach
+    @endif
 
+    @if ($canAssign)
         @foreach ($users as $user)
             @php
                 $bag = 'user_roles_'.$user->getKey();

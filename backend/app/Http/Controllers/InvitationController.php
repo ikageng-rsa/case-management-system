@@ -20,7 +20,7 @@ class InvitationController extends Controller
 {
     public function store(InviteUserRequest $request, InviteUser $inviteUser): RedirectResponse
     {
-        Gate::authorize(Permission::ManageUsers->value);
+        Gate::authorize(Permission::InviteUsers->value);
 
         try {
             $inviteUser->invite(
@@ -44,7 +44,7 @@ class InvitationController extends Controller
 
     public function resend(UserInvitation $invitation, ResendInvitation $resendInvitation): RedirectResponse
     {
-        Gate::authorize(Permission::ManageUsers->value);
+        Gate::authorize(Permission::InviteUsers->value);
 
         try {
             $resendInvitation->resend($invitation);
@@ -61,7 +61,7 @@ class InvitationController extends Controller
 
     public function destroy(UserInvitation $invitation, RevokeInvitation $revokeInvitation): RedirectResponse
     {
-        Gate::authorize(Permission::ManageUsers->value);
+        Gate::authorize(Permission::InviteUsers->value);
 
         try {
             $revokeInvitation->revoke($invitation);

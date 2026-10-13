@@ -27,7 +27,7 @@ class UserController extends Controller
 {
     public function index(): View
     {
-        Gate::authorize(Permission::ManageUsers->value);
+        Gate::authorize(Permission::ViewUsers->value);
 
         $users = User::query()
             ->with('roles')
@@ -57,7 +57,7 @@ class UserController extends Controller
 
     public function updateDetails(UpdateUserDetailsRequest $request, User $user, UpdateUserDetails $updateDetails): RedirectResponse
     {
-        Gate::authorize(Permission::ManageUsers->value);
+        Gate::authorize(Permission::EditUsers->value);
 
         $updateDetails->update($user, $request->validated());
 
@@ -79,7 +79,7 @@ class UserController extends Controller
 
     public function storeRole(SaveRoleRequest $request, SaveRole $saveRole): RedirectResponse
     {
-        Gate::authorize(Permission::AssignRoles->value);
+        Gate::authorize(Permission::ManageRoles->value);
 
         $saveRole->save(null, $request->validated('name'), $request->validated('permissions') ?? []);
 
@@ -88,7 +88,7 @@ class UserController extends Controller
 
     public function updateRole(SaveRoleRequest $request, Role $role, SaveRole $saveRole): RedirectResponse
     {
-        Gate::authorize(Permission::AssignRoles->value);
+        Gate::authorize(Permission::ManageRoles->value);
 
         try {
             $saveRole->save($role, $request->validated('name'), $request->validated('permissions') ?? []);
@@ -101,7 +101,7 @@ class UserController extends Controller
 
     public function destroyRole(Role $role, DeleteRole $deleteRole): RedirectResponse
     {
-        Gate::authorize(Permission::AssignRoles->value);
+        Gate::authorize(Permission::ManageRoles->value);
 
         try {
             $deleteRole->delete($role);

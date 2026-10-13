@@ -177,7 +177,7 @@ class UserAccountTest extends TestCase
         $this->assertStringNotContainsString('821234567', Activity::forSubject($person)->get()->toJson());
     }
 
-    public function test_only_users_who_manage_users_may_change_a_staff_record(): void
+    public function test_only_users_with_edit_users_may_change_a_staff_record(): void
     {
         $person = $this->userWithRole(RoleEnum::Attorney);
 
