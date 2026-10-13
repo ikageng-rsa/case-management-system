@@ -379,9 +379,32 @@ class NotificationsTest extends TestCase
 
         $this->actingAs($secretary)->get(route('matters', ['new' => 1]))
             ->assertOk()
-            ->assertSee("x-init=\"\$nextTick(() => \$dispatch('sheet-open', 'new-matter'))\"", false);
+            ->assertSee("\$dispatch('sheet-open', 'new-matter');", false);
 
         $this->actingAs($secretary)->get(route('matters'))
-            ->assertDontSee('x-init="$nextTick', false);
+            ->assertDontSee("searchParams.delete('new')", false);
+    }
+
+    public function test_the_form_clears_the_new_parameter_from_the_address_once_it_has_opened(): void
+    {
+        $secretary = User::factory()->create();
+        $secretary->assignRole(RoleEnum::Secretary->value);
+
+        $this->actingAs($secretary)->get(route('matters', ['new' => 1]))
+            ->assertSee("searchParams.delete('new')", false)
+            ->assertSee('history.replaceState', false);
+    }
+
+    public function test_paging_does_not_carry_the_new_parameter_along(): void
+    {
+        $secretary = User::factory()->create();
+        $secretary->assignRole(RoleEnum::Secretary->value);
+        Matter::factory()->count(20)->create();
+
+        $html = $this->actingAs($secretary)->get(route('matters', ['new' => 1, 'filter' => 'all']))->getContent();
+
+        $this->assertStringContainsString('page=2', $html);
+        $this->assertStringNotContainsString('new=1&amp;page=2', $html);
+        $this->assertStringNotContainsString('page=2&amp;new=1', $html);
     }
 }

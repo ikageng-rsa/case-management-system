@@ -128,9 +128,16 @@
     </div>
 
     @can('create', \App\Models\Matter::class)
-        {{-- Arriving from the New matter button elsewhere in the app: the form opens by itself. --}}
+        {{-- Arriving from the New matter button elsewhere in the app: the form opens by itself, and the
+             address is cleaned at once so that closing it, or reloading, does not open it again. --}}
         @if (request()->boolean('new'))
-            <div x-data x-init="$nextTick(() => $dispatch('sheet-open', 'new-matter'))"></div>
+            <div x-data x-init="$nextTick(() => {
+                    $dispatch('sheet-open', 'new-matter');
+
+                    const address = new URL(window.location.href);
+                    address.searchParams.delete('new');
+                    window.history.replaceState(window.history.state, '', address);
+                })"></div>
         @endif
 
         <x-matter.intake name="new-matter" :matter-types="$matterTypes" :courts="$courts" :attorneys="$attorneys"

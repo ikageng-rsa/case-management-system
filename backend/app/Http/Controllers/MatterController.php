@@ -85,7 +85,7 @@ class MatterController extends Controller
                     ->orderBy('next_due_at'),
             })
             ->paginate()
-            ->withQueryString();
+            ->appends($request->except('new'));
 
         $canOpen = $user->can('create', Matter::class);
 
