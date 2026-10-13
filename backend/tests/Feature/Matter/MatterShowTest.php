@@ -299,16 +299,36 @@ class MatterShowTest extends TestCase
             ->assertDontSee('mine 0');
     }
 
-    public function test_long_activity_type_names_are_cut_short_on_the_ledger_filters_with_the_whole_name_on_hover(): void
+    public function test_the_ledger_offers_its_kinds_of_work_as_a_list_with_their_whole_names(): void
     {
         $matter = Matter::factory()->create();
-        $type = ActivityType::factory()->create(['code' => 'CALL', 'name' => 'telephone attendance']);
-        Narration::factory()->for($matter)->create(['activity_type_id' => $type->getKey()]);
+        $call = ActivityType::factory()->create(['code' => 'CALL', 'name' => 'telephone attendance']);
+        $admin = ActivityType::factory()->create(['code' => 'ADMIN', 'name' => 'file administration']);
+        Narration::factory()->for($matter)->count(2)->create(['activity_type_id' => $call->getKey()]);
+        Narration::factory()->for($matter)->create(['activity_type_id' => $admin->getKey()]);
+
+        $html = $this->actingAs($this->userWithRole(RoleEnum::Director))
+            ->get(route('matter.show', $matter))
+            ->assertOk()
+            ->assertSee('dropdown-item', false)
+            ->assertSee('telephone attendance')
+            ->assertSee('file administration')
+            ->getContent();
+
+        // Each kind is a link in the list, with how many; none is a button of its own in the row.
+        $this->assertStringContainsString('filter=CALL', $html);
+        $this->assertStringContainsString('filter=ADMIN', $html);
+        $this->assertStringNotContainsString('telephone atte…', $html);
+    }
+
+    public function test_the_chosen_kind_is_named_on_the_dropdown_button(): void
+    {
+        $matter = Matter::factory()->create();
+        $call = ActivityType::factory()->create(['code' => 'CALL', 'name' => 'telephone attendance']);
+        Narration::factory()->for($matter)->count(2)->create(['activity_type_id' => $call->getKey()]);
 
         $this->actingAs($this->userWithRole(RoleEnum::Director))
-            ->get(route('matter.show', $matter))
-            ->assertSee('telephone atte… 1', false)
-            ->assertSee('title="telephone attendance"', false)
-            ->assertDontSee('telephone attendance 1');
+            ->get(route('matter.show', [$matter, 'filter' => 'CALL']))
+            ->assertSee('telephone attendance 2');
     }
 }

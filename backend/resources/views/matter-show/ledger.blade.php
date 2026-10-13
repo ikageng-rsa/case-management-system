@@ -17,16 +17,35 @@
 
         {{-- Only what the ledger holds is offered, and a row holding only "all" is just clutter. --}}
         @if ($filters->isNotEmpty() || $mineCount > 0 || $filter === 'mine')
-            {{-- Smaller type than a button's usual, so more of the ledger's own words fit. --}}
+            @php
+                $typeFilter = $filters->has($filter) ? $filters[$filter] : null;
+            @endphp
+
+            {{-- The kinds of work are the firm's to name and there can be many, so they are a list to choose from
+                 and not a row of buttons that outgrows the card. --}}
             <div class="d-flex flex-wrap align-items-center gap-2 bg-light rounded-pill p-1" style="--tblr-btn-font-size: var(--cms-text-base);">
                 <x-ui.button :variant="blank($filter) ? 'dark' : 'ghost-secondary'" class="rounded-pill" size="sm"
                     :href="$link()">all {{ $allCount }}</x-ui.button>
 
-                @foreach ($filters as $code => $type)
-                    {{-- Type names are the firm's to choose, so long ones are cut short; the title carries the whole name. --}}
-                    <x-ui.button :variant="$filter === $code ? 'dark' : 'ghost-secondary'" class="rounded-pill" size="sm"
-                        :href="$link(['filter' => $code])" :title="$type['label']">{{ Str::limit($type['label'], 14, '…') }} {{ $type['count'] }}</x-ui.button>
-                @endforeach
+                @if ($filters->isNotEmpty())
+                    <div class="dropdown position-relative" x-data="{ open: false }" x-on:click.outside="open = false" x-on:keydown.escape.window="open = false">
+                        <x-ui.button :variant="$typeFilter ? 'dark' : 'ghost-secondary'" class="rounded-pill" size="sm"
+                            x-on:click="open = ! open" x-bind:aria-expanded="open" aria-haspopup="true">
+                            {{ $typeFilter ? $typeFilter['label'].' '.$typeFilter['count'] : 'type' }}
+                            <x-ui.icon name="chevron-down" class="ms-1" />
+                        </x-ui.button>
+
+                        <div class="dropdown-menu" x-bind:class="{ show: open }" x-cloak style="left: 0; right: auto; max-height: 60vh; overflow-y: auto;">
+                            @foreach ($filters as $code => $type)
+                                <a @class(['dropdown-item d-flex align-items-center justify-content-between gap-3', 'active' => $filter === $code])
+                                   href="{{ $link(['filter' => $code]) }}">
+                                    <span>{{ $type['label'] }}</span>
+                                    <span class="text-meta">{{ $type['count'] }}</span>
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
 
                 @if ($mineCount > 0 || $filter === 'mine')
                     <x-ui.button :variant="$filter === 'mine' ? 'dark' : 'ghost-secondary'" class="rounded-pill" size="sm"
