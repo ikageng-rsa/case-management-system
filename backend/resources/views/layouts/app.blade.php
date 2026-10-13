@@ -55,15 +55,54 @@
             </x-ui.sidebar>
 
             <x-ui.header>
-                @php($unread = $user->unreadNotifications()->count())
+                {{-- What the system has told you. The list is fetched when the bell is opened. --}}
+                <div class="position-relative" x-data="notificationMenu({{ \Illuminate\Support\Js::from(['url' => url('/notifications'), 'unread' => $user->unreadNotifications()->count()]) }})"
+                     x-on:click.outside="open = false" x-on:keydown.escape.window="open = false">
+                    <button type="button" class="btn btn-ghost-secondary btn-icon position-relative" x-on:click="toggle()"
+                        x-bind:aria-expanded="open" aria-haspopup="true"
+                        x-bind:aria-label="unread > 0 ? 'Notifications, ' + unread + ' unread' : 'Notifications'" title="Notifications">
+                        <x-ui.icon name="bell" />
+                        <span class="badge bg-primary text-dark position-absolute top-0 start-100 translate-middle rounded-pill"
+                              x-show="unread > 0" x-cloak x-text="unread > 99 ? '99+' : unread"></span>
+                    </button>
 
-                <a href="{{ route('notifications') }}" class="btn btn-ghost-secondary btn-icon position-relative"
-                   aria-label="Notifications{{ $unread > 0 ? ', '.$unread.' unread' : '' }}" title="Notifications">
-                    <x-ui.icon name="bell" />
-                    @if ($unread > 0)
-                        <span class="badge bg-primary text-dark position-absolute top-0 start-100 translate-middle rounded-pill">{{ $unread > 99 ? '99+' : $unread }}</span>
+                    <div class="dropdown-menu dropdown-menu-end p-0" x-bind:class="{ show: open }" x-cloak
+                         style="width: 24rem; max-width: 92vw; max-height: 70vh; overflow-y: auto;">
+                        <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom">
+                            <span class="text-meta text-uppercase">Notifications</span>
+                            <button type="button" class="btn btn-link btn-sm p-0" x-show="unread > 0" x-cloak x-on:click="markAllRead()">Mark all as read</button>
+                        </div>
+
+                        <p class="text-secondary text-center py-4 mb-0" x-show="loading && ! loaded" x-cloak>Loading…</p>
+                        <p class="text-secondary text-center py-4 mb-0" x-show="loaded && items.length === 0" x-cloak>Nothing has needed your attention yet.</p>
+
+                        <template x-for="item in items" :key="item.id">
+                            <div class="d-flex align-items-start gap-2 px-3 py-2 border-bottom" x-bind:class="{ 'bg-light': ! item.read }">
+                                <button type="button" class="btn btn-link text-start text-decoration-none text-body p-0 flex-fill"
+                                    x-on:click="go(item)" x-bind:style="item.url ? '' : 'cursor: default;'">
+                                    <span class="d-block" x-bind:class="{ 'fw-bold': ! item.read }" x-text="item.message"></span>
+                                    <span class="d-block text-meta" x-text="item.when"></span>
+                                </button>
+
+                                <button type="button" class="btn btn-ghost-secondary btn-icon btn-sm flex-shrink-0"
+                                    x-show="! item.read" x-cloak x-on:click="markRead(item)"
+                                    aria-label="Mark as read" title="Mark as read">
+                                    <i class="ti ti-check"></i>
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                {{-- A matter can be opened from anywhere; the form lives on the matters page, which this opens. --}}
+                @can('create', \App\Models\Matter::class)
+                    @if (request()->routeIs('matters'))
+                        <x-ui.button variant="dark" icon="plus"
+                            x-data x-on:click="$dispatch('sheet-open', 'new-matter')">New matter</x-ui.button>
+                    @else
+                        <x-ui.button variant="dark" icon="plus" :href="route('matters', ['new' => 1])">New matter</x-ui.button>
                     @endif
-                </a>
+                @endcan
             </x-ui.header>
 
             <div class="page-wrapper">

@@ -128,6 +128,11 @@
     </div>
 
     @can('create', \App\Models\Matter::class)
+        {{-- Arriving from the New matter button elsewhere in the app: the form opens by itself. --}}
+        @if (request()->boolean('new'))
+            <div x-data x-init="$nextTick(() => $dispatch('sheet-open', 'new-matter'))"></div>
+        @endif
+
         <x-matter.intake name="new-matter" :matter-types="$matterTypes" :courts="$courts" :attorneys="$attorneys"
             :selected-client="$selectedClient" :action="route('matter.store')" />
     @endcan

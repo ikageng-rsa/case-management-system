@@ -5,51 +5,70 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use Illuminate\Contracts\View\View;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\DatabaseNotification;
 
 /*
- * What the system has told this person. Only ever their own: every lookup goes
- * through the signed-in user's notifications, so another person's cannot be
- * named by guessing an id.
+ * What the system has told this person, for the list that drops down from the
+ * bell. Only ever their own: every lookup goes through the signed-in user's
+ * notifications, so another person's cannot be named by guessing an id.
  */
 class NotificationController extends Controller
 {
-    public function index(Request $request): View
+    /** How many the list holds; it is for what is new, not an archive. */
+    private const LIST_SIZE = 10;
+
+    public function index(Request $request): JsonResponse
     {
         /** @var User $user */
         $user = $request->user();
 
-        $unreadOnly = $request->query('show') === 'unread';
-
-        return view('notifications', [
-            'notifications' => ($unreadOnly ? $user->unreadNotifications() : $user->notifications())
-                ->paginate(15)
-                ->withQueryString(),
-            'unreadCount' => $user->unreadNotifications()->count(),
-            'show' => $unreadOnly ? 'unread' : 'all',
+        return response()->json([
+            'unread' => $user->unreadNotifications()->count(),
+            'items' => $user->notifications()
+                ->latest()
+                ->limit(self::LIST_SIZE)
+                ->get()
+                ->map(fn (DatabaseNotification $notification) => $this->present($notification))
+                ->values(),
         ]);
     }
 
-    /** Open one: it is marked read and the person goes where it points. */
-    public function read(Request $request, string $notification): RedirectResponse
+    /** Mark one read, and say where it points so the list can take the person there. */
+    public function read(Request $request, string $notification): JsonResponse
     {
-        $found = $request->user()->notifications()->findOrFail($notification);
+        /** @var User $user */
+        $user = $request->user();
 
+        $found = $user->notifications()->findOrFail($notification);
         $found->markAsRead();
 
-        $url = $found->data['url'] ?? null;
-
-        return $url !== null && str_starts_with($url, url('/'))
-            ? redirect($url)
-            : redirect()->route('notifications');
+        return response()->json([
+            'unread' => $user->unreadNotifications()->count(),
+            'item' => $this->present($found->refresh()),
+        ]);
     }
 
-    public function readAll(Request $request): RedirectResponse
+    public function readAll(Request $request): JsonResponse
     {
         $request->user()->unreadNotifications()->update(['read_at' => now()]);
 
-        return redirect()->route('notifications')->with('status', 'All marked as read.');
+        return response()->json(['unread' => 0]);
+    }
+
+    /** @return array<string, mixed> */
+    private function present(DatabaseNotification $notification): array
+    {
+        $url = $notification->data['url'] ?? null;
+
+        return [
+            'id' => $notification->getKey(),
+            'message' => $notification->data['message'] ?? 'Something needs your attention.',
+            // Only a place in this app is ever offered as somewhere to go.
+            'url' => is_string($url) && str_starts_with($url, url('/')) ? $url : null,
+            'read' => $notification->read_at !== null,
+            'when' => $notification->created_at->diffForHumans(),
+        ];
     }
 }

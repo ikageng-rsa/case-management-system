@@ -206,9 +206,20 @@ class NotificationsTest extends TestCase
         Exceptions::assertReported(fn (\RuntimeException $e) => $e->getMessage() === 'The mail server is down.');
     }
 
-    // ---- seeing them ----
+    // ---- seeing them: the list that drops down from the bell ----
 
-    public function test_what_was_sent_to_the_system_appears_for_the_person_with_a_link(): void
+    protected function addNotification(User $user, array $data, mixed $readAt = null): string
+    {
+        $id = (string) Str::uuid();
+
+        $user->notifications()->create([
+            'id' => $id, 'type' => MatterAssigned::class, 'data' => $data, 'read_at' => $readAt,
+        ]);
+
+        return $id;
+    }
+
+    public function test_what_was_sent_to_the_system_is_in_the_list_with_a_link(): void
     {
         $matter = Matter::factory()->create(['reference' => 'IOT/CIV/105/2026']);
         $person = User::factory()->create();
@@ -218,95 +229,159 @@ class NotificationsTest extends TestCase
         app(AssignUserToMatter::class)->assign($matter, $person, Assignment::Responsible);
 
         $this->actingAs($person)
-            ->get(route('notifications'))
+            ->getJson(route('notifications'))
             ->assertOk()
-            ->assertSee($actor->name.' put you on matter IOT/CIV/105/2026 as responsible.');
+            ->assertJsonPath('unread', 1)
+            ->assertJsonPath('items.0.message', $actor->name.' put you on matter IOT/CIV/105/2026 as responsible.')
+            ->assertJsonPath('items.0.url', route('matter.show', $matter))
+            ->assertJsonPath('items.0.read', false);
     }
 
-    public function test_the_bell_counts_what_is_unread(): void
+    public function test_the_list_is_the_newest_ten(): void
     {
         $person = User::factory()->create();
-        $person->notifications()->create(['id' => (string) Str::uuid(), 'type' => MatterAssigned::class, 'data' => ['message' => 'One', 'url' => null]]);
-        $person->notifications()->create(['id' => (string) Str::uuid(), 'type' => MatterAssigned::class, 'data' => ['message' => 'Two', 'url' => null], 'read_at' => now()]);
+
+        foreach (range(1, 12) as $n) {
+            $this->addNotification($person, ['message' => "Number {$n}", 'url' => null]);
+            $this->travel(1)->minutes();
+        }
+
+        $items = $this->actingAs($person)->getJson(route('notifications'))->json('items');
+
+        $this->assertCount(10, $items);
+        $this->assertSame('Number 12', $items[0]['message']);
+        $this->assertSame('Number 3', $items[9]['message']);
+    }
+
+    public function test_the_bell_in_the_header_knows_the_unread_count_and_fetches_the_list_when_opened(): void
+    {
+        $person = User::factory()->create();
+        $this->addNotification($person, ['message' => 'One', 'url' => null]);
+        $this->addNotification($person, ['message' => 'Two', 'url' => null], now());
 
         $this->actingAs($person)
             ->get(route('dashboard'))
-            ->assertSee('Notifications, 1 unread');
+            ->assertSee('notificationMenu(', false)
+            ->assertSee('Mark all as read')
+            ->assertDontSee('Two');
+
+        $this->actingAs($person)->getJson(route('notifications'))->assertJsonPath('unread', 1);
     }
 
-    public function test_opening_one_marks_it_read_and_goes_where_it_points(): void
+    public function test_marking_one_read_says_where_it_points_and_how_many_are_left(): void
     {
         $matter = Matter::factory()->create();
         $person = User::factory()->create();
-        $notification = $person->notifications()->create([
-            'id' => (string) Str::uuid(), 'type' => MatterAssigned::class,
-            'data' => ['message' => 'You were put on it.', 'url' => route('matter.show', $matter)],
-        ]);
+        $id = $this->addNotification($person, ['message' => 'You were put on it.', 'url' => route('matter.show', $matter)]);
+        $this->addNotification($person, ['message' => 'Another.', 'url' => null]);
 
         $this->actingAs($person)
-            ->post(route('notifications.read', $notification->getKey()))
-            ->assertRedirect(route('matter.show', $matter));
+            ->postJson(route('notifications.read', $id))
+            ->assertOk()
+            ->assertJsonPath('unread', 1)
+            ->assertJsonPath('item.read', true)
+            ->assertJsonPath('item.url', route('matter.show', $matter));
 
-        $this->assertNotNull($notification->fresh()->read_at);
+        $this->assertNotNull($person->notifications()->find($id)->read_at);
     }
 
-    public function test_one_with_nowhere_to_go_returns_to_the_list(): void
+    public function test_one_with_nowhere_to_go_has_no_link(): void
     {
         $person = User::factory()->create();
-        $notification = $person->notifications()->create([
-            'id' => (string) Str::uuid(), 'type' => MatterUnassigned::class, 'data' => ['message' => 'Taken off.', 'url' => null],
-        ]);
+        $this->addNotification($person, ['message' => 'Taken off.', 'url' => null]);
 
-        $this->actingAs($person)
-            ->post(route('notifications.read', $notification->getKey()))
-            ->assertRedirect(route('notifications'));
+        $this->actingAs($person)->getJson(route('notifications'))->assertJsonPath('items.0.url', null);
     }
 
-    public function test_a_link_to_another_site_is_never_followed(): void
+    public function test_a_link_to_another_site_is_never_offered(): void
     {
         $person = User::factory()->create();
-        $notification = $person->notifications()->create([
-            'id' => (string) Str::uuid(), 'type' => MatterAssigned::class, 'data' => ['message' => 'x', 'url' => 'https://evil.example/phish'],
-        ]);
+        $this->addNotification($person, ['message' => 'x', 'url' => 'https://evil.example/phish']);
 
-        $this->actingAs($person)
-            ->post(route('notifications.read', $notification->getKey()))
-            ->assertRedirect(route('notifications'));
+        $this->actingAs($person)->getJson(route('notifications'))->assertJsonPath('items.0.url', null);
     }
 
     public function test_nobody_can_open_or_see_another_persons_notifications(): void
     {
         $owner = User::factory()->create();
         $other = User::factory()->create();
-        $notification = $owner->notifications()->create([
-            'id' => (string) Str::uuid(), 'type' => MatterAssigned::class, 'data' => ['message' => 'Private to the owner.', 'url' => null],
-        ]);
+        $id = $this->addNotification($owner, ['message' => 'Private to the owner.', 'url' => null]);
 
-        $this->actingAs($other)->post(route('notifications.read', $notification->getKey()))->assertNotFound();
-        $this->actingAs($other)->get(route('notifications'))->assertDontSee('Private to the owner.');
+        $this->actingAs($other)->postJson(route('notifications.read', $id))->assertNotFound();
+        $this->actingAs($other)->getJson(route('notifications'))->assertJsonPath('items', [])->assertJsonPath('unread', 0);
 
-        $this->assertNull($notification->fresh()->read_at);
+        $this->assertNull($owner->notifications()->find($id)->read_at);
     }
 
-    public function test_mark_all_as_read_and_the_unread_filter(): void
+    public function test_mark_all_as_read_touches_only_the_persons_own(): void
     {
         $person = User::factory()->create();
+        $other = User::factory()->create();
 
         foreach (['One', 'Two'] as $text) {
-            $person->notifications()->create(['id' => (string) Str::uuid(), 'type' => MatterAssigned::class, 'data' => ['message' => $text, 'url' => null]]);
+            $this->addNotification($person, ['message' => $text, 'url' => null]);
         }
 
-        $this->actingAs($person)->get(route('notifications', ['show' => 'unread']))->assertSee('One')->assertSee('Two');
+        $this->addNotification($other, ['message' => 'Not yours', 'url' => null]);
 
-        $this->actingAs($person)->post(route('notifications.read-all'))->assertRedirect(route('notifications'));
+        $this->actingAs($person)->postJson(route('notifications.read-all'))->assertOk()->assertJsonPath('unread', 0);
 
         $this->assertSame(0, $person->unreadNotifications()->count());
-        $this->actingAs($person)->get(route('notifications', ['show' => 'unread']))->assertSee('Nothing unread.');
+        $this->assertSame(1, $other->unreadNotifications()->count());
     }
 
-    public function test_the_notification_pages_are_for_signed_in_users(): void
+    public function test_the_notifications_address_serves_the_list_as_data_not_a_page(): void
     {
-        $this->get(route('notifications'))->assertRedirect();
-        $this->post(route('notifications.read-all'))->assertRedirect();
+        $response = $this->actingAs(User::factory()->create())->get(route('notifications'));
+
+        $response->assertOk();
+        $this->assertStringContainsString('application/json', $response->headers->get('Content-Type'));
+        $this->assertStringNotContainsString('<html', $response->getContent());
+    }
+
+    public function test_the_list_is_for_signed_in_users(): void
+    {
+        $this->getJson(route('notifications'))->assertUnauthorized();
+        $this->postJson(route('notifications.read-all'))->assertUnauthorized();
+    }
+
+    // ---- the New matter button in the header ----
+
+    public function test_the_header_offers_new_matter_to_those_who_may_open_one(): void
+    {
+        $secretary = User::factory()->create();
+        $secretary->assignRole(RoleEnum::Secretary->value);
+        $manager = User::factory()->create();
+        $manager->assignRole(RoleEnum::Manager->value);
+
+        $this->actingAs($secretary)->get(route('dashboard'))
+            ->assertSee('href="'.route('matters', ['new' => 1]).'"', false)
+            ->assertSee('New matter');
+
+        $this->actingAs($manager)->get(route('dashboard'))
+            ->assertDontSee('New matter');
+    }
+
+    public function test_on_the_matters_page_the_button_opens_the_form_where_you_are(): void
+    {
+        $secretary = User::factory()->create();
+        $secretary->assignRole(RoleEnum::Secretary->value);
+
+        $this->actingAs($secretary)->get(route('matters'))
+            ->assertDontSee('href="'.route('matters', ['new' => 1]).'"', false)
+            ->assertSee("sheet-open', 'new-matter'", false);
+    }
+
+    public function test_arriving_from_the_button_opens_the_form(): void
+    {
+        $secretary = User::factory()->create();
+        $secretary->assignRole(RoleEnum::Secretary->value);
+
+        $this->actingAs($secretary)->get(route('matters', ['new' => 1]))
+            ->assertOk()
+            ->assertSee("x-init=\"\$nextTick(() => \$dispatch('sheet-open', 'new-matter'))\"", false);
+
+        $this->actingAs($secretary)->get(route('matters'))
+            ->assertDontSee('x-init="$nextTick', false);
     }
 }

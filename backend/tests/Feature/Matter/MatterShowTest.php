@@ -252,7 +252,7 @@ class MatterShowTest extends TestCase
         $this->actingAs($this->userWithRole(RoleEnum::Director))
             ->get(route('matter.show', [$matter, 'tab' => 'documents']))
             ->assertOk()
-            ->assertDontSee('rounded-pill', false);
+            ->assertDontSee('rounded-pill p-1', false);
     }
 
     public function test_the_diary_only_offers_views_that_have_entries(): void
@@ -277,7 +277,7 @@ class MatterShowTest extends TestCase
         $this->actingAs($this->userWithRole(RoleEnum::Director))
             ->get(route('matter.show', [$matter, 'tab' => 'diary']))
             ->assertOk()
-            ->assertDontSee('rounded-pill', false)
+            ->assertDontSee('rounded-pill p-1', false)
             ->assertSee('No diary entries to show.');
     }
 
@@ -289,7 +289,7 @@ class MatterShowTest extends TestCase
         $this->actingAs($director)
             ->get(route('matter.show', $matter))
             ->assertOk()
-            ->assertDontSee('rounded-pill', false);
+            ->assertDontSee('rounded-pill p-1', false);
 
         Narration::factory()->for($matter)->create();
 

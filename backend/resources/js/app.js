@@ -449,6 +449,82 @@ Alpine.data('matterPicker', ({ url, scope = 'visible', selected = null } = {}) =
 }));
 
 
+/*
+ * The list that drops down from the bell. It is fetched when opened, so the page
+ * itself only has to know how many are unread; reading one or all is a request
+ * that answers with the new count.
+ */
+Alpine.data('notificationMenu', ({ url, unread = 0 } = {}) => ({
+    unread,
+    items: [],
+    open: false,
+    loading: false,
+    loaded: false,
+
+    headers() {
+        return {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+        };
+    },
+
+    async toggle() {
+        this.open = ! this.open;
+
+        if (this.open) {
+            await this.load();
+        }
+    },
+
+    async load() {
+        this.loading = true;
+
+        try {
+            const response = await fetch(url, { headers: this.headers() });
+
+            if (response.ok) {
+                const data = await response.json();
+                this.items = data.items;
+                this.unread = data.unread;
+                this.loaded = true;
+            }
+        } finally {
+            this.loading = false;
+        }
+    },
+
+    async markRead(item) {
+        const response = await fetch(`${url}/${item.id}/read`, { method: 'POST', headers: this.headers() });
+
+        if (response.ok) {
+            item.read = true;
+            this.unread = (await response.json()).unread;
+        }
+    },
+
+    async markAllRead() {
+        const response = await fetch(`${url}/read-all`, { method: 'POST', headers: this.headers() });
+
+        if (response.ok) {
+            this.items.forEach((item) => (item.read = true));
+            this.unread = 0;
+        }
+    },
+
+    // Opening one marks it read, then goes where it points.
+    async go(item) {
+        if (! item.read) {
+            await this.markRead(item);
+        }
+
+        if (item.url) {
+            window.location = item.url;
+        }
+    },
+}));
+
+
 /* Floating messages config */
 Alpine.data('toasts', (seed = []) => ({
     items: [],
