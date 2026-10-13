@@ -1,5 +1,8 @@
 @php
     $link = fn (array $params = []) => route('matter.show', [$matter, 'tab' => 'documents'] + $params);
+
+    // A kind nothing has been filed under is not worth a button, unless it is the one being looked at.
+    $usedKinds = collect($kinds)->filter(fn ($option) => ($kindCounts[$option->value] ?? 0) > 0 || $kind === $option);
 @endphp
 
 <div class="card">
@@ -9,15 +12,18 @@
             <p class="text-meta mb-0">{{ $allDocumentsCount }} filed on this matter</p>
         </div>
 
-        <div class="d-flex flex-wrap align-items-center gap-2 bg-light rounded-pill p-1">
-            <x-ui.button :variant="$kind ? 'ghost-secondary' : 'dark'" class="rounded-pill" size="sm"
-                :href="$link()">all {{ $allDocumentsCount }}</x-ui.button>
+        {{-- With nothing to narrow by, a row holding only "all" is just clutter. --}}
+        @if ($usedKinds->isNotEmpty())
+            <div class="d-flex flex-wrap align-items-center gap-2 bg-light rounded-pill p-1">
+                <x-ui.button :variant="$kind ? 'ghost-secondary' : 'dark'" class="rounded-pill" size="sm"
+                    :href="$link()">all {{ $allDocumentsCount }}</x-ui.button>
 
-            @foreach ($kinds as $option)
-                <x-ui.button :variant="$kind === $option ? 'dark' : 'ghost-secondary'" class="rounded-pill" size="sm"
-                    :href="$link(['kind' => $option->value])">{{ str_replace('_', ' ', $option->value) }} {{ $kindCounts[$option->value] ?? 0 }}</x-ui.button>
-            @endforeach
-        </div>
+                @foreach ($usedKinds as $option)
+                    <x-ui.button :variant="$kind === $option ? 'dark' : 'ghost-secondary'" class="rounded-pill" size="sm"
+                        :href="$link(['kind' => $option->value])">{{ str_replace('_', ' ', $option->value) }} {{ $kindCounts[$option->value] ?? 0 }}</x-ui.button>
+                @endforeach
+            </div>
+        @endif
     </div>
 
     <div class="table-responsive">

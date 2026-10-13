@@ -1,5 +1,9 @@
 @php
     $link = fn (array $params = []) => route('matter.show', [$matter, 'tab' => 'diary'] + $params);
+
+    // A view with nothing in it is not worth a button, unless it is the one being looked at.
+    $views = collect(['pending', 'overdue', 'mine', 'completed'])
+        ->filter(fn ($option) => $diaryCounts[$option] > 0 || $show === $option);
 @endphp
 
 <div class="card">
@@ -9,12 +13,15 @@
             <p class="text-meta mb-0">{{ $diaryCounts['pending'] }} pending · {{ $diaryCounts['overdue'] }} overdue</p>
         </div>
 
-        <div class="d-flex flex-wrap align-items-center gap-2 bg-light rounded-pill p-1">
-            @foreach (['pending', 'overdue', 'mine', 'completed'] as $option)
-                <x-ui.button :variant="$show === $option ? 'dark' : 'ghost-secondary'" class="rounded-pill" size="sm"
-                    :href="$link(['show' => $option])">{{ $option }} {{ $diaryCounts[$option] }}</x-ui.button>
-            @endforeach
-        </div>
+        {{-- A single view is not a choice, so there is nothing to switch between. --}}
+        @if ($views->count() > 1)
+            <div class="d-flex flex-wrap align-items-center gap-2 bg-light rounded-pill p-1">
+                @foreach ($views as $option)
+                    <x-ui.button :variant="$show === $option ? 'dark' : 'ghost-secondary'" class="rounded-pill" size="sm"
+                        :href="$link(['show' => $option])">{{ $option }} {{ $diaryCounts[$option] }}</x-ui.button>
+                @endforeach
+            </div>
+        @endif
     </div>
 
     <div class="table-responsive">

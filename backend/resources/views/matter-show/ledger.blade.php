@@ -15,18 +15,23 @@
                 :href="route('matter.narrations.export', array_filter([$matter, 'filter' => $filter]))">Export</x-ui.button>
         </div>
 
-        <div class="d-flex flex-wrap align-items-center gap-2 bg-light rounded-pill p-1">
-            <x-ui.button :variant="blank($filter) ? 'dark' : 'ghost-secondary'" class="rounded-pill" size="sm"
-                :href="$link()">all {{ $allCount }}</x-ui.button>
+        {{-- Only what the ledger holds is offered, and a row holding only "all" is just clutter. --}}
+        @if ($filters->isNotEmpty() || $mineCount > 0 || $filter === 'mine')
+            <div class="d-flex flex-wrap align-items-center gap-2 bg-light rounded-pill p-1">
+                <x-ui.button :variant="blank($filter) ? 'dark' : 'ghost-secondary'" class="rounded-pill" size="sm"
+                    :href="$link()">all {{ $allCount }}</x-ui.button>
 
-            @foreach ($filters as $code => $type)
-                <x-ui.button :variant="$filter === $code ? 'dark' : 'ghost-secondary'" class="rounded-pill" size="sm"
-                    :href="$link(['filter' => $code])">{{ $type['label'] }} {{ $type['count'] }}</x-ui.button>
-            @endforeach
+                @foreach ($filters as $code => $type)
+                    <x-ui.button :variant="$filter === $code ? 'dark' : 'ghost-secondary'" class="rounded-pill" size="sm"
+                        :href="$link(['filter' => $code])">{{ $type['label'] }} {{ $type['count'] }}</x-ui.button>
+                @endforeach
 
-            <x-ui.button :variant="$filter === 'mine' ? 'dark' : 'ghost-secondary'" class="rounded-pill" size="sm"
-                :href="$link(['filter' => 'mine'])">mine {{ $mineCount }}</x-ui.button>
-        </div>
+                @if ($mineCount > 0 || $filter === 'mine')
+                    <x-ui.button :variant="$filter === 'mine' ? 'dark' : 'ghost-secondary'" class="rounded-pill" size="sm"
+                        :href="$link(['filter' => 'mine'])">mine {{ $mineCount }}</x-ui.button>
+                @endif
+            </div>
+        @endif
     </div>
 
     <div class="table-responsive">
