@@ -10,6 +10,9 @@
                 <h3 class="card-title mb-0">Attendance ledger</h3>
                 <p class="text-meta mb-0">{{ $allCount }} {{ Str::plural('entry', $allCount) }} · {{ number_format($minutesRecorded / 60, 1) }} h recorded</p>
             </div>
+
+            <x-ui.button variant="outline-secondary" size="sm"
+                :href="route('matter.narrations.export', array_filter([$matter, 'filter' => $filter]))">Export</x-ui.button>
         </div>
 
         <div class="d-flex flex-wrap align-items-center gap-2 bg-light rounded-pill p-1">
@@ -23,9 +26,6 @@
 
             <x-ui.button :variant="$filter === 'mine' ? 'dark' : 'ghost-secondary'" class="rounded-pill" size="sm"
                 :href="$link(['filter' => 'mine'])">mine {{ $mineCount }}</x-ui.button>
-
-            <x-ui.button variant="ghost-secondary" class="rounded-pill" size="sm"
-                :href="route('matter.narrations.export', array_filter([$matter, 'filter' => $filter]))">export</x-ui.button>
         </div>
     </div>
 
