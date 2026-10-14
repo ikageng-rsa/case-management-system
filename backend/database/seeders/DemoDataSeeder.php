@@ -21,6 +21,7 @@ use App\Models\MatterType;
 use App\Models\Narration;
 use App\Models\PopiaConsent;
 use App\Models\User;
+use App\Services\Matters\MatterReference;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -195,7 +196,7 @@ class DemoDataSeeder extends Seeder
         };
 
         return $factory->create([
-            'reference' => "{$initials}/{$type->code}/".str_pad((string) $sequence, 4, '0', STR_PAD_LEFT)."/{$year}",
+            'reference' => MatterReference::format($initials, $type->code, $sequence, $year),
             'sequence_number' => $sequence,
             'opened_year' => $year,
             'title' => $entry['title'],
