@@ -79,4 +79,16 @@ class LoginTest extends TestCase
 
         $this->assertGuest();
     }
+
+    public function test_the_login_page_states_the_idle_time_the_session_is_really_set_to(): void
+    {
+        config(['session.lifetime' => 120]);
+        $this->get('/login')->assertSee('Sessions expire after 2 hours idle');
+
+        config(['session.lifetime' => 60]);
+        $this->get('/login')->assertSee('Sessions expire after 1 hour idle');
+
+        config(['session.lifetime' => 45]);
+        $this->get('/login')->assertSee('Sessions expire after 45 minutes idle');
+    }
 }
