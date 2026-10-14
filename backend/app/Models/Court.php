@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Appends(['label'])]
 #[Fillable(['tier', 'name', 'seat'])]
@@ -23,6 +24,7 @@ class Court extends Model
     use HasFactory;
 
     use RecordsActivity;
+    use SoftDeletes;
 
     /**
      * Get the attributes that should be cast.
@@ -39,6 +41,11 @@ class Court extends Model
     public function matters(): HasMany
     {
         return $this->hasMany(Matter::class);
+    }
+
+    public function narrations(): HasMany
+    {
+        return $this->hasMany(Narration::class);
     }
 
     /** How the court is cited on a pleading, e.g. "High Court, Johannesburg". */

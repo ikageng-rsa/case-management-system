@@ -79,13 +79,13 @@ class Matter extends Model implements HasMedia
 
     public function matterType(): BelongsTo
     {
-        return $this->belongsTo(MatterType::class);
+        return $this->belongsTo(MatterType::class)->withTrashed();
     }
 
     /** Null for non-litigious matters, which are not before a court. */
     public function court(): BelongsTo
     {
-        return $this->belongsTo(Court::class);
+        return $this->belongsTo(Court::class)->withTrashed();
     }
 
     public function assignments(): HasMany

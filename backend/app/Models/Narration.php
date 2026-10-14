@@ -49,7 +49,7 @@ class Narration extends Model
 
     public function activityType(): BelongsTo
     {
-        return $this->belongsTo(ActivityType::class);
+        return $this->belongsTo(ActivityType::class)->withTrashed();
     }
 
     public function author(): BelongsTo
@@ -60,7 +60,7 @@ class Narration extends Model
     /** Set only for appearances, where the court attended affects the tariff. */
     public function court(): BelongsTo
     {
-        return $this->belongsTo(Court::class);
+        return $this->belongsTo(Court::class)->withTrashed();
     }
 
     public function billableUnits(): int
