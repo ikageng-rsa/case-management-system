@@ -46,6 +46,7 @@ enum Permission: string
     case ViewUsers = 'view_users';
     case EditUsers = 'edit_users';
     case InviteUsers = 'invite_users';
+    case DeactivateUsers = 'deactivate_users';
     case AssignRoles = 'assign_roles';
     case ManageRoles = 'manage_roles';
 

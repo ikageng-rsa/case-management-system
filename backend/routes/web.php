@@ -112,6 +112,10 @@ Route::middleware('auth')->group(function () {
         Route::delete('/invitations/{invitation}', [InvitationController::class, 'destroy'])->name('invitation.destroy');
     });
 
+    Route::middleware('can:deactivate_users')->group(function () {
+        Route::post('/users/{user}/deactivate', [UserController::class, 'deactivate'])->name('user.deactivate');
+        Route::post('/users/{user}/reactivate', [UserController::class, 'reactivate'])->name('user.reactivate');
+    });
     Route::patch('/users/{user}/roles', [UserController::class, 'updateRoles'])->middleware('can:assign_roles')->name('user.roles.update');
 
     Route::middleware('can:manage_roles')->group(function () {

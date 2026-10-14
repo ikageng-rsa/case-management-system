@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\Auth\Permission;
 use App\Http\Requests\Role\SaveRoleRequest;
+use App\Http\Requests\User\DeactivateUserRequest;
 use App\Http\Requests\User\UpdateUserDetailsRequest;
 use App\Http\Requests\User\UpdateUserRolesRequest;
 use App\Models\Role;
@@ -16,16 +17,21 @@ use App\Services\Roles\CannotRemoveLastAdministrator;
 use App\Services\Roles\DeleteRole;
 use App\Services\Roles\SaveRole;
 use App\Services\Users\AssignUserRoles;
+use App\Services\Users\CannotDeactivateUser;
+use App\Services\Users\DeactivateUser;
+use App\Services\Users\ReactivateUser;
 use App\Services\Users\UpdateUserDetails;
+use App\Services\Users\UserWorkload;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 class UserController extends Controller
 {
-    public function index(): View
+    public function index(Request $request, UserWorkload $workload): View
     {
         Gate::authorize(Permission::ViewUsers->value);
 
@@ -50,6 +56,11 @@ class UserController extends Controller
             'lifetimes' => UserInvitation::LIFETIMES,
             'defaultLifetime' => UserInvitation::DEFAULT_LIFETIME,
             'lastActive' => $lastActive,
+            'deactivated' => User::onlyTrashed()->orderByDesc('deleted_at')->get(),
+            'workloads' => $request->user()->can(Permission::DeactivateUsers->value)
+                ? $users->getCollection()->mapWithKeys(fn (User $person) => [$person->getKey() => $workload->for($person)])
+                : collect(),
+            'staff' => User::query()->orderBy('name')->get(['id', 'name', 'job_title']),
             'roles' => Role::query()->withCount('users')->with('permissions')->orderBy('name')->get(),
             'permissions' => Permission::cases(),
         ]);
@@ -75,6 +86,29 @@ class UserController extends Controller
         }
 
         return redirect()->route('users')->with('status', 'Roles updated.');
+    }
+
+    public function deactivate(DeactivateUserRequest $request, User $user, DeactivateUser $deactivate): RedirectResponse
+    {
+        Gate::authorize(Permission::DeactivateUsers->value);
+
+        try {
+            $deactivate->deactivate($user, $request->user(), $request->validated('reason'), $request->validated('successors') ?? []);
+        } catch (CannotDeactivateUser|CannotRemoveLastAdministrator $e) {
+            return back()->withInput()->withErrors(['deactivate' => $e->getMessage()], 'deactivate_user_'.$user->getKey());
+        }
+
+        return redirect()->route('users')->with('status', $user->name.' deactivated.');
+    }
+
+    public function reactivate(string $user, ReactivateUser $reactivate): RedirectResponse
+    {
+        Gate::authorize(Permission::DeactivateUsers->value);
+
+        $person = User::onlyTrashed()->findOrFail($user);
+        $reactivate->reactivate($person, request()->user());
+
+        return redirect()->route('users')->with('status', $person->name.' reactivated.');
     }
 
     public function storeRole(SaveRoleRequest $request, SaveRole $saveRole): RedirectResponse

@@ -59,6 +59,7 @@ enum Role: string
                 Permission::ViewUsers,
                 Permission::EditUsers,
                 Permission::InviteUsers,
+                Permission::DeactivateUsers,
                 Permission::AssignRoles,
                 Permission::ManageRoles,
                 Permission::ManageMatterTypes,

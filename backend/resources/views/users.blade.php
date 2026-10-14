@@ -9,6 +9,7 @@
         $canInvite = auth()->user()->can('invite_users');
         $canAssign = auth()->user()->can('assign_roles');
         $canShape = auth()->user()->can('manage_roles');
+        $canDeactivate = auth()->user()->can('deactivate_users');
         $label = fn (string $value) => Str::headline($value);
 
         // A sheet reopens on its own errors, and only those; another form's
@@ -19,10 +20,7 @@
     <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-1">
         <div>
             <h1 class="mb-1">Users &amp; roles</h1>
-            <p class="text-secondary mb-4">{{ $total }} active · {{ $invitations->filter->isPending()->count() }} invited</p>
-            {{-- Planned: needs deactivation
-            <p class="text-secondary mb-4">9 active · 1 invited · 2 disabled</p>
-            --}}
+            <p class="text-secondary mb-4">{{ $total }} active · {{ $invitations->filter->isPending()->count() }} invited @if ($deactivated->isNotEmpty())· {{ $deactivated->count() }} deactivated @endif</p>
         </div>
 
         <div class="d-flex align-items-center gap-2">
@@ -78,6 +76,11 @@
                                     <x-ui.button variant="ghost-secondary" size="sm"
                                         x-data x-on:click="$dispatch('sheet-open', 'user-roles-{{ $user->getKey() }}')">Roles</x-ui.button>
                                 @endif
+
+                                @if ($canDeactivate && ! $user->is(auth()->user()))
+                                    <x-ui.button variant="ghost-secondary" size="sm"
+                                        x-data x-on:click="$dispatch('sheet-open', 'deactivate-user-{{ $user->getKey() }}')">Deactivate</x-ui.button>
+                                @endif
                             </td>
                         </tr>
                     @endforeach
@@ -99,6 +102,46 @@
             </div>
         @endif
     </div>
+
+    @if ($deactivated->isNotEmpty())
+        <h3 class="text-meta text-uppercase mb-2">Deactivated</h3>
+
+        <div class="card mb-4">
+            <div class="table-responsive">
+                <table class="table table-vcenter card-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Deactivated</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($deactivated as $former)
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">{{ $former->name }}</div>
+                                    <div class="text-meta">{{ \App\Services\Clients\MaskIdentifier::email($former->email) }}@if ($former->job_title) · {{ $former->job_title }}@endif</div>
+                                </td>
+                                <td class="text-secondary text-nowrap">{{ $former->deleted_at->format('d M Y') }}</td>
+                                <td class="text-end">
+                                    @if ($canDeactivate)
+                                        <form method="POST" action="{{ route('user.reactivate', $former->getKey()) }}"
+                                            data-confirm="{{ $former->name }} will be able to sign in again with the roles they had. The work that was handed over stays with whoever received it."
+                                            data-confirm-title="Reactivate {{ $former->name }}" data-confirm-action="Reactivate"
+                                            data-confirm-tone="primary" data-confirm-icon="user-check">
+                                            @csrf
+                                            <x-ui.button type="submit" variant="ghost-secondary" size="sm">Reactivate</x-ui.button>
+                                        </form>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    @endif
 
     @if ($invitations->isNotEmpty())
         <h3 class="text-meta text-uppercase mb-2">Invitations</h3>
@@ -191,6 +234,90 @@
                 </div>
             </x-slot:footer>
         </x-ui.sheet>
+    @endif
+
+    @if ($canDeactivate)
+        @foreach ($users as $person)
+            @continue($person->is(auth()->user()))
+
+            @php
+                $bag = 'deactivate_user_'.$person->getKey();
+                $items = $workloads[$person->getKey()] ?? collect();
+                $pick = fn (string $matterId) => $errors->getBag($bag)->any() ? old('successors.'.$matterId) : null;
+            @endphp
+
+            <x-ui.sheet name="deactivate-user-{{ $person->getKey() }}" title="Deactivate {{ $person->name }}" :bag="$bag" icon="user-off"
+                lede="They will not be able to sign in. Their name stays on everything they did." :action="route('user.deactivate', $person)">
+                @if ($errors->getBag($bag)->has('deactivate'))
+                    <div class="alert alert-danger" role="alert">{{ $errors->getBag($bag)->first('deactivate') }}</div>
+                @endif
+
+                @if ($items->isNotEmpty())
+                    <p class="text-secondary">
+                        {{ $person->name }} is still carrying work on {{ $items->count() }} open {{ Str::plural('matter', $items->count()) }}.
+                        Choose who takes it over. Their diary entries on a matter move with it.
+                    </p>
+
+                    @foreach ($items as $item)
+                        @php
+                            $matter = $item['matter'];
+                        @endphp
+
+                        <div class="border rounded p-3 mb-3">
+                            <div class="fw-bold">{{ $matter->reference }}@if ($matter->title) · {{ $matter->title }}@endif</div>
+                            <div class="text-meta mb-2">
+                                {{ $item['capacities']->map(fn ($capacity) => Str::headline($capacity->value))->implode(', ') ?: 'Not on the team' }}
+                                @if ($item['entries']->isNotEmpty())
+                                    · {{ $item['entries']->count() }} diary {{ Str::plural('entry', $item['entries']->count()) }} to do
+                                @endif
+                            </div>
+
+                            @if ($item['needs_successor'])
+                                @php
+                                    $selected = $pick($matter->getKey());
+                                @endphp
+
+                                <select name="successors[{{ $matter->getKey() }}]" class="form-select" required aria-label="Who takes over {{ $matter->reference }}">
+                                    <option value="">Choose who takes over…</option>
+                                    @if ($item['team']->isNotEmpty())
+                                        <optgroup label="Already on this matter">
+                                            @foreach ($item['team'] as $member)
+                                                <option value="{{ $member->getKey() }}" @selected($selected === $member->getKey())>{{ $member->name }}</option>
+                                            @endforeach
+                                        </optgroup>
+                                    @endif
+                                    <optgroup label="Add to this matter">
+                                        @foreach ($staff->reject(fn ($member) => $member->is($person) || $item['team']->contains(fn ($on) => $on->is($member))) as $member)
+                                            <option value="{{ $member->getKey() }}" @selected($selected === $member->getKey())>{{ $member->name }}@if ($member->job_title) · {{ $member->job_title }}@endif</option>
+                                        @endforeach
+                                    </optgroup>
+                                </select>
+                            @else
+                                <div class="text-secondary">They will be taken off this matter. Nothing of theirs is left to do on it.</div>
+                            @endif
+                        </div>
+                    @endforeach
+                @else
+                    <p class="text-secondary">{{ $person->name }} is not carrying any work on an open matter.</p>
+                @endif
+
+                <div class="mb-3">
+                    <label class="form-label form-label-mono" for="deactivate_reason_{{ $person->getKey() }}">Reason</label>
+                    <textarea class="form-control @error('reason', $bag) is-invalid @enderror" id="deactivate_reason_{{ $person->getKey() }}" name="reason" rows="2" required>{{ $errors->getBag($bag)->any() ? old('reason') : '' }}</textarea>
+                    @error('reason', $bag)
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                    <div class="form-hint">Kept in the audit log.</div>
+                </div>
+
+                <x-slot:footer>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <x-ui.button size="sm" variant="outline-secondary" x-on:click="close()">Cancel</x-ui.button>
+                        <x-ui.button size="sm" type="submit" variant="danger">Deactivate</x-ui.button>
+                    </div>
+                </x-slot:footer>
+            </x-ui.sheet>
+        @endforeach
     @endif
 
     @if ($canEdit)
