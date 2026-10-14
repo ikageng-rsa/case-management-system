@@ -15,6 +15,7 @@ enum NotificationType: string
     case MatterAssigned = 'matter_assigned';
     case MatterUnassigned = 'matter_unassigned';
     case DiaryAssigned = 'diary_assigned';
+    case DiaryDueSoon = 'diary_due_soon';
     case DiaryOverdue = 'diary_overdue';
 
     public const CHANNEL_SYSTEM = 'database';
@@ -27,6 +28,7 @@ enum NotificationType: string
             self::MatterAssigned => 'I am assigned to a matter',
             self::MatterUnassigned => 'I am taken off a matter',
             self::DiaryAssigned => 'A diary entry is assigned to me',
+            self::DiaryDueSoon => 'A diary entry assigned to me is coming due',
             self::DiaryOverdue => 'A diary entry assigned to me is overdue',
         };
     }
@@ -37,6 +39,7 @@ enum NotificationType: string
             self::MatterAssigned => 'When someone puts you on a matter, in any capacity. Not sent for what you assign to yourself.',
             self::MatterUnassigned => 'When someone takes you off a matter you were on.',
             self::DiaryAssigned => 'When someone else adds a diary entry for you to do.',
+            self::DiaryDueSoon => 'Ahead of the time it falls due, as long before as each entry asks for.',
             self::DiaryOverdue => 'For each entry that is past its due date and not yet done.',
         };
     }
@@ -49,9 +52,15 @@ enum NotificationType: string
     public function defaultChannels(): array
     {
         return match ($this) {
-            self::MatterAssigned, self::DiaryOverdue => [self::CHANNEL_SYSTEM, self::CHANNEL_EMAIL],
+            self::MatterAssigned, self::DiaryDueSoon, self::DiaryOverdue => [self::CHANNEL_SYSTEM, self::CHANNEL_EMAIL],
             self::MatterUnassigned, self::DiaryAssigned => [self::CHANNEL_SYSTEM],
         };
+    }
+
+    /** Whether the kind has a "how early" the person sets their own default for. */
+    public function hasLeadTime(): bool
+    {
+        return $this === self::DiaryDueSoon;
     }
 
     /** @return array<int, string> */

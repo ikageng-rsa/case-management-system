@@ -31,6 +31,7 @@
                     <th>Due</th>
                     <th>Entry</th>
                     <th>Assigned to</th>
+                    <th>Reminder</th>
                     <th>Status</th>
                     <th></th>
                 </tr>
@@ -41,6 +42,20 @@
                         <td @class(['text-meta text-nowrap', 'text-danger' => $entry->isOverdue()])>{{ $entry->due_at->format('d M Y H:i') }}</td>
                         <td>{{ $entry->body }}</td>
                         <td>{{ $entry->assignee->name }}</td>
+                        <td class="text-secondary text-nowrap">
+                            @if ($entry->isComplete())
+                                —
+                            @else
+                                {{ \App\Services\Diary\ReminderLead::label($entry->remind_before_minutes) }}
+
+                                {{-- It is the assignee's to set: whoever made the entry only suggested it. --}}
+                                @if ($canWork && $entry->assigned_to === auth()->id())
+                                    <x-ui.button variant="ghost-secondary" size="sm" icon="bell"
+                                        aria-label="Change when I am reminded" title="Change when I am reminded"
+                                        x-data x-on:click="$dispatch('sheet-open', 'entry-reminder-{{ $entry->getKey() }}')" />
+                                @endif
+                            @endif
+                        </td>
                         <td>
                             @if ($entry->isComplete())
                                 <x-ui.stage-badge tone="success">Done {{ $entry->completed_at->format('d M') }}</x-ui.stage-badge>
@@ -67,10 +82,34 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="text-center text-secondary py-4">No diary entries to show.</td>
+                        <td colspan="6" class="text-center text-secondary py-4">No diary entries to show.</td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
 </div>
+
+@if ($canWork)
+    @foreach ($entries as $entry)
+        @if ($entry->isPending() && $entry->assigned_to === auth()->id())
+            @php($reminderBag = 'diary_reminder_'.$entry->getKey())
+
+            <x-ui.sheet name="entry-reminder-{{ $entry->getKey() }}" title="When to remind me" :lede="$entry->body" :bag="$reminderBag" method="PATCH"
+                :action="route('matter.diary.reminder', [$matter, $entry])">
+                <p class="text-secondary">Due {{ $entry->due_at->format('d M Y H:i') }}.</p>
+
+                <x-diary.reminder id="reminder_{{ $entry->getKey() }}" label="Remind me" :minutes="$entry->remind_before_minutes"
+                    :use-old="$errors->getBag($reminderBag)->any()"
+                    :error="$errors->getBag($reminderBag)->first('remind_value') ?: $errors->getBag($reminderBag)->first('remind')" />
+
+                <x-slot:footer>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <x-ui.button variant="outline-secondary" x-on:click="close()">Cancel</x-ui.button>
+                        <x-ui.button type="submit" variant="primary">Save</x-ui.button>
+                    </div>
+                </x-slot:footer>
+            </x-ui.sheet>
+        @endif
+    @endforeach
+@endif

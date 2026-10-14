@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Concerns\RecordsActivity;
 use App\Observers\DiaryEntryObserver;
+use Carbon\CarbonInterface;
 use Database\Factories\DiaryEntryFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
@@ -15,7 +16,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use InvalidArgumentException;
 
-#[Fillable(['body', 'due_at'])]
+#[Fillable(['body', 'due_at', 'remind_before_minutes'])]
 #[ObservedBy([DiaryEntryObserver::class])]
 class DiaryEntry extends Model
 {
@@ -35,6 +36,8 @@ class DiaryEntry extends Model
             'due_at' => 'datetime',
             'completed_at' => 'datetime',
             'overdue_notified_at' => 'datetime',
+            'remind_before_minutes' => 'integer',
+            'reminder_sent_at' => 'datetime',
         ];
     }
 
@@ -111,6 +114,23 @@ class DiaryEntry extends Model
         }
 
         $this->narration()->associate($narration);
+    }
+
+    /** Still to do, not yet due, with a reminder asked for and not yet sent. */
+    public function scopeAwaitingReminder(Builder $query): void
+    {
+        $query->whereNull('completed_at')
+            ->where('due_at', '>', now())
+            ->whereNotNull('remind_before_minutes')
+            ->whereNull('reminder_sent_at');
+    }
+
+    /** The moment the reminder is due to go out, or null where none was asked for. */
+    public function remindAt(): ?CarbonInterface
+    {
+        return $this->remind_before_minutes === null
+            ? null
+            : $this->due_at->copy()->subMinutes($this->remind_before_minutes);
     }
 
     /** Past due, still to do, and nobody has yet been told so. */

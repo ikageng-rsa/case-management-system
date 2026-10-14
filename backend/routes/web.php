@@ -75,6 +75,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/matters/{matter}/narrations/export', [NarrationController::class, 'export'])->name('matter.narrations.export');
 
     Route::post('/matters/{matter}/diary', [DiaryEntryController::class, 'store'])->name('matter.diary.store');
+    Route::patch('/matters/{matter}/diary/{diaryEntry}/reminder', [DiaryEntryController::class, 'updateReminder'])->name('matter.diary.reminder');
     Route::post('/matters/{matter}/diary/{diaryEntry}/complete', [DiaryEntryController::class, 'complete'])->name('matter.diary.complete');
 
     Route::post('/matters/{matter}/documents', [MatterDocumentController::class, 'store'])->name('matter.documents.store');

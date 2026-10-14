@@ -55,6 +55,10 @@
         @endforeach
     </x-ui.select>
 
+    <x-diary.reminder id="diary_remind" label="Remind them" :minutes="$defaultReminder" :use-old="$errors->diary->any()"
+        hint="Starts at how you usually like to be reminded. Whoever the entry is for can change it for themselves."
+        :error="$errors->diary->first('remind_value') ?: $errors->diary->first('remind')" />
+
     <x-slot:footer>
         <div class="d-flex align-items-center justify-content-between">
             <x-ui.button variant="outline-secondary" x-on:click="close()">Cancel</x-ui.button>

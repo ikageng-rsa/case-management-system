@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * How one person has chosen to be told about one kind of notification. There is
  * a row only once they have chosen; without one, the kind's own default applies.
  */
-#[Fillable(['type', 'database', 'mail'])]
+#[Fillable(['type', 'database', 'mail', 'lead_minutes'])]
 class NotificationPreference extends Model
 {
     /** @use HasFactory<NotificationPreferenceFactory> */
@@ -36,6 +36,7 @@ class NotificationPreference extends Model
         return [
             'database' => 'boolean',
             'mail' => 'boolean',
+            'lead_minutes' => 'integer',
         ];
     }
 

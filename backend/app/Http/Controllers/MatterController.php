@@ -18,6 +18,7 @@ use App\Models\Matter;
 use App\Models\MatterType;
 use App\Models\Narration;
 use App\Models\User;
+use App\Services\Diary\ResolveReminderLead;
 use App\Services\Matters\AssignUserToMatter;
 use App\Services\Matters\CannotAssignToClosedMatter;
 use App\Services\Matters\CloseMatter;
@@ -141,6 +142,7 @@ class MatterController extends Controller
             'tabs' => $tabs,
             'nextDate' => $matter->diaryEntries()->pending()->orderBy('due_at')->first()?->due_at,
             'canWork' => $user->can('work', $matter),
+            'defaultReminder' => app(ResolveReminderLead::class)->for($user),
             'activityTypes' => ActivityType::query()->orderBy('name')->get(),
             'courts' => Court::query()->orderBy('name')->get(),
             'assignable' => $user->can('assign', $matter) ? User::query()->orderBy('name')->get() : collect(),

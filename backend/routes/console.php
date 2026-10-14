@@ -13,3 +13,6 @@ Artisan::command('inspire', function () {
 // Entries are told of once
 Schedule::command('diary:alert-overdue')
     ->hourly()->withoutOverlapping();
+
+// Reminders go out as each entry asks, down to half an hour ahead, so this runs often. Each is sent once.
+Schedule::command('diary:remind-upcoming')->everyFiveMinutes()->withoutOverlapping();
