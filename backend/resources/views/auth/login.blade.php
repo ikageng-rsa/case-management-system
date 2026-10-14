@@ -2,6 +2,13 @@
 
 @section('title', 'Sign in — Example Firm')
 
+@php
+    // What the session is actually set to, so the page cannot say one thing and do another.
+    $minutes = (int) config('session.lifetime');
+    $hours = intdiv($minutes, 60);
+    $idle = $minutes % 60 === 0 ? $hours.' '.Str::plural('hour', $hours) : $minutes.' minutes';
+@endphp
+
 @section('content')
     <div class="row g-0 min-vh-100 bg-dark">
         {{-- Left panel: the actual sign-in form --}}
@@ -50,7 +57,7 @@
                     <x-ui.button type="submit" class="w-100" size="lg">Sign in</x-ui.button>
                 </form>
 
-                <p class="text-meta mt-3" style="color: var(--cms-on-ink-caption);">Sessions expire after 30 minutes idle. All access is logged.</p>
+                <p class="text-meta mt-3" style="color: var(--cms-on-ink-caption);">Sessions expire after {{ $idle }} idle. All access is logged.</p>
             </div>
         </div>
 

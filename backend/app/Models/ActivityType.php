@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 #[Appends(['unit_label'])]
@@ -26,6 +27,7 @@ class ActivityType extends Model
     use HasFactory;
 
     use RecordsActivity;
+    use SoftDeletes;
 
     /**
      * Get the attributes that should be cast.
@@ -40,6 +42,14 @@ class ActivityType extends Model
             'default_billable' => 'boolean',
             'requires_court' => 'boolean',
         ];
+    }
+
+    /** The code the system itself files an opening narration under; it cannot be changed or retired. */
+    public const SYSTEM_CODES = ['ADMIN'];
+
+    public function isSystem(): bool
+    {
+        return in_array($this->code, self::SYSTEM_CODES, true);
     }
 
     public function narrations(): HasMany

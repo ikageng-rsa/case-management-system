@@ -12,12 +12,10 @@ class ExampleTest extends TestCase
     /**
      * A basic test example.
      */
-    public function test_the_application_returns_a_successful_response(): void
+    public function test_the_front_door_leads_to_signing_in(): void
     {
         $this->withoutVite();
 
-        $response = $this->get('/');
-
-        $response->assertStatus(200);
+        $this->get('/')->assertRedirect('/login');
     }
 }

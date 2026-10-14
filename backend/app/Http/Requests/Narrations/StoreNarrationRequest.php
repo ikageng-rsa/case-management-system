@@ -28,14 +28,14 @@ class StoreNarrationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'activity_type_id' => ['required', 'integer', Rule::exists('activity_types', 'id')],
+            'activity_type_id' => ['required', 'integer', Rule::exists('activity_types', 'id')->withoutTrashed()],
             'body' => ['required', 'string'],
             'quantity' => ['required', 'numeric', 'gt:0'],
             'occurred_at' => ['nullable', 'date', 'before_or_equal:now'],
             'court_id' => [
                 $this->courtIsRequired() ? 'required' : 'nullable',
                 'integer',
-                Rule::exists('courts', 'id'),
+                Rule::exists('courts', 'id')->withoutTrashed(),
             ],
         ];
     }

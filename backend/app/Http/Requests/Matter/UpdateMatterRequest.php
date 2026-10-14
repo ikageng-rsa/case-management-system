@@ -28,7 +28,7 @@ class UpdateMatterRequest extends FormRequest
         return [
             'title' => ['sometimes', 'nullable', 'string', 'max:255'],
             'instructed_at' => ['sometimes', 'nullable', 'date'],
-            'court_id' => ['sometimes', 'nullable', 'integer', Rule::exists('courts', 'id')],
+            'court_id' => ['sometimes', 'nullable', 'integer', Rule::exists('courts', 'id')->withoutTrashed()],
         ];
     }
 }

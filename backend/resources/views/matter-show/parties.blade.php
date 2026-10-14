@@ -8,8 +8,18 @@
         </div>
 
         @foreach ($contacts as $contact)
+            @php
+                $masked = match ($contact->kind) {
+                    \App\Enums\Client\ContactKind::Mobile => \App\Services\Clients\MaskIdentifier::mobile($contact->value),
+                    \App\Enums\Client\ContactKind::Email => \App\Services\Clients\MaskIdentifier::email($contact->value),
+                    default => \App\Services\Clients\MaskIdentifier::address($contact->value),
+                };
+            @endphp
+
             <div @class(['mb-3' => ! $loop->last])>
-                <div class="mb-0">{{ $contact->value }}</div>
+                <div class="mb-0">
+                    <x-client.reveal :masked="$masked" :target="'contact:'.$contact->getKey()" :client="$matter->client" :can-reveal="$canReveal" />
+                </div>
                 <div class="text-meta">{{ str_replace('-', ' ', $contact->kind->value) }}{{ $contact->is_primary ? ' · primary' : '' }}</div>
             </div>
         @endforeach

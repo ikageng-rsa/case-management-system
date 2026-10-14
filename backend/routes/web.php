@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 use App\Http\Controllers\AcceptInvitationController;
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\ActivityTypeController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\ClientContactController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ClientRevealController;
 use App\Http\Controllers\ContactPersonController;
+use App\Http\Controllers\CourtController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiaryEntryController;
 use App\Http\Controllers\DocumentController;
@@ -16,14 +18,18 @@ use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\MatterController;
 use App\Http\Controllers\MatterDocumentController;
 use App\Http\Controllers\MatterPartyController;
+use App\Http\Controllers\MatterTypeController;
 use App\Http\Controllers\NarrationController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PopiaConsentController;
+use App\Http\Controllers\ReferenceDataController;
 use App\Http\Controllers\SignInCodeController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
+    return redirect('/login');
+
     return view('welcome');
 });
 
@@ -110,6 +116,30 @@ Route::middleware('auth')->group(function () {
         Route::post('/roles', [UserController::class, 'storeRole'])->name('role.store');
         Route::patch('/roles/{role}', [UserController::class, 'updateRole'])->name('role.update');
         Route::delete('/roles/{role}', [UserController::class, 'destroyRole'])->name('role.destroy');
+    });
+
+    // The lists the forms are filled from. Each table is its own permission.
+    Route::get('/reference-data', [ReferenceDataController::class, 'index'])->name('reference-data');
+
+    Route::middleware('can:manage_courts')->group(function () {
+        Route::post('/courts', [CourtController::class, 'store'])->name('court.store');
+        Route::patch('/courts/{court}', [CourtController::class, 'update'])->name('court.update');
+        Route::delete('/courts/{court}', [CourtController::class, 'destroy'])->name('court.destroy');
+        Route::post('/courts/{court}/restore', [CourtController::class, 'restore'])->withTrashed()->name('court.restore');
+    });
+
+    Route::middleware('can:manage_matter_types')->group(function () {
+        Route::post('/matter-types', [MatterTypeController::class, 'store'])->name('matter-type.store');
+        Route::patch('/matter-types/{matterType}', [MatterTypeController::class, 'update'])->name('matter-type.update');
+        Route::delete('/matter-types/{matterType}', [MatterTypeController::class, 'destroy'])->name('matter-type.destroy');
+        Route::post('/matter-types/{matterType}/restore', [MatterTypeController::class, 'restore'])->withTrashed()->name('matter-type.restore');
+    });
+
+    Route::middleware('can:manage_activity_types')->group(function () {
+        Route::post('/activity-types', [ActivityTypeController::class, 'store'])->name('activity-type.store');
+        Route::patch('/activity-types/{activityType}', [ActivityTypeController::class, 'update'])->name('activity-type.update');
+        Route::delete('/activity-types/{activityType}', [ActivityTypeController::class, 'destroy'])->name('activity-type.destroy');
+        Route::post('/activity-types/{activityType}/restore', [ActivityTypeController::class, 'restore'])->withTrashed()->name('activity-type.restore');
     });
 
     Route::get('/audit-log', [AuditLogController::class, 'index'])->middleware('can:view_audit_log')->name('audit-log');
