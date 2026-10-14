@@ -51,28 +51,34 @@
             <div class="text-meta text-uppercase mb-1">Status</div>
 
             @if ($canClose || $canReopen)
-                <button type="button" x-show="! editing" class="btn btn-link p-0 text-decoration-none d-inline-flex align-items-center gap-1 fw-bold"
-                    x-on:click="editing = true; $nextTick(() => $refs.stage.focus())" title="Change the status">
-                    <span @class(['text-primary' => $matter->isOpen(), 'text-success' => $matter->isClosed()])>{{ $matter->isOpen() ? 'Open' : 'Closed' }}</span>
-                    <x-ui.icon name="pencil" class="text-secondary" />
-                </button>
+                {{-- The value and the field share one place: whichever is not showing is not there. The
+                     toggle sits on a wrapper because a utility display class would beat the hiding. --}}
+                <div x-show="! editing">
+                    <button type="button" class="border-0 bg-transparent p-0 text-start" style="font: inherit;"
+                        x-on:click="editing = true; $nextTick(() => $refs.stage.focus())" title="Change the status">
+                        <span @class(['text-primary' => $matter->isOpen(), 'text-success' => $matter->isClosed()])>{{ $matter->isOpen() ? 'Open' : 'Closed' }}</span>
+                        <x-ui.icon name="pencil" class="text-secondary ms-1" />
+                    </button>
+                </div>
 
-                <select x-ref="stage" x-show="editing" x-cloak class="form-select form-select-sm"
-                    x-on:change="
-                        const chosen = $event.target.value;
-                        editing = false;
-                        $event.target.value = '{{ $matter->isOpen() ? 'open' : 'closed' }}';
-                        if (chosen === 'closed') $refs.closeForm.requestSubmit();
-                        if (chosen === 'open') $refs.reopenForm.requestSubmit();
-                    ">
-                    <option value="{{ $matter->isOpen() ? 'open' : 'closed' }}" selected>{{ $matter->isOpen() ? 'Open' : 'Closed' }}</option>
-                    @if ($canClose)
-                        <option value="closed">Closed</option>
-                    @endif
-                    @if ($canReopen)
-                        <option value="open">Open</option>
-                    @endif
-                </select>
+                <div x-show="editing" x-cloak>
+                    <select x-ref="stage" class="form-select form-select-sm py-0" style="min-height: 0; height: 1.75rem;"
+                        x-on:change="
+                            const chosen = $event.target.value;
+                            editing = false;
+                            $event.target.value = '{{ $matter->isOpen() ? 'open' : 'closed' }}';
+                            if (chosen === 'closed') $refs.closeForm.requestSubmit();
+                            if (chosen === 'open') $refs.reopenForm.requestSubmit();
+                        ">
+                        <option value="{{ $matter->isOpen() ? 'open' : 'closed' }}" selected>{{ $matter->isOpen() ? 'Open' : 'Closed' }}</option>
+                        @if ($canClose)
+                            <option value="closed">Closed</option>
+                        @endif
+                        @if ($canReopen)
+                            <option value="open">Open</option>
+                        @endif
+                    </select>
+                </div>
 
                 @if ($canClose)
                     <form x-ref="closeForm" method="POST" action="{{ route('matter.close', $matter) }}" class="d-none"
@@ -92,7 +98,7 @@
                     </form>
                 @endif
             @else
-                <div @class(['fw-bold', 'text-primary' => $matter->isOpen(), 'text-success' => $matter->isClosed()])>{{ $matter->isOpen() ? 'Open' : 'Closed' }}</div>
+                <div @class(['text-primary' => $matter->isOpen(), 'text-success' => $matter->isClosed()])>{{ $matter->isOpen() ? 'Open' : 'Closed' }}</div>
             @endif
 
             @if ($matter->isClosed())
