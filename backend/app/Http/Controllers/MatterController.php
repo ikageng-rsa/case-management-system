@@ -378,7 +378,8 @@ class MatterController extends Controller
         return [
             'matterParties' => $matter->parties()->orderBy('created_at')->orderBy('id')->get(),
             'partyRoles' => PartyRole::cases(),
-            'contacts' => $user->can('view_client_contacts') && $user->can('view_unmasked_client_data') ? $client->contacts()->get() : collect(),
+            'contacts' => $user->can('view_client_contacts') ? $client->contacts()->get() : collect(),
+            'canReveal' => $user->can('view_unmasked_client_data'),
         ];
     }
 

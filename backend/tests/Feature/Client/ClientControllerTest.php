@@ -8,6 +8,7 @@ use App\Enums\Auth\Role as RoleEnum;
 use App\Enums\Client\ContactKind;
 use App\Enums\Matter\Assignment;
 use App\Models\Client;
+use App\Models\ClientContactPerson;
 use App\Models\Matter;
 use App\Models\MatterAssignment;
 use App\Models\MatterType;
@@ -327,22 +328,67 @@ class ClientControllerTest extends TestCase
         $this->assertSame('Thabo', $client->fresh()->first_name);
     }
 
-    public function test_the_edit_form_only_carries_the_full_id_number_for_users_cleared_to_see_it(): void
+    public function test_the_edit_form_never_carries_an_identifier_in_full_whoever_is_looking(): void
     {
         $client = Client::factory()->create(['id_number' => self::ID_NUMBER]);
 
-        $editor = User::factory()->create();
-        $editor->givePermissionTo('view_clients', 'edit_clients');
+        // Even someone cleared to read it: reading it is the eye's job, which is checked and logged.
+        foreach ([$this->userWithRole(RoleEnum::Secretary), $this->userWithRole(RoleEnum::Director)] as $user) {
+            $this->actingAs($user)
+                ->get(route('client.show', $client))
+                ->assertSee('edit_id_number', false)
+                ->assertDontSee(self::ID_NUMBER)
+                ->assertSee('·········0088', false);
+        }
+    }
 
-        $this->actingAs($editor)
-            ->get(route('client.show', $client))
-            ->assertSee('edit_id_number', false)
-            ->assertDontSee(self::ID_NUMBER)
-            ->assertSee('·········0088', false);
+    public function test_the_entity_edit_form_never_carries_the_registration_number_in_full(): void
+    {
+        $client = Client::factory()->entity()->create(['registration_number' => '2015/987654/09']);
 
-        $this->actingAs($this->userWithRole(RoleEnum::Secretary))
+        $this->actingAs($this->userWithRole(RoleEnum::Director))
             ->get(route('client.show', $client))
-            ->assertSee('value="'.self::ID_NUMBER.'"', false);
+            ->assertSee('edit_registration_number', false)
+            ->assertDontSee('2015/987654/09')
+            ->assertSee('2015/······/09');
+    }
+
+    public function test_leaving_the_identifier_empty_in_the_edit_form_keeps_it(): void
+    {
+        $client = Client::factory()->create(['id_number' => self::ID_NUMBER, 'first_name' => 'Thabo', 'last_name' => 'Mokoena']);
+
+        $this->actingAs($this->userWithRole(RoleEnum::Director))
+            ->patch(route('client.update', $client), ['first_name' => 'Thabiso', 'last_name' => 'Mokoena', 'id_number' => ''])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(self::ID_NUMBER, $client->fresh()->id_number);
+    }
+
+    public function test_no_page_about_a_client_prints_their_details_in_full(): void
+    {
+        $client = Client::factory()->create(['id_number' => self::ID_NUMBER]);
+        app(AddClientContact::class)->add($client, ContactKind::Mobile, '0721234418');
+        app(AddClientContact::class)->add($client, ContactKind::Email, 'thabo.mokoena@example.com');
+        $person = ClientContactPerson::factory()->for($client)->primary()->create(['mobile' => '0831112222', 'email' => 'sipho.dlamini@example.com']);
+        $matter = Matter::factory()->for($client)->create();
+
+        $director = $this->userWithRole(RoleEnum::Director);
+
+        $pages = [
+            route('client.show', $client),
+            route('client.show', [$client, 'tab' => 'contacts']),
+            route('client.show', [$client, 'tab' => 'persons']),
+            route('matter.show', [$matter, 'tab' => 'parties']),
+            route('matter.show', $matter),
+        ];
+
+        foreach ($pages as $url) {
+            $html = $this->actingAs($director)->get($url)->assertOk()->getContent();
+
+            foreach ([self::ID_NUMBER, '0721234418', '+27721234418', 'thabo.mokoena@example.com', '0831112222', '+27831112222', 'sipho.dlamini@example.com'] as $secret) {
+                $this->assertStringNotContainsString($secret, $html, "{$secret} is printed in full on {$url}");
+            }
+        }
     }
 
     public function test_the_edit_and_new_matter_actions_follow_their_permissions(): void

@@ -198,7 +198,6 @@ class ClientController extends Controller
             : collect();
 
         return [
-            'canSeeFullIdentifiers' => $user->can('view_unmasked_client_data'),
             'contactPersons' => $user->can('view_client_contacts') ? $client->contactPersons()->orderByDesc('is_primary')->oldest()->get() : collect(),
             'matters' => $matters,
             'openMattersCount' => $matters->filter->isOpen()->count(),
