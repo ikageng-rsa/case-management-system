@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
+use App\Notifications\PasswordChanged;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -104,5 +105,37 @@ class ForgotPasswordTest extends TestCase
         $this->assertDatabaseMissing('sessions', ['id' => 'elsewhere']);
         $this->assertNotSame($remember, $user->fresh()->remember_token);
         $this->assertTrue(Activity::forSubject($user)->where('event', 'password_reset')->exists());
+    }
+
+    public function test_a_reset_tells_the_person_by_email(): void
+    {
+        Notification::fake();
+        $user = User::factory()->create();
+
+        $this->post(route('password.update'), [
+            'token' => Password::createToken($user), 'email' => $user->email,
+            'password' => 'A-new-Passw0rd-here!', 'password_confirmation' => 'A-new-Passw0rd-here!',
+        ]);
+
+        Notification::assertSentTo($user, PasswordChanged::class, fn ($n, $channels) => $channels === ['mail']);
+    }
+
+    public function test_changing_it_from_my_account_signs_out_the_others_keeps_this_one_and_tells_them(): void
+    {
+        Notification::fake();
+        config(['session.driver' => 'database']);
+        $user = User::factory()->create(['password' => Hash::make('Old-Passw0rd-here!')]);
+        DB::table('sessions')->insert(['id' => 'elsewhere', 'user_id' => $user->getKey(), 'payload' => '', 'last_activity' => time()]);
+
+        $this->actingAs($user)
+            ->withSession(['_token' => 't'])
+            ->put(route('user-password.update'), [
+                'current_password' => 'Old-Passw0rd-here!',
+                'password' => 'A-new-Passw0rd-here!', 'password_confirmation' => 'A-new-Passw0rd-here!',
+            ])->assertSessionHasNoErrors();
+
+        $this->assertDatabaseMissing('sessions', ['id' => 'elsewhere']);
+        Notification::assertSentTo($user, PasswordChanged::class);
+        $this->assertTrue(Activity::forSubject($user)->where('event', 'password_changed')->exists());
     }
 }
