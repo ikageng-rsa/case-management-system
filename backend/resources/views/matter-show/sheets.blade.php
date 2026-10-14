@@ -10,14 +10,6 @@
         hint="Minutes for timed work; otherwise pages, kilometres or items."
         :error="$errors->narration->first('quantity')" />
 
-    <x-ui.select label="Court" name="court_id" before="Required for court appearances"
-        :error="$errors->narration->first('court_id')">
-        <option value="">—</option>
-        @foreach ($courts as $court)
-            <option value="{{ $court->getKey() }}" @selected((int) old('court_id') === $court->getKey())>{{ $court->label }}</option>
-        @endforeach
-    </x-ui.select>
-
     <x-ui.input label="When" name="occurred_at" type="datetime-local" :value="old('occurred_at')"
         hint="Leave empty for now." :error="$errors->narration->first('occurred_at')" />
 

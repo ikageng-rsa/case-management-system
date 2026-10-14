@@ -45,6 +45,12 @@ class Matter extends Model implements HasMedia
      *
      * @return array<string, string>
      */
+    /** The court is set through its relation, so it is not fillable, but moving a matter to another court is a change to the file. */
+    protected function auditAlso(): array
+    {
+        return ['court_id'];
+    }
+
     protected function casts(): array
     {
         return [

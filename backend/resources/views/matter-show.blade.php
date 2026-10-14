@@ -5,6 +5,7 @@
 @section('content')
     @php
         $attorney = $matter->responsibleAttorney();
+        $canEditDetails = auth()->user()->can('editDetails', $matter);
     @endphp
 
     <p class="text-meta mb-2">
@@ -16,7 +17,11 @@
     <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-3">
         <div>
             <h1 class="mb-1">{{ $matter->client->full_name }}</h1>
-            <p class="text-secondary mb-0">{{ $matter->title }}</p>
+            @if ($matter->title || $canEditDetails)
+                <x-matter.inline-field :matter="$matter" field="title" label="title" :value="$matter->title" :can-edit="$canEditDetails" placeholder="Title of the matter">
+                    <span class="text-secondary">{{ $matter->title ?: 'Add a title' }}</span>
+                </x-matter.inline-field>
+            @endif
         </div>
 
         {{-- Work on a file belongs to the people assigned to it, while it is open. --}}
@@ -122,8 +127,40 @@
             @endif
         </div>
         <div class="col-6 col-md-2">
-            <div class="text-meta text-uppercase mb-1">Opened</div>
-            <div>{{ $matter->instructed_at?->format('d M Y') ?? '—' }}</div>
+            <div class="text-meta text-uppercase mb-1">Instructed</div>
+            <x-matter.inline-field :matter="$matter" field="instructed_at" label="date instructed" type="date"
+                :value="$matter->instructed_at?->format('Y-m-d')" :can-edit="$canEditDetails">
+                <span>{{ $matter->instructed_at?->format('d M Y') ?? '—' }}</span>
+            </x-matter.inline-field>
+        </div>
+    </div>
+
+    {{-- The particulars that belong to the kind of matter: where it is before, and when the claim is lost. --}}
+    <div class="row mb-3">
+        @if ($matter->matterType->is_litigation)
+            <div class="col-6 col-md-4">
+                <div class="text-meta text-uppercase mb-1">Court</div>
+                <x-matter.inline-field :matter="$matter" field="court_id" label="court" :can-edit="$canEditDetails">
+                    <span>{{ $matter->court?->name ?? '—' }}</span>
+
+                    <x-slot:options>
+                        <option value="">No court</option>
+                        @foreach ($courts as $court)
+                            <option value="{{ $court->getKey() }}" @selected($matter->court_id === $court->getKey())>{{ $court->name }}</option>
+                        @endforeach
+                    </x-slot:options>
+                </x-matter.inline-field>
+            </div>
+        @endif
+
+        <div class="col-6 col-md-4">
+            <div class="text-meta text-uppercase mb-1">Prescribes</div>
+            <x-matter.inline-field :matter="$matter" field="prescribes_at" label="prescription date" type="date"
+                :value="$matter->prescribes_at?->format('Y-m-d')" :can-edit="$canEditDetails"
+                confirm="The date a claim is lost on feeds the warnings that it is about to be. The change is recorded against your name, with your reason."
+                prompt="Why is the date being changed?">
+                <span @class(['text-danger' => $matter->hasPrescribed()])>{{ $matter->prescribes_at?->format('d M Y') ?? '—' }}</span>
+            </x-matter.inline-field>
         </div>
     </div>
 

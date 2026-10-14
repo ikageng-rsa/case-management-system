@@ -64,9 +64,9 @@ class MatterWorkTest extends TestCase
         ]);
     }
 
-    public function test_an_appearance_needs_a_court(): void
+    public function test_an_appearance_needs_the_matter_to_have_a_court(): void
     {
-        $matter = Matter::factory()->create();
+        $matter = Matter::factory()->create(['court_id' => null]);
         $user = $this->assignedAttorney($matter);
         $appearance = ActivityType::factory()->appearance()->create();
 
@@ -76,14 +76,16 @@ class MatterWorkTest extends TestCase
                 'quantity' => 60,
                 'body' => 'Appeared in motion court.',
             ])
-            ->assertSessionHasErrorsIn('narration', 'court_id');
+            ->assertSessionHasErrorsIn('narration', 'activity_type_id');
+
+        $matter->update(['court_id' => null]);
+        $matter->court()->associate(Court::factory()->create())->save();
 
         $this->actingAs($user)
             ->post(route('matter.narrations.store', $matter), [
                 'activity_type_id' => $appearance->getKey(),
                 'quantity' => 60,
                 'body' => 'Appeared in motion court.',
-                'court_id' => Court::factory()->create()->getKey(),
             ])
             ->assertSessionHasNoErrors();
 

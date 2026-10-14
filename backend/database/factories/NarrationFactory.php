@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use App\Models\ActivityType;
-use App\Models\Court;
 use App\Models\Matter;
 use App\Models\Narration;
 use App\Models\User;
@@ -37,7 +36,6 @@ class NarrationFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'activity_type_id' => ActivityType::factory()->appearance(),
-            'court_id' => Court::factory(),
         ]);
     }
 

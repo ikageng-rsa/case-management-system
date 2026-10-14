@@ -27,11 +27,13 @@ use App\Services\Matters\OpenMatter;
 use App\Services\Matters\ReopenMatter;
 use App\Services\Matters\SaveMatterParty;
 use App\Services\Matters\UnassignUserFromMatter;
+use App\Services\Matters\UpdateMatterDetails;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
@@ -268,22 +270,15 @@ class MatterController extends Controller
         $narration->save();
     }
 
-    public function update(UpdateMatterRequest $request, Matter $matter): RedirectResponse
+    public function update(UpdateMatterRequest $request, Matter $matter, UpdateMatterDetails $updateDetails): RedirectResponse
     {
-        Gate::authorize('update', $matter);
+        Gate::authorize('editDetails', $matter);
 
         $data = $request->validated();
 
-        $matter->fill(collect($data)->only(['title', 'instructed_at'])->all());
+        $updateDetails->update($matter, Arr::except($data, 'reason'), $data['reason'] ?? null);
 
-        // Non litigious matters are not before a court.
-        if (array_key_exists('court_id', $data) && $matter->matterType->is_litigation) {
-            $matter->court()->associate($data['court_id'] === null ? null : Court::findOrFail($data['court_id']));
-        }
-
-        $matter->save();
-
-        return redirect()->route('matter.show', $matter);
+        return redirect()->route('matter.show', $matter)->with('status', 'Matter updated.');
     }
 
     public function close(Matter $matter, CloseMatter $closeMatter): RedirectResponse

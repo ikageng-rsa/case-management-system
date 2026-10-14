@@ -23,6 +23,7 @@ enum Role: string
             self::Attorney => [
                 Permission::CreateMatters,
                 Permission::EditMatters,
+                Permission::EditMatterDetails,
                 Permission::CloseMatters,
                 Permission::AssignMatters,
                 Permission::ViewClients,
@@ -45,6 +46,7 @@ enum Role: string
                 Permission::ViewAllMatters,
                 Permission::CreateMatters,
                 Permission::EditMatters,
+                Permission::EditMatterDetails,
                 Permission::ViewClients,
                 Permission::CreateClients,
                 Permission::EditClients,

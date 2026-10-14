@@ -9,14 +9,14 @@ use App\Models\Court;
 class RetireCourt
 {
     /**
-     * A court nothing refers to is removed outright. One that matters or
-     * narrations carry is retired: no longer offered, still read correctly.
+     * A court nothing refers to is removed outright. One that a matter
+     * carries is retired: no longer offered, still read correctly.
      *
      * @return 'deleted'|'retired'
      */
     public function remove(Court $court): string
     {
-        $inUse = $court->matters()->withTrashed()->exists() || $court->narrations()->exists();
+        $inUse = $court->matters()->withTrashed()->exists();
 
         if ($inUse) {
             $court->delete();

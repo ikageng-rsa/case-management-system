@@ -50,7 +50,6 @@
                             <th>Court</th>
                             <th>Tier</th>
                             <th class="text-center">Matters</th>
-                            <th class="text-center">Narrations</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -65,7 +64,6 @@
                                 </td>
                                 <td>{{ $label($court->tier->value) }}</td>
                                 <td class="text-center">{{ $court->matters_count }}</td>
-                                <td class="text-center">{{ $court->narrations_count }}</td>
                                 <td class="text-end text-nowrap">
                                     @if ($court->trashed())
                                         <form method="POST" action="{{ route('court.restore', $court) }}" class="d-inline">
@@ -77,7 +75,7 @@
                                             x-data x-on:click="$dispatch('sheet-open', 'edit-court-{{ $court->getKey() }}')">Edit</x-ui.button>
 
                                         @php
-$used = $court->matters_count + $court->narrations_count > 0;
+$used = $court->matters_count > 0;
 @endphp
                                         <form method="POST" action="{{ route('court.destroy', $court) }}" class="d-inline"
                                             data-confirm="{{ $used ? 'Retire '.$court->label.'? It is no longer offered on new forms, and the files that carry it still read correctly.' : 'Delete '.$court->label.'? Nothing uses it. This cannot be undone.' }}"
