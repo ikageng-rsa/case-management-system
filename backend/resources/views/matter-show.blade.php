@@ -41,9 +41,63 @@
             <div class="text-meta text-uppercase mb-1">Type</div>
             <div>{{ $matter->matterType->name }}</div>
         </div>
-        <div class="col-6 col-md-2">
+        @php
+            $canClose = $matter->isOpen() && auth()->user()->can('close', $matter);
+            $canReopen = $matter->isClosed() && auth()->user()->can('reopen', $matter);
+        @endphp
+
+        {{-- The value is the control: clicking it turns it into a field, and choosing a stage asks first. --}}
+        <div class="col-6 col-md-2" x-data="{ editing: false }" x-on:click.outside="editing = false" x-on:keydown.escape.window="editing = false">
             <div class="text-meta text-uppercase mb-1">Status</div>
-            <div @class(['fw-bold', 'text-primary' => $matter->isOpen(), 'text-success' => $matter->isClosed()])>{{ $matter->isOpen() ? 'Open' : 'Closed' }}</div>
+
+            @if ($canClose || $canReopen)
+                <button type="button" x-show="! editing" class="btn btn-link p-0 text-decoration-none d-inline-flex align-items-center gap-1 fw-bold"
+                    x-on:click="editing = true; $nextTick(() => $refs.stage.focus())" title="Change the status">
+                    <span @class(['text-primary' => $matter->isOpen(), 'text-success' => $matter->isClosed()])>{{ $matter->isOpen() ? 'Open' : 'Closed' }}</span>
+                    <x-ui.icon name="pencil" class="text-secondary" />
+                </button>
+
+                <select x-ref="stage" x-show="editing" x-cloak class="form-select form-select-sm"
+                    x-on:change="
+                        const chosen = $event.target.value;
+                        editing = false;
+                        $event.target.value = '{{ $matter->isOpen() ? 'open' : 'closed' }}';
+                        if (chosen === 'closed') $refs.closeForm.requestSubmit();
+                        if (chosen === 'open') $refs.reopenForm.requestSubmit();
+                    ">
+                    <option value="{{ $matter->isOpen() ? 'open' : 'closed' }}" selected>{{ $matter->isOpen() ? 'Open' : 'Closed' }}</option>
+                    @if ($canClose)
+                        <option value="closed">Closed</option>
+                    @endif
+                    @if ($canReopen)
+                        <option value="open">Open</option>
+                    @endif
+                </select>
+
+                @if ($canClose)
+                    <form x-ref="closeForm" method="POST" action="{{ route('matter.close', $matter) }}" class="d-none"
+                        data-confirm="Close matter {{ $matter->reference }}? Nothing more can be added to it: no narrations, diary entries, documents or people. This cannot be undone here; only someone allowed to reopen matters can, and that is recorded."
+                        data-confirm-title="Close this matter?" data-confirm-action="Close matter" data-confirm-tone="danger" data-confirm-icon="lock">
+                        @csrf
+                    </form>
+                @endif
+
+                @if ($canReopen)
+                    <form x-ref="reopenForm" method="POST" action="{{ route('matter.reopen', $matter) }}" class="d-none"
+                        data-confirm="Reopen matter {{ $matter->reference }}? Work can be added to it again, and the reopening is recorded against your name."
+                        data-confirm-title="Reopen this matter?" data-confirm-action="Reopen matter" data-confirm-tone="primary" data-confirm-icon="lock-open"
+                        data-confirm-prompt-label="Why is it being reopened?" data-confirm-prompt-field="reason">
+                        @csrf
+                        <input type="hidden" name="reason" value="">
+                    </form>
+                @endif
+            @else
+                <div @class(['fw-bold', 'text-primary' => $matter->isOpen(), 'text-success' => $matter->isClosed()])>{{ $matter->isOpen() ? 'Open' : 'Closed' }}</div>
+            @endif
+
+            @if ($matter->isClosed())
+                <div class="text-meta mt-1">since {{ $matter->closed_at->format('d M Y') }}</div>
+            @endif
         </div>
         <div class="col-6 col-md-2">
             <div class="text-meta text-uppercase mb-1">Attorney</div>

@@ -8,6 +8,7 @@ use App\Enums\Document\DocumentKind;
 use App\Enums\Matter\Assignment;
 use App\Enums\Matter\PartyRole;
 use App\Http\Requests\Matter\AssignUserRequest;
+use App\Http\Requests\Matter\ReopenMatterRequest;
 use App\Http\Requests\Matter\StoreMatterRequest;
 use App\Http\Requests\Matter\UpdateMatterRequest;
 use App\Models\ActivityType;
@@ -22,6 +23,7 @@ use App\Services\Matters\CannotAssignToClosedMatter;
 use App\Services\Matters\CloseMatter;
 use App\Services\Matters\MatterReference;
 use App\Services\Matters\OpenMatter;
+use App\Services\Matters\ReopenMatter;
 use App\Services\Matters\SaveMatterParty;
 use App\Services\Matters\UnassignUserFromMatter;
 use Illuminate\Contracts\View\View;
@@ -288,7 +290,16 @@ class MatterController extends Controller
 
         $closeMatter->close($matter);
 
-        return redirect()->route('matter.show', $matter);
+        return redirect()->route('matter.show', $matter)->with('status', 'Matter closed.');
+    }
+
+    public function reopen(ReopenMatterRequest $request, Matter $matter, ReopenMatter $reopenMatter): RedirectResponse
+    {
+        Gate::authorize('reopen', $matter);
+
+        $reopenMatter->reopen($matter, $request->validated('reason'));
+
+        return redirect()->route('matter.show', $matter)->with('status', 'Matter reopened.');
     }
 
     public function assign(AssignUserRequest $request, Matter $matter, AssignUserToMatter $assignUser): RedirectResponse

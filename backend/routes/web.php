@@ -61,6 +61,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/matters/search', [MatterController::class, 'search'])->name('matter.search');
     Route::get('/matters/reference-preview', [MatterController::class, 'previewReference'])->name('matter.reference-preview');
     Route::post('/matters/{matter}/close', [MatterController::class, 'close'])->name('matter.close');
+    Route::post('/matters/{matter}/reopen', [MatterController::class, 'reopen'])->name('matter.reopen');
     Route::post('/matters/{matter}/assign', [MatterController::class, 'assign'])->name('matter.assign');
     Route::delete('/matters/{matter}/assign', [MatterController::class, 'unassign'])->name('matter.unassign');
     Route::patch('/matters/{matter}', [MatterController::class, 'update'])->name('matter.update');

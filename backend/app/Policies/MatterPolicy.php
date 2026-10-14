@@ -36,6 +36,12 @@ class MatterPolicy
         return $user->can(Permission::CloseMatters->value);
     }
 
+    /** Undoing a closure is a decision of its own, held by fewer people than closing. */
+    public function reopen(User $user, Matter $matter): bool
+    {
+        return $user->can(Permission::ReopenMatters->value);
+    }
+
     public function assign(User $user, Matter $matter): bool
     {
         return $user->can(Permission::AssignMatters->value);

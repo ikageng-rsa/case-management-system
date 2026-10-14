@@ -9,7 +9,8 @@
         $tone = fn (?string $event) => match ($event) {
             'created', 'uploaded', 'role_granted' => 'text-success',
             'updated', 'value_changed' => 'text-info',
-            'deleted', 'role_revoked' => 'text-danger',
+            'deleted', 'role_revoked', 'closed' => 'text-danger',
+            'reopened' => 'text-warning',
             'exported', 'downloaded' => 'text-primary',
             'permissions_changed' => 'text-warning',
             'revealed' => 'text-warning',
