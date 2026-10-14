@@ -51,7 +51,10 @@
                             @endif
                         </td>
                         <td class="text-end">
-                            @if ($canWork && $entry->isPending())
+                            @if ($canWork && $entry->isPending() && ! $entry->isDue())
+                                <x-ui.button variant="ghost-secondary" size="sm" disabled
+                                    title="Not due until {{ $entry->due_at->format('d M Y H:i') }}">Mark done</x-ui.button>
+                            @elseif ($canWork && $entry->isPending())
                                 <form method="POST" action="{{ route('matter.diary.complete', [$matter, $entry]) }}"
                                     data-confirm="Mark this diary entry as done? It cannot be marked pending again."
                                     data-confirm-title="Complete diary entry" data-confirm-action="Mark done"

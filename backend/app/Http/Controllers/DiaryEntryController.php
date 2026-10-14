@@ -9,6 +9,7 @@ use App\Models\DiaryEntry;
 use App\Models\Matter;
 use App\Models\User;
 use App\Notifications\DiaryEntryAssigned;
+use App\Services\Diary\CompleteDiaryEntry;
 use App\Services\Notifications\NotifyUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
@@ -38,15 +39,20 @@ class DiaryEntryController extends Controller
             ->with('status', 'Diary entry added.');
     }
 
-    public function complete(Matter $matter, DiaryEntry $diaryEntry): RedirectResponse
+    public function complete(Matter $matter, DiaryEntry $diaryEntry, CompleteDiaryEntry $completeEntry): RedirectResponse
     {
         Gate::authorize('work', $matter);
 
         abort_unless($diaryEntry->matter_id === $matter->getKey(), 404);
 
-        if ($diaryEntry->isPending()) {
-            $diaryEntry->markComplete(request()->user());
+        // An entry is a reminder of a time; until that time it is not the person's to tick off.
+        if ($diaryEntry->isPending() && ! $diaryEntry->isDue()) {
+            return redirect()
+                ->route('matter.show', [$matter, 'tab' => 'diary'])
+                ->withErrors(['diary' => 'This entry is not due until '.$diaryEntry->due_at->format('d M Y H:i').', so it cannot be marked done yet.'], 'diary_entries');
         }
+
+        $completeEntry->complete($diaryEntry, request()->user());
 
         return redirect()
             ->route('matter.show', [$matter, 'tab' => 'diary'])

@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Concerns\RecordsActivity;
+use App\Observers\DiaryEntryObserver;
 use Database\Factories\DiaryEntryFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use InvalidArgumentException;
 
 #[Fillable(['body', 'due_at'])]
+#[ObservedBy([DiaryEntryObserver::class])]
 class DiaryEntry extends Model
 {
     /** @use HasFactory<DiaryEntryFactory> */
@@ -31,6 +34,7 @@ class DiaryEntry extends Model
         return [
             'due_at' => 'datetime',
             'completed_at' => 'datetime',
+            'overdue_notified_at' => 'datetime',
         ];
     }
 
@@ -58,6 +62,12 @@ class DiaryEntry extends Model
     public function isPending(): bool
     {
         return $this->completed_at === null;
+    }
+
+    /** An entry is a reminder of a time, so it cannot be done before that time has come. */
+    public function isDue(): bool
+    {
+        return $this->due_at->isPast();
     }
 
     public function isComplete(): bool
@@ -101,6 +111,12 @@ class DiaryEntry extends Model
         }
 
         $this->narration()->associate($narration);
+    }
+
+    /** Past due, still to do, and nobody has yet been told so. */
+    public function scopeAwaitingOverdueNotice(Builder $query): void
+    {
+        $query->overdue()->whereNull('overdue_notified_at');
     }
 
     public function scopePending(Builder $query): void

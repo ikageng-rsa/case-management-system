@@ -124,6 +124,14 @@ class MatterWorkTest extends TestCase
         $this->assertSame($user->getKey(), $entry->assigned_to);
         $this->assertTrue($entry->isPending());
 
+        // Not due for a week yet, so it is not the person's to tick off.
+        $this->actingAs($user)
+            ->post(route('matter.diary.complete', [$matter, $entry]))
+            ->assertSessionHasErrorsIn('diary_entries', 'diary');
+        $this->assertTrue($entry->fresh()->isPending());
+
+        $entry->forceFill(['due_at' => now()->subHour()])->save();
+
         $this->actingAs($user)
             ->post(route('matter.diary.complete', [$matter, $entry]))
             ->assertRedirect();
