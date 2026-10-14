@@ -57,6 +57,8 @@
                     <x-ui.button type="submit" class="w-100" size="lg">Sign in</x-ui.button>
                 </form>
 
+                <p class="mt-3 mb-0"><a href="{{ route('password.request') }}" class="text-meta" style="color: var(--cms-on-ink-caption);">Forgot your password?</a></p>
+
                 <p class="text-meta mt-3" style="color: var(--cms-on-ink-caption);">Sessions expire after {{ $idle }} idle. All access is logged.</p>
             </div>
         </div>
