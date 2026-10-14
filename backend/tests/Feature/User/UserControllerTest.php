@@ -6,12 +6,12 @@ namespace Tests\Feature\User;
 
 use App\Enums\Auth\Permission;
 use App\Enums\Auth\Role as RoleEnum;
+use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Spatie\Activitylog\Models\Activity;
-use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class UserControllerTest extends TestCase

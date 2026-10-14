@@ -11,6 +11,7 @@
             'updated', 'value_changed' => 'text-info',
             'deleted', 'role_revoked' => 'text-danger',
             'exported', 'downloaded' => 'text-primary',
+            'permissions_changed' => 'text-warning',
             'revealed' => 'text-warning',
             default => 'text-secondary',
         };

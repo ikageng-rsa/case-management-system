@@ -64,7 +64,7 @@
 </x-ui.sheet>
 
 <x-ui.sheet name="upload-document" title="Upload a document" lede="File it on this matter." bag="document" action="{{ route('matter.documents.store', $matter) }}" enctype="multipart/form-data">
-    <x-ui.input label="File" name="file" type="file" :error="$errors->document->first('file')" hint="Up to 50 MB." />
+    <x-ui.input label="File" name="file" type="file" accept="{{ collect(array_keys(config('documents.allowed')))->map(fn ($extension) => '.'.$extension)->implode(',') }}" :error="$errors->document->first('file')" hint="PDF, Office, image, email or audio files, up to 50 MB." />
 
     <x-ui.select label="Kind" name="kind" :error="$errors->document->first('kind')">
         @foreach (App\Enums\Document\DocumentKind::cases() as $option)

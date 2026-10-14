@@ -125,7 +125,7 @@
             <x-ui.matter-picker label="Matter" name="matter_id" scope="fileable" :selected="$uploadMatter"
                 :error="$errors->document->first('matter_id')" />
 
-            <x-ui.input label="File" name="file" id="upload_file" type="file" :error="$errors->document->first('file')" hint="Up to 50 MB." />
+            <x-ui.input label="File" name="file" id="upload_file" type="file" accept="{{ collect(array_keys(config('documents.allowed')))->map(fn ($extension) => '.'.$extension)->implode(',') }}" :error="$errors->document->first('file')" hint="PDF, Office, image, email or audio files, up to 50 MB." />
 
             <x-ui.select label="Kind" name="kind" id="upload_kind" :error="$errors->document->first('kind')">
                 @foreach ($kinds as $option)

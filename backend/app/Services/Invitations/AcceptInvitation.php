@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services\Invitations;
 
+use App\Models\Role;
 use App\Models\User;
 use App\Models\UserInvitation;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Models\Role;
 
 class AcceptInvitation
 {

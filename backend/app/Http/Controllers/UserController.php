@@ -8,6 +8,7 @@ use App\Enums\Auth\Permission;
 use App\Http\Requests\Role\SaveRoleRequest;
 use App\Http\Requests\User\UpdateUserDetailsRequest;
 use App\Http\Requests\User\UpdateUserRolesRequest;
+use App\Models\Role;
 use App\Models\User;
 use App\Models\UserInvitation;
 use App\Services\Roles\CannotDeleteRoleInUse;
@@ -21,7 +22,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {

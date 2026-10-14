@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Roles;
 
+use App\Models\Role;
 use RuntimeException;
-use Spatie\Permission\Models\Role;
 
 class CannotDeleteRoleInUse extends RuntimeException
 {

@@ -34,7 +34,12 @@ class MatterDocumentController extends Controller
 
         $media->recordAccess('downloaded');
 
-        return $media->toResponse(request());
+        $response = $media->toResponse(request());
+
+        // Whatever the file is, the browser is to treat it as a download and nothing more.
+        $response->headers->set('X-Content-Type-Options', 'nosniff');
+
+        return $response;
     }
 
     public function destroy(Matter $matter, int $document): RedirectResponse
