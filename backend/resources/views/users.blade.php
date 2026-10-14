@@ -39,6 +39,21 @@
         </div>
     </div>
 
+    {{-- What each icon in the table does, for those who may use it. --}}
+    @if ($canEdit || $canAssign || $canDeactivate)
+        <div class="d-flex flex-wrap justify-content-end gap-3 text-meta text-secondary mb-2" aria-label="Legend">
+            @if ($canEdit)
+                <span><x-ui.icon name="user-edit" class="me-1" />Details</span>
+            @endif
+            @if ($canAssign)
+                <span><x-ui.icon name="shield" class="me-1" />Roles</span>
+            @endif
+            @if ($canDeactivate)
+                <span><x-ui.icon name="user-off" class="me-1" />Deactivate</span>
+            @endif
+        </div>
+    @endif
+
     <div class="card mb-4">
         <div class="table-responsive">
             <table class="table table-vcenter card-table">
@@ -68,18 +83,18 @@
                             <td><x-ui.stage-badge tone="success">Active</x-ui.stage-badge></td>
                             <td class="text-end text-nowrap">
                                 @if ($canEdit)
-                                    <x-ui.button variant="ghost-secondary" size="sm"
-                                        x-data x-on:click="$dispatch('sheet-open', 'edit-user-{{ $user->getKey() }}')">Details</x-ui.button>
+                                    <x-ui.button variant="ghost-secondary" size="sm" icon="user-edit" title="Details" aria-label="Details for {{ $user->name }}"
+                                        x-data x-on:click="$dispatch('sheet-open', 'edit-user-{{ $user->getKey() }}')" />
                                 @endif
 
                                 @if ($canAssign)
-                                    <x-ui.button variant="ghost-secondary" size="sm"
-                                        x-data x-on:click="$dispatch('sheet-open', 'user-roles-{{ $user->getKey() }}')">Roles</x-ui.button>
+                                    <x-ui.button variant="ghost-secondary" size="sm" icon="shield" title="Roles" aria-label="Roles for {{ $user->name }}"
+                                        x-data x-on:click="$dispatch('sheet-open', 'user-roles-{{ $user->getKey() }}')" />
                                 @endif
 
                                 @if ($canDeactivate && ! $user->is(auth()->user()))
-                                    <x-ui.button variant="ghost-secondary" size="sm"
-                                        x-data x-on:click="$dispatch('sheet-open', 'deactivate-user-{{ $user->getKey() }}')">Deactivate</x-ui.button>
+                                    <x-ui.button variant="ghost-secondary" size="sm" icon="user-off" title="Deactivate" aria-label="Deactivate {{ $user->name }}"
+                                        x-data x-on:click="$dispatch('sheet-open', 'deactivate-user-{{ $user->getKey() }}')" />
                                 @endif
                             </td>
                         </tr>
