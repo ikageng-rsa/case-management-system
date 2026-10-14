@@ -234,7 +234,10 @@ class DemoDataSeeder extends Seeder
 
     protected function seedNarration(Matter $matter, Collection $activityTypes, User $author, int $index): void
     {
-        $type = $activityTypes->random();
+        // Work before a court needs the matter to have one, as it does in the application.
+        $type = $activityTypes
+            ->when($matter->court_id === null, fn (Collection $types) => $types->reject->requires_court)
+            ->random();
 
         Narration::factory()
             ->for($matter)
@@ -244,7 +247,6 @@ class DemoDataSeeder extends Seeder
                 'body' => $this->narrationBody($type->code),
                 'quantity' => $this->quantityFor($type->measure),
                 'occurred_at' => now()->subDays($index * fake()->numberBetween(3, 14)),
-                'court_id' => $type->requires_court ? $matter->court_id : null,
             ]);
 
         /*
