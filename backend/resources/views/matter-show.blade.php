@@ -141,12 +141,12 @@
             <div class="col-6 col-md-4">
                 <div class="text-meta text-uppercase mb-1">Court</div>
                 <x-matter.inline-field :matter="$matter" field="court_id" label="court" :can-edit="$canEditDetails">
-                    <span>{{ $matter->court?->name ?? '—' }}</span>
+                    <span>{{ $matter->court?->label ?? '—' }}</span>
 
                     <x-slot:options>
                         <option value="">No court</option>
                         @foreach ($courts as $court)
-                            <option value="{{ $court->getKey() }}" @selected($matter->court_id === $court->getKey())>{{ $court->name }}</option>
+                            <option value="{{ $court->getKey() }}" @selected($matter->court_id === $court->getKey())>{{ $court->label }}</option>
                         @endforeach
                     </x-slot:options>
                 </x-matter.inline-field>
