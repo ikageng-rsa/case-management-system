@@ -82,7 +82,7 @@
     <x-ui.sheet name="new-person" title="Add a contact person" :lede="'At '.$client->full_name" bag="person_new"
         :action="route('client.persons.store', $client)">
         <x-ui.input label="Name" name="name" id="new_person_name" :value="old('name')" :error="$errors->person_new->first('name')" />
-        <x-ui.input label="Role" name="role" id="new_person_role" :value="old('role')" before="Optional" hint="e.g. Managing director" :error="$errors->person_new->first('role')" />
+        <x-ui.input label="Role / Relationship" name="role" id="new_person_role" :value="old('role')" before="Optional" hint="e.g. Managing director" :error="$errors->person_new->first('role')" />
         <x-ui.input label="Mobile" name="mobile" id="new_person_mobile" type="tel" :value="old('mobile')" :error="$errors->person_new->first('mobile')" />
         <x-ui.input label="Email" name="email" id="new_person_email" type="email" :value="old('email')" :error="$errors->person_new->first('email')"
             hint="A mobile number or an email address is needed." />
@@ -106,7 +106,7 @@
         <x-ui.sheet name="edit-person-{{ $person->getKey() }}" title="Edit contact person" :lede="$person->name" :bag="$bag" method="PATCH"
             :action="route('client.persons.update', [$client, $person])">
             <x-ui.input label="Name" name="name" id="edit_person_name_{{ $person->getKey() }}" :value="$personInput($bag, 'name', $person->name)" :error="$errors->getBag($bag)->first('name')" />
-            <x-ui.input label="Role" name="role" id="edit_person_role_{{ $person->getKey() }}" :value="$personInput($bag, 'role', $person->role)" before="Optional" :error="$errors->getBag($bag)->first('role')" />
+            <x-ui.input label="Role / Relationship" name="role" id="edit_person_role_{{ $person->getKey() }}" :value="$personInput($bag, 'role', $person->role)" before="Optional" :error="$errors->getBag($bag)->first('role')" />
             <x-ui.input label="Mobile" name="mobile" id="edit_person_mobile_{{ $person->getKey() }}" type="tel" :value="$personInput($bag, 'mobile', '')"
                 :placeholder="$maskedMobile($person)" :hint="$person->mobile ? 'Leave empty to keep the current number.' : null" :error="$errors->getBag($bag)->first('mobile')" />
             <x-ui.input label="Email" name="email" id="edit_person_email_{{ $person->getKey() }}" type="email" :value="$personInput($bag, 'email', '')"

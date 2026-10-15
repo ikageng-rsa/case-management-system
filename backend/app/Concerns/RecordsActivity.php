@@ -17,7 +17,7 @@ trait RecordsActivity
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logFillable()
+            ->logOnly(array_merge($this->getFillable(), $this->auditAlso()))
             ->logExcept($this->auditExcept())
             ->logOnlyDirty()
             ->dontLogEmptyChanges()
@@ -91,6 +91,17 @@ trait RecordsActivity
     protected function auditCauser(): string
     {
         return Auth::user()?->name ?? 'System';
+    }
+
+    /**
+     * Attributes to log in addition to the fillable ones: a foreign key that is set
+     * through its relation, and so is not mass assignable, is still a change to the record.
+     *
+     * @return array<int, string>
+     */
+    protected function auditAlso(): array
+    {
+        return [];
     }
 
     /**

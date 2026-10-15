@@ -31,9 +31,26 @@ class MatterPolicy
         return $user->can(Permission::EditMatters->value);
     }
 
+    /**
+     * The matter's own particulars: its title, dates and court. Kept apart from
+     * its parties, only while it is open, and only for those who may see the file.
+     */
+    public function editDetails(User $user, Matter $matter): bool
+    {
+        return $matter->isOpen()
+            && $user->can(Permission::EditMatterDetails->value)
+            && $this->view($user, $matter);
+    }
+
     public function close(User $user, Matter $matter): bool
     {
         return $user->can(Permission::CloseMatters->value);
+    }
+
+    /** Undoing a closure is a decision of its own, held by fewer people than closing. */
+    public function reopen(User $user, Matter $matter): bool
+    {
+        return $user->can(Permission::ReopenMatters->value);
     }
 
     public function assign(User $user, Matter $matter): bool

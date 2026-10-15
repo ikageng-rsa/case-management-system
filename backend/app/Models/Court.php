@@ -43,11 +43,6 @@ class Court extends Model
         return $this->hasMany(Matter::class);
     }
 
-    public function narrations(): HasMany
-    {
-        return $this->hasMany(Narration::class);
-    }
-
     /** How the court is cited on a pleading, e.g. "High Court, Johannesburg". */
     protected function label(): Attribute
     {

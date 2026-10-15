@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Services\Narrations;
 
 use App\Models\ActivityType;
-use App\Models\Court;
 use App\Models\Matter;
 use App\Models\User;
 use App\Services\Narrations\RecordNarration;
@@ -47,14 +46,14 @@ class RecordNarrationTest extends TestCase
         $this->assertSame(8, $narration->billableUnits());
     }
 
-    public function test_it_requires_a_court_for_a_court_bound_activity(): void
+    public function test_it_requires_the_matter_to_have_a_court_for_a_court_bound_activity(): void
     {
         $type = ActivityType::factory()->appearance()->create();
 
         $this->expectException(InvalidArgumentException::class);
 
         (new RecordNarration)->record(
-            Matter::factory()->create(),
+            Matter::factory()->create(['court_id' => null]),
             $type,
             User::factory()->create(),
             'Appeared for the applicant.',
@@ -62,37 +61,29 @@ class RecordNarrationTest extends TestCase
         );
     }
 
-    public function test_it_records_the_court_for_an_appearance(): void
+    public function test_an_appearance_is_recorded_against_the_matters_own_court(): void
     {
         $type = ActivityType::factory()->appearance()->create();
-        $court = Court::factory()->create();
+        $matter = Matter::factory()->create();
 
-        $narration = (new RecordNarration)->record(
-            Matter::factory()->create(),
-            $type,
-            User::factory()->create(),
-            'Appeared for the applicant.',
-            60,
-            $court,
-        );
+        $narration = (new RecordNarration)->record($matter, $type, User::factory()->create(), 'Appeared for the applicant.', 60);
 
-        $this->assertTrue($narration->court->is($court));
+        $this->assertTrue($narration->matter->court->is($matter->court));
     }
 
-    public function test_it_ignores_a_court_for_a_non_court_activity(): void
+    public function test_other_work_does_not_need_a_court(): void
     {
         $type = ActivityType::factory()->create(['requires_court' => false]);
 
         $narration = (new RecordNarration)->record(
-            Matter::factory()->create(),
+            Matter::factory()->create(['court_id' => null]),
             $type,
             User::factory()->create(),
             'Reviewed correspondence.',
             15,
-            Court::factory()->create(),
         );
 
-        $this->assertNull($narration->court_id);
+        $this->assertNotNull($narration->getKey());
     }
 
     public function test_it_defaults_the_occurrence_time_to_now(): void

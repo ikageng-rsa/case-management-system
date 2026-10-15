@@ -20,7 +20,6 @@ return new class extends Migration
             $table->foreignUuid('author_id')->constrained('users');
             $table->text('body');
             $table->decimal('quantity');
-            $table->foreignId('court_id')->nullable()->constrained('courts');
 
             $table->dateTime('occurred_at')->nullable();
             $table->timestamps();

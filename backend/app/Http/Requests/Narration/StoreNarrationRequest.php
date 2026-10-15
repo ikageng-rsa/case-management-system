@@ -8,6 +8,7 @@ use App\Models\ActivityType;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class StoreNarrationRequest extends FormRequest
 {
@@ -33,19 +34,25 @@ class StoreNarrationRequest extends FormRequest
             'body' => ['required', 'string', 'max:5000'],
             'quantity' => ['required', 'numeric', 'gt:0', 'max:99999'],
             'occurred_at' => ['nullable', 'date', 'before_or_equal:now'],
-            // An appearance is before a court, and the court affects the tariff.
-            'court_id' => [
-                $this->courtIsRequired() ? 'required' : 'nullable',
-                'integer',
-                Rule::exists('courts', 'id')->withoutTrashed(),
-            ],
         ];
     }
 
-    protected function courtIsRequired(): bool
+    /**
+     * An appearance is before a court, and the court is the matter's own: it is set
+     * once on the matter, not repeated on every narration.
+     *
+     * @return array<int, callable>
+     */
+    public function after(): array
     {
-        return (bool) ActivityType::query()
-            ->whereKey($this->input('activity_type_id'))
-            ->value('requires_court');
+        return [function (Validator $validator): void {
+            $needsCourt = (bool) ActivityType::query()
+                ->whereKey($this->input('activity_type_id'))
+                ->value('requires_court');
+
+            if ($needsCourt && $this->route('matter')->court_id === null) {
+                $validator->errors()->add('activity_type_id', 'This work is before a court and the matter has none yet. Set the court on the matter first.');
+            }
+        }];
     }
 }

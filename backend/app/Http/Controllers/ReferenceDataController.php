@@ -40,7 +40,7 @@ class ReferenceDataController extends Controller
             'tabs' => $tabs,
             'tab' => $tab,
             'courts' => $tab === 'courts'
-                ? Court::withTrashed()->withCount(['matters' => fn ($q) => $q->withTrashed(), 'narrations'])->orderBy('name')->get()
+                ? Court::withTrashed()->withCount(['matters' => fn ($q) => $q->withTrashed()])->orderBy('name')->get()
                 : collect(),
             'matterTypes' => $tab === 'matter-types'
                 ? MatterType::withTrashed()->withCount(['matters' => fn ($q) => $q->withTrashed()])->orderBy('name')->get()

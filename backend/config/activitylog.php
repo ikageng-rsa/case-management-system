@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Models\Activity;
 use Spatie\Activitylog\Actions\CleanActivityLogAction;
 use Spatie\Activitylog\Actions\LogActivityAction;
-use Spatie\Activitylog\Models\Activity;
 
 return [
 
@@ -35,7 +35,7 @@ return [
      * If set to true, the subject relationship on activities
      * will include soft deleted models.
      */
-    'include_soft_deleted_subjects' => false,
+    'include_soft_deleted_subjects' => true,
 
     /*
      * This model will be used to log activity.

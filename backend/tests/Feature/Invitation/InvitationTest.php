@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Invitation;
 
 use App\Enums\Auth\Role as RoleEnum;
+use App\Models\Role;
 use App\Models\User;
 use App\Models\UserInvitation;
 use App\Notifications\UserInvitationNotification;
@@ -14,7 +15,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Spatie\Activitylog\Models\Activity;
-use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class InvitationTest extends TestCase

@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
@@ -29,6 +30,15 @@ class User extends Authenticatable
     use HasUuids;
     use Notifiable;
     use RecordsActivity;
+    use SoftDeletes;
+
+    /**
+     * Deactivating and reactivating are recorded by the services that do them, with
+     * the reason, so the model's own deleted and restored entries would only repeat them.
+     *
+     * @var array<int, string>
+     */
+    protected static array $recordEvents = ['created', 'updated'];
 
     /**
      * Get the attributes that should be cast.

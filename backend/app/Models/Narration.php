@@ -54,13 +54,7 @@ class Narration extends Model
 
     public function author(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'author_id');
-    }
-
-    /** Set only for appearances, where the court attended affects the tariff. */
-    public function court(): BelongsTo
-    {
-        return $this->belongsTo(Court::class)->withTrashed();
+        return $this->belongsTo(User::class, 'author_id')->withTrashed();
     }
 
     public function billableUnits(): int

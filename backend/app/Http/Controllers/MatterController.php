@@ -8,6 +8,7 @@ use App\Enums\Document\DocumentKind;
 use App\Enums\Matter\Assignment;
 use App\Enums\Matter\PartyRole;
 use App\Http\Requests\Matter\AssignUserRequest;
+use App\Http\Requests\Matter\ReopenMatterRequest;
 use App\Http\Requests\Matter\StoreMatterRequest;
 use App\Http\Requests\Matter\UpdateMatterRequest;
 use App\Models\ActivityType;
@@ -17,18 +18,22 @@ use App\Models\Matter;
 use App\Models\MatterType;
 use App\Models\Narration;
 use App\Models\User;
+use App\Services\Diary\ResolveReminderLead;
 use App\Services\Matters\AssignUserToMatter;
 use App\Services\Matters\CannotAssignToClosedMatter;
 use App\Services\Matters\CloseMatter;
 use App\Services\Matters\MatterReference;
 use App\Services\Matters\OpenMatter;
+use App\Services\Matters\ReopenMatter;
 use App\Services\Matters\SaveMatterParty;
 use App\Services\Matters\UnassignUserFromMatter;
+use App\Services\Matters\UpdateMatterDetails;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
@@ -139,6 +144,7 @@ class MatterController extends Controller
             'tabs' => $tabs,
             'nextDate' => $matter->diaryEntries()->pending()->orderBy('due_at')->first()?->due_at,
             'canWork' => $user->can('work', $matter),
+            'defaultReminder' => app(ResolveReminderLead::class)->for($user),
             'activityTypes' => ActivityType::query()->orderBy('name')->get(),
             'courts' => Court::query()->orderBy('name')->get(),
             'assignable' => $user->can('assign', $matter) ? User::query()->orderBy('name')->get() : collect(),
@@ -264,22 +270,15 @@ class MatterController extends Controller
         $narration->save();
     }
 
-    public function update(UpdateMatterRequest $request, Matter $matter): RedirectResponse
+    public function update(UpdateMatterRequest $request, Matter $matter, UpdateMatterDetails $updateDetails): RedirectResponse
     {
-        Gate::authorize('update', $matter);
+        Gate::authorize('editDetails', $matter);
 
         $data = $request->validated();
 
-        $matter->fill(collect($data)->only(['title', 'instructed_at'])->all());
+        $updateDetails->update($matter, Arr::except($data, 'reason'), $data['reason'] ?? null);
 
-        // Non litigious matters are not before a court.
-        if (array_key_exists('court_id', $data) && $matter->matterType->is_litigation) {
-            $matter->court()->associate($data['court_id'] === null ? null : Court::findOrFail($data['court_id']));
-        }
-
-        $matter->save();
-
-        return redirect()->route('matter.show', $matter);
+        return redirect()->route('matter.show', $matter)->with('status', 'Matter updated.');
     }
 
     public function close(Matter $matter, CloseMatter $closeMatter): RedirectResponse
@@ -288,7 +287,16 @@ class MatterController extends Controller
 
         $closeMatter->close($matter);
 
-        return redirect()->route('matter.show', $matter);
+        return redirect()->route('matter.show', $matter)->with('status', 'Matter closed.');
+    }
+
+    public function reopen(ReopenMatterRequest $request, Matter $matter, ReopenMatter $reopenMatter): RedirectResponse
+    {
+        Gate::authorize('reopen', $matter);
+
+        $reopenMatter->reopen($matter, $request->validated('reason'));
+
+        return redirect()->route('matter.show', $matter)->with('status', 'Matter reopened.');
     }
 
     public function assign(AssignUserRequest $request, Matter $matter, AssignUserToMatter $assignUser): RedirectResponse

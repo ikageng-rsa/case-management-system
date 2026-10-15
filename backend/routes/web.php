@@ -61,6 +61,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/matters/search', [MatterController::class, 'search'])->name('matter.search');
     Route::get('/matters/reference-preview', [MatterController::class, 'previewReference'])->name('matter.reference-preview');
     Route::post('/matters/{matter}/close', [MatterController::class, 'close'])->name('matter.close');
+    Route::post('/matters/{matter}/reopen', [MatterController::class, 'reopen'])->name('matter.reopen');
     Route::post('/matters/{matter}/assign', [MatterController::class, 'assign'])->name('matter.assign');
     Route::delete('/matters/{matter}/assign', [MatterController::class, 'unassign'])->name('matter.unassign');
     Route::patch('/matters/{matter}', [MatterController::class, 'update'])->name('matter.update');
@@ -74,6 +75,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/matters/{matter}/narrations/export', [NarrationController::class, 'export'])->name('matter.narrations.export');
 
     Route::post('/matters/{matter}/diary', [DiaryEntryController::class, 'store'])->name('matter.diary.store');
+    Route::patch('/matters/{matter}/diary/{diaryEntry}/reminder', [DiaryEntryController::class, 'updateReminder'])->name('matter.diary.reminder');
     Route::post('/matters/{matter}/diary/{diaryEntry}/complete', [DiaryEntryController::class, 'complete'])->name('matter.diary.complete');
 
     Route::post('/matters/{matter}/documents', [MatterDocumentController::class, 'store'])->name('matter.documents.store');
@@ -110,6 +112,10 @@ Route::middleware('auth')->group(function () {
         Route::delete('/invitations/{invitation}', [InvitationController::class, 'destroy'])->name('invitation.destroy');
     });
 
+    Route::middleware('can:deactivate_users')->group(function () {
+        Route::post('/users/{user}/deactivate', [UserController::class, 'deactivate'])->name('user.deactivate');
+        Route::post('/users/{user}/reactivate', [UserController::class, 'reactivate'])->name('user.reactivate');
+    });
     Route::patch('/users/{user}/roles', [UserController::class, 'updateRoles'])->middleware('can:assign_roles')->name('user.roles.update');
 
     Route::middleware('can:manage_roles')->group(function () {

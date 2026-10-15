@@ -5,15 +5,19 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Concerns\RecordsActivity;
+use App\Observers\DiaryEntryObserver;
+use Carbon\CarbonInterface;
 use Database\Factories\DiaryEntryFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use InvalidArgumentException;
 
-#[Fillable(['body', 'due_at'])]
+#[Fillable(['body', 'due_at', 'remind_before_minutes'])]
+#[ObservedBy([DiaryEntryObserver::class])]
 class DiaryEntry extends Model
 {
     /** @use HasFactory<DiaryEntryFactory> */
@@ -31,6 +35,9 @@ class DiaryEntry extends Model
         return [
             'due_at' => 'datetime',
             'completed_at' => 'datetime',
+            'overdue_notified_at' => 'datetime',
+            'remind_before_minutes' => 'integer',
+            'reminder_sent_at' => 'datetime',
         ];
     }
 
@@ -47,17 +54,23 @@ class DiaryEntry extends Model
 
     public function assignee(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'assigned_to');
+        return $this->belongsTo(User::class, 'assigned_to')->withTrashed();
     }
 
     public function completedBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'completed_by');
+        return $this->belongsTo(User::class, 'completed_by')->withTrashed();
     }
 
     public function isPending(): bool
     {
         return $this->completed_at === null;
+    }
+
+    /** An entry is a reminder of a time, so it cannot be done before that time has come. */
+    public function isDue(): bool
+    {
+        return $this->due_at->isPast();
     }
 
     public function isComplete(): bool
@@ -101,6 +114,29 @@ class DiaryEntry extends Model
         }
 
         $this->narration()->associate($narration);
+    }
+
+    /** Still to do, not yet due, with a reminder asked for and not yet sent. */
+    public function scopeAwaitingReminder(Builder $query): void
+    {
+        $query->whereNull('completed_at')
+            ->where('due_at', '>', now())
+            ->whereNotNull('remind_before_minutes')
+            ->whereNull('reminder_sent_at');
+    }
+
+    /** The moment the reminder is due to go out, or null where none was asked for. */
+    public function remindAt(): ?CarbonInterface
+    {
+        return $this->remind_before_minutes === null
+            ? null
+            : $this->due_at->copy()->subMinutes($this->remind_before_minutes);
+    }
+
+    /** Past due, still to do, and nobody has yet been told so. */
+    public function scopeAwaitingOverdueNotice(Builder $query): void
+    {
+        $query->overdue()->whereNull('overdue_notified_at');
     }
 
     public function scopePending(Builder $query): void

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Listeners;
 
+use App\Models\Role;
 use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Events\RoleAttachedEvent;
 use Spatie\Permission\Events\RoleDetachedEvent;
-use Spatie\Permission\Models\Role;
 
 class RecordRoleChange
 {

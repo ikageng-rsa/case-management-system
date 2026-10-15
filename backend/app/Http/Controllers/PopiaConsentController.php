@@ -75,7 +75,10 @@ class PopiaConsentController extends Controller
 
         $mandate->recordAccess('downloaded');
 
-        return $mandate->toResponse($request);
+        $response = $mandate->toResponse($request);
+        $response->headers->set('X-Content-Type-Options', 'nosniff');
+
+        return $response;
     }
 
     protected function back(Client $client): RedirectResponse

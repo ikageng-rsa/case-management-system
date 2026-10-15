@@ -18,6 +18,7 @@ use App\Models\Media;
 use App\Models\Narration;
 use App\Models\NotificationPreference;
 use App\Models\PopiaConsent;
+use App\Models\Role;
 use App\Models\User;
 use App\Models\UserInvitation;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -56,6 +57,7 @@ class AppServiceProvider extends ServiceProvider
             'matter_type' => MatterType::class,
             'activity_type' => ActivityType::class,
             'user' => User::class,
+            'role' => Role::class,
             'user_invitation' => UserInvitation::class,
             'notification_preference' => NotificationPreference::class,
         ]);

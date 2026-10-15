@@ -24,6 +24,9 @@ return new class extends Migration
             $table->boolean('database');
             $table->boolean('mail');
 
+            // For the kinds that ask "how early?": the person's own default, in minutes.
+            $table->unsignedInteger('lead_minutes')->nullable();
+
             $table->timestamps();
 
             $table->unique(['user_id', 'type']);

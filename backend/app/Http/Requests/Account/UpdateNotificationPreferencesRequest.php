@@ -5,11 +5,15 @@ declare(strict_types=1);
 namespace App\Http\Requests\Account;
 
 use App\Enums\Notification\NotificationType;
+use App\Http\Requests\Diary\Concerns\ChoosesReminder;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class UpdateNotificationPreferencesRequest extends FormRequest
 {
+    use ChoosesReminder;
+
     protected $errorBag = 'notifications';
 
     /**
@@ -36,6 +40,12 @@ class UpdateNotificationPreferencesRequest extends FormRequest
             }
         }
 
-        return $rules;
+        return $rules + $this->reminderRules();
+    }
+
+    /** @return array<int, callable> */
+    public function after(): array
+    {
+        return [fn (Validator $validator) => $this->checkReminderRange($validator)];
     }
 }

@@ -10,14 +10,6 @@
         hint="Minutes for timed work; otherwise pages, kilometres or items."
         :error="$errors->narration->first('quantity')" />
 
-    <x-ui.select label="Court" name="court_id" before="Required for court appearances"
-        :error="$errors->narration->first('court_id')">
-        <option value="">—</option>
-        @foreach ($courts as $court)
-            <option value="{{ $court->getKey() }}" @selected((int) old('court_id') === $court->getKey())>{{ $court->label }}</option>
-        @endforeach
-    </x-ui.select>
-
     <x-ui.input label="When" name="occurred_at" type="datetime-local" :value="old('occurred_at')"
         hint="Leave empty for now." :error="$errors->narration->first('occurred_at')" />
 
@@ -55,6 +47,10 @@
         @endforeach
     </x-ui.select>
 
+    <x-diary.reminder id="diary_remind" label="Remind them" :minutes="$defaultReminder" :use-old="$errors->diary->any()"
+        hint="Starts at how you usually like to be reminded. Whoever the entry is for can change it for themselves."
+        :error="$errors->diary->first('remind_value') ?: $errors->diary->first('remind')" />
+
     <x-slot:footer>
         <div class="d-flex align-items-center justify-content-between">
             <x-ui.button variant="outline-secondary" x-on:click="close()">Cancel</x-ui.button>
@@ -64,7 +60,7 @@
 </x-ui.sheet>
 
 <x-ui.sheet name="upload-document" title="Upload a document" lede="File it on this matter." bag="document" action="{{ route('matter.documents.store', $matter) }}" enctype="multipart/form-data">
-    <x-ui.input label="File" name="file" type="file" :error="$errors->document->first('file')" hint="Up to 50 MB." />
+    <x-ui.input label="File" name="file" type="file" accept="{{ collect(array_keys(config('documents.allowed')))->map(fn ($extension) => '.'.$extension)->implode(',') }}" :error="$errors->document->first('file')" hint="PDF, Office, image, email or audio files, up to 50 MB." />
 
     <x-ui.select label="Kind" name="kind" :error="$errors->document->first('kind')">
         @foreach (App\Enums\Document\DocumentKind::cases() as $option)

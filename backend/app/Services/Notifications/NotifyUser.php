@@ -11,16 +11,18 @@ use Throwable;
 class NotifyUser
 {
     /**
-     * Tell someone, now. A notification is never worth failing what caused it:
-     * if mail cannot be sent the matter is still assigned, and the problem is
-     * reported for someone to see.
+     * Tell someone, now. Report any failing notification
      */
-    public function about(User $user, PersonalNotification $notification): void
+    public function about(User $user, PersonalNotification $notification): bool
     {
         try {
             $user->notifyNow($notification);
+
+            return true;
         } catch (Throwable $e) {
             report($e);
+
+            return false;
         }
     }
 }
