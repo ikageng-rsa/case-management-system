@@ -146,7 +146,7 @@ class MatterController extends Controller
             'canWork' => $user->can('work', $matter),
             'defaultReminder' => app(ResolveReminderLead::class)->for($user),
             'activityTypes' => ActivityType::query()->orderBy('name')->get(),
-            'courts' => Court::query()->orderBy('name')->get(),
+            'courts' => Court::query()->orderBy('name')->orderBy('seat')->get(),
             'assignable' => $user->can('assign', $matter) ? User::query()->orderBy('name')->get() : collect(),
             'capacities' => Assignment::cases(),
             'team' => $matter->assignments->pluck('user')->unique('id')->values(),
