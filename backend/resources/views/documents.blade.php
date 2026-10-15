@@ -20,7 +20,7 @@
     <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-1">
         <div>
             <h1 class="mb-1">Documents</h1>
-            <p class="text-secondary mb-4">{{ number_format($fileCount, 0, '.', ' ') }} {{ Str::plural('file', $fileCount) }} · {{ $totalSize }} · encrypted at rest</p>
+            <p class="text-secondary mb-4">{{ number_format($fileCount, 0, '.', ' ') }} {{ Str::plural('file', $fileCount) }} · {{ $totalSize }}</p>
         </div>
 
         <div class="d-flex align-items-center gap-2">
