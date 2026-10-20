@@ -22,10 +22,11 @@ const Darzations = require('../app/Http/Controllers/DarzationController');
 const Reports = require('../app/Http/Controllers/ReportController');
 
 const router = express.Router();
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 20 * 1024 * 1024, // 20 MiB per file
+    fileSize: MAX_FILE_SIZE,    
     files: 1,                   // One file per request
     fields: 10,                 // Maximum text fields
     parts: 11,                  // Files + fields

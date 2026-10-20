@@ -1,4 +1,4 @@
-const crypto = require('crypto');
+const crypto = require('node:crypto');
 
 // Stand-in for Laravel's Hash::make / Hash::check (scrypt instead of bcrypt).
 exports.make = plain => {

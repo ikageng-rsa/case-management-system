@@ -10,7 +10,7 @@
  *   secretary@legalcms.test  password   Secretary   (no Billing tab)
  *   messenger@legalcms.test  password   Messenger   (Home / Documents / More only)
  */
-const crypto = require('crypto');
+const crypto = require('node:crypto');
 const hash = require('../../app/Support/hash');
 const { fileReference } = require('../../app/Support/fileReference');
 

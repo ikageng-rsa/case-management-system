@@ -3,8 +3,8 @@
  * disk at storage/db.json so data survives restarts.
  * `node server.js --fresh` wipes and re-seeds it (like `php artisan migrate:fresh --seed`).
  */
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const FILE = path.join(__dirname, '..', 'storage', 'db.json');
 let data = {};

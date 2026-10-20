@@ -19,6 +19,15 @@ const PORT = 8000;
 const LATENCY = Number(process.env.MOCK_LATENCY_MS ?? 300);
 const FILES_DIR = path.join(__dirname, 'storage','files');
 
+const allowedOrigins =
+  process.env.NODE_ENV === 'production'
+    ? ['https://legalcms.example.com']
+    : [
+        'http://localhost:8000',
+        'http://localhost:8081',
+      ];
+
+
 //A tiny valid PDF that the seeded document point at.
 function ensureSamplePDF(){
     fs.mkdirSync(FILES_DIR, {recursive: true});
@@ -53,16 +62,13 @@ const app = express();
 // Disable the header that identifies Express.
 app.disable('x-powered-by');
 
-
-if (process.env.NODE_ENV === 'production') {
-  app.use(
-    cors({
-      origin: ['https://legalcms.example.com'],
-    }),
-  );
-} else {
-  app.use(cors());
-}
+app.use(
+  cors({
+    origin: allowedOrigins,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  }),
+);
 // Continue with your existing middleware.
 app.use(express.json());
 

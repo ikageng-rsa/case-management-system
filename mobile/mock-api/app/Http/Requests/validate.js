@@ -20,14 +20,23 @@ const validator = require('validator');
 const label = field =>
   field
     .replace(/\.\*$/, '')
-    .replace(/([a-z])([A-Z])/g, '$1 $2')
-    .replace(/_/g, ' ')
+    .replaceAll(/([a-z])([A-Z])/g, '$1 $2')
+    .replaceAll(/_/g, ' ')
     .toLowerCase();
 
 const isPresent = value =>
   value !== undefined && value !== null && value !== '';
 
-const BOOLEANS = [true, false, 1, 0, '1', '0', 'true', 'false'];
+const BOOLEANS = new Set([
+  true,
+  false,
+  1,
+  0,
+  '1',
+  '0',
+  'true',
+  'false',
+]);
 
 function check(value, rules, field) {
   const name = label(field);

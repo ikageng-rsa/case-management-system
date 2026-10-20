@@ -5,6 +5,7 @@ const validate = require('../Requests/validate');
 const Resource = require('../Resources');
 
 exports.login = (req,res) => {
+    
     const data = validate(req,res, {email: 'required|string|email', password: 'required|string'});
     if(!data) return;
 
