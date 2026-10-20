@@ -1,4 +1,4 @@
-import { apiClient } from '@/api/client';
+import { apiClient, setAuthToken } from '@/api/client';
 import { User } from '@/models/index';
 
 export interface LoginResponse {
@@ -7,7 +7,7 @@ export interface LoginResponse {
 }
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
-  const { data } = await apiClient.post<LoginResponse>('/auth/login', { email, password });
+  const { data } = await apiClient.post<LoginResponse>('/auth/login', { email, password })
   return data;
 }
 

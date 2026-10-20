@@ -7,8 +7,8 @@ export function useLogin() {
   const dispatch = useAppDispatch();
   const { status, error } = useAppSelector(state => state.auth);
   //Pre-fill the demo account when it's enabled so you can just tap sign in
-  const [email, setEmail] = useState(isDemoLoginEnabled ? DEMO_CREDENTIALS.email:'');
-  const [password, setPassword] = useState(isDemoLoginEnabled ? DEMO_CREDENTIALS.password:'');
+  const [email, setEmail] = useState<string>(isDemoLoginEnabled ? (DEMO_CREDENTIALS.email??'') :'');
+  const [password, setPassword] = useState<string>(isDemoLoginEnabled ? (DEMO_CREDENTIALS.password??'') : '');
 
   const submit = () => {
     if (!email || !password) {
