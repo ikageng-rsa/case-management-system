@@ -192,7 +192,7 @@ class MatterShowTest extends TestCase
         $matter = Matter::factory()->create();
         $attorney = $this->userWithRole(RoleEnum::Attorney);
         MatterAssignment::factory()->for($matter)->for($attorney)->capacity(Assignment::Responsible)->create();
-        DiaryEntry::factory()->for($matter)->create();
+        DiaryEntry::factory()->for($matter)->overdue()->create();
 
         $this->actingAs($attorney)
             ->get(route('matter.show', [$matter, 'tab' => 'diary']))

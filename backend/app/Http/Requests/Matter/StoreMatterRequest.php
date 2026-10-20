@@ -39,7 +39,7 @@ class StoreMatterRequest extends FormRequest
             'court_id' => [
                 $this->courtIsRequired() ? 'required' : 'nullable',
                 'integer',
-                Rule::exists('courts', 'id'),
+                Rule::exists('courts', 'id')->withoutTrashed(),
             ],
             // Choosing who carries the file is assigning it, which has its own permission.
             'responsible_attorney_id' => $this->user()->can(Permission::AssignMatters->value)

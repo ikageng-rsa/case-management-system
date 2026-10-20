@@ -527,13 +527,15 @@ class UserAccountTest extends TestCase
         $this->assertSame(0, Activity::forSubject($preference)->count());
     }
 
-    public function test_deleting_a_user_takes_their_choices_with_them(): void
+    public function test_removing_a_user_for_good_takes_their_choices_with_them_but_deactivating_keeps_them(): void
     {
         $user = User::factory()->create();
         NotificationPreference::factory()->for($user)->create();
 
         $user->delete();
+        $this->assertDatabaseCount('notification_preferences', 1);
 
+        $user->forceDelete();
         $this->assertDatabaseCount('notification_preferences', 0);
     }
 

@@ -52,7 +52,7 @@ class UserInvitation extends Model
 
     public function inviter(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'invited_by');
+        return $this->belongsTo(User::class, 'invited_by')->withTrashed();
     }
 
     /** The only form a token is ever stored in. */

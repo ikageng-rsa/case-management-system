@@ -10,6 +10,7 @@ use App\Models\Matter;
 use App\Models\Narration;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class NarrationTest extends TestCase
@@ -39,17 +40,13 @@ class NarrationTest extends TestCase
         $this->assertInstanceOf(User::class, $narration->author);
     }
 
-    public function test_most_narrations_have_no_court(): void
-    {
-        $this->assertNull(Narration::factory()->create()->court);
-    }
-
-    public function test_an_appearance_records_the_court_attended(): void
+    public function test_a_narration_has_no_court_of_its_own_the_matters_court_is_the_one(): void
     {
         $narration = Narration::factory()->appearance()->create();
 
-        $this->assertNotNull($narration->court);
+        $this->assertFalse(Schema::hasColumn('narrations', 'court_id'));
         $this->assertTrue($narration->activityType->requires_court);
+        $this->assertNotNull($narration->matter->court);
     }
 
     public function test_it_bills_time_in_whole_increments(): void

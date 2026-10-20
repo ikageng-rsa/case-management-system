@@ -20,7 +20,7 @@
     <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-1">
         <div>
             <h1 class="mb-1">Documents</h1>
-            <p class="text-secondary mb-4">{{ number_format($fileCount, 0, '.', ' ') }} {{ Str::plural('file', $fileCount) }} · {{ $totalSize }} · encrypted at rest</p>
+            <p class="text-secondary mb-4">{{ number_format($fileCount, 0, '.', ' ') }} {{ Str::plural('file', $fileCount) }} · {{ $totalSize }}</p>
         </div>
 
         <div class="d-flex align-items-center gap-2">
@@ -125,7 +125,7 @@
             <x-ui.matter-picker label="Matter" name="matter_id" scope="fileable" :selected="$uploadMatter"
                 :error="$errors->document->first('matter_id')" />
 
-            <x-ui.input label="File" name="file" id="upload_file" type="file" :error="$errors->document->first('file')" hint="Up to 50 MB." />
+            <x-ui.input label="File" name="file" id="upload_file" type="file" accept="{{ collect(array_keys(config('documents.allowed')))->map(fn ($extension) => '.'.$extension)->implode(',') }}" :error="$errors->document->first('file')" hint="PDF, Office, image, email or audio files, up to 50 MB." />
 
             <x-ui.select label="Kind" name="kind" id="upload_kind" :error="$errors->document->first('kind')">
                 @foreach ($kinds as $option)

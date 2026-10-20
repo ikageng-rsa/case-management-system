@@ -107,7 +107,7 @@ class MatterIntakeTest extends TestCase
             ->assertOk()
             ->json('reference');
 
-        $this->assertSame('TM/EST/1/2026', $preview);
+        $this->assertSame('TM/EST/0001/2026', $preview);
 
         $this->actingAs($secretary)
             ->post(route('matter.store'), ['client_id' => $client->getKey(), 'matter_type_id' => $type->getKey(), 'instructed_at' => '2026-10-01']);

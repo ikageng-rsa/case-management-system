@@ -22,6 +22,12 @@ return new class extends Migration
             $table->foreignUuid('assigned_to')->constrained('users');
 
             $table->timestamp('completed_at')->nullable();
+
+            $table->timestamp('overdue_notified_at')->nullable();
+
+            // How long before it falls due the assignee is reminded, and when they were. Empty is no reminder.
+            $table->unsignedInteger('remind_before_minutes')->nullable();
+            $table->timestamp('reminder_sent_at')->nullable();
             $table->foreignUuid('completed_by')->nullable()->constrained('users');
             $table->timestamps();
         });

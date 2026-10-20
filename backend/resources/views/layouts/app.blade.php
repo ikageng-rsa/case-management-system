@@ -34,12 +34,15 @@
                 <x-ui.nav-item :href="route('documents')" label="Documents" icon="file-text" :active="request()->routeIs('documents')"/>
                 <x-ui.nav-item href="#" label="Reports" icon="chart-bar"/>
 
-                @canany(['view_users', 'view_audit_log'])
+                @canany(['view_users', 'view_audit_log', 'manage_courts', 'manage_matter_types', 'manage_activity_types'])
                     <x-ui.nav-section>Firm</x-ui.nav-section>
                 @endcanany
                 @can('view_users')
                     <x-ui.nav-item :href="route('users')" label="Users" icon="users" :active="request()->routeIs('users')"/>
                 @endcan
+                @canany(['manage_courts', 'manage_matter_types', 'manage_activity_types'])
+                    <x-ui.nav-item :href="route('reference-data')" label="Reference data" icon="database" :active="request()->routeIs('reference-data')"/>
+                @endcanany
                 @can('view_audit_log')
                     <x-ui.nav-item :href="route('audit-log')" label="Audit log" icon="history" :active="request()->routeIs('audit-log*')"/>
                 @endcan

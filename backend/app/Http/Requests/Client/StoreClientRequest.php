@@ -108,7 +108,7 @@ class StoreClientRequest extends FormRequest
             'court_id' => [
                 $this->courtIsRequired() ? 'required' : 'nullable',
                 'integer',
-                Rule::exists('courts', 'id'),
+                Rule::exists('courts', 'id')->withoutTrashed(),
             ],
         ];
     }

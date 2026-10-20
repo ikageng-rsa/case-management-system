@@ -290,10 +290,12 @@
                     <x-ui.input label="Registered name" name="entity_name" id="edit_entity_name"
                         :value="$field('entity_name', $client->entity_name)" :error="$errors->client_edit->first('entity_name')" />
 
+                    {{-- An identifier is never printed into a form: reading one in full is the eye's job, which
+                         is checked and logged. Left empty here, the number on file is kept. --}}
                     <x-ui.input label="Registration number" name="registration_number" id="edit_registration_number"
-                        :value="$canSeeFullIdentifiers ? $field('registration_number', $client->registration_number) : $field('registration_number', '')"
-                        :placeholder="$canSeeFullIdentifiers ? null : \App\Services\Clients\MaskIdentifier::registrationNumber((string) $client->registration_number)"
-                        :hint="$canSeeFullIdentifiers ? 'e.g. 2011/123456/07' : 'Leave empty to keep the current number.'"
+                        :value="$field('registration_number', '')"
+                        :placeholder="\App\Services\Clients\MaskIdentifier::registrationNumber((string) $client->registration_number)"
+                        hint="Leave empty to keep the current number. Use the eye on the client to read it."
                         :error="$errors->client_edit->first('registration_number')" />
                 @else
                     <x-ui.input label="First name" name="first_name" id="edit_first_name"
@@ -303,9 +305,9 @@
                         :value="$field('last_name', $client->last_name)" :error="$errors->client_edit->first('last_name')" />
 
                     <x-ui.input label="ID number" name="id_number" id="edit_id_number"
-                        :value="$canSeeFullIdentifiers ? $field('id_number', $client->id_number) : $field('id_number', '')"
-                        :placeholder="$canSeeFullIdentifiers ? null : \App\Services\Clients\MaskIdentifier::idNumber((string) $client->id_number)"
-                        :hint="$canSeeFullIdentifiers ? null : 'Leave empty to keep the current number.'"
+                        :value="$field('id_number', '')"
+                        :placeholder="\App\Services\Clients\MaskIdentifier::idNumber((string) $client->id_number)"
+                        hint="Leave empty to keep the current number. Use the eye on the client to read it."
                         :error="$errors->client_edit->first('id_number')" />
                 @endif
 

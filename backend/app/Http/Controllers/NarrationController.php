@@ -6,7 +6,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Narration\StoreNarrationRequest;
 use App\Models\ActivityType;
-use App\Models\Court;
 use App\Models\Matter;
 use App\Models\Narration;
 use App\Models\User;
@@ -30,10 +29,6 @@ class NarrationController extends Controller
         $narration->matter()->associate($matter);
         $narration->author()->associate($request->user());
         $narration->activityType()->associate(ActivityType::findOrFail($request->validated('activity_type_id')));
-
-        if ($request->filled('court_id')) {
-            $narration->court()->associate(Court::findOrFail($request->validated('court_id')));
-        }
 
         $narration->save();
 

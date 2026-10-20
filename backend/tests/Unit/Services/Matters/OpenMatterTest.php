@@ -27,7 +27,7 @@ class OpenMatterTest extends TestCase
 
         $matter = $this->service()->open($client, $type, title: 'Malla v Road Accident Fund', court: Court::factory()->create());
 
-        $this->assertStringStartsWith('KTM/CIV/1/', $matter->reference);
+        $this->assertStringStartsWith('KTM/CIV/0001/', $matter->reference);
         $this->assertTrue($matter->exists);
         $this->assertTrue($matter->client->is($client));
         $this->assertTrue($matter->isOpen());

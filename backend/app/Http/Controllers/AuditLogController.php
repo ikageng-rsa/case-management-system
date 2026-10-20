@@ -145,6 +145,7 @@ class AuditLogController extends Controller
         return match (true) {
             $value === null => '—',
             is_bool($value) => $value ? 'yes' : 'no',
+            is_array($value) && array_is_list($value) && collect($value)->every(fn ($item) => is_scalar($item)) => $value === [] ? '—' : implode(', ', $value),
             is_array($value) => json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
             default => (string) $value,
         };

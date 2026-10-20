@@ -142,6 +142,10 @@
             </tbody>
         </table>
 
+        <x-diary.reminder id="default_reminder" label="When a diary entry is coming due, remind me" :minutes="$reminderLead"
+            :use-old="$errors->notifications->any()" :error="$errors->notifications->first('remind_value')"
+            hint="This is where new entries start. You can change it on any entry that is yours." />
+
         <x-slot:footer>
             <div class="d-flex align-items-center justify-content-between">
                 <x-ui.button variant="outline-secondary" x-on:click="close()">Cancel</x-ui.button>

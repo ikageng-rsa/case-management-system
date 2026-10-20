@@ -15,6 +15,7 @@ enum Permission: string
     case ViewAllMatters = 'view_all_matters';
     case CreateMatters = 'create_matters';
     case EditMatters = 'edit_matters';
+    case EditMatterDetails = 'edit_matter_details';
     case CloseMatters = 'close_matters';
     case ReopenMatters = 'reopen_matters';
     case ArchiveMatters = 'archive_matters';
@@ -46,6 +47,7 @@ enum Permission: string
     case ViewUsers = 'view_users';
     case EditUsers = 'edit_users';
     case InviteUsers = 'invite_users';
+    case DeactivateUsers = 'deactivate_users';
     case AssignRoles = 'assign_roles';
     case ManageRoles = 'manage_roles';
 

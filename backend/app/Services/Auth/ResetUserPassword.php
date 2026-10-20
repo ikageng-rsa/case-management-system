@@ -30,5 +30,7 @@ class ResetUserPassword implements ResetsUserPasswords
         $user->forceFill([
             'password' => Hash::make($input['password']),
         ])->save();
+
+        app(FinishPasswordChange::class)($user, 'password_reset', 'Password reset from an emailed link');
     }
 }

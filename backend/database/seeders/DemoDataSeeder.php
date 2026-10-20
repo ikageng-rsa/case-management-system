@@ -21,6 +21,7 @@ use App\Models\MatterType;
 use App\Models\Narration;
 use App\Models\PopiaConsent;
 use App\Models\User;
+use App\Services\Matters\MatterReference;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -195,7 +196,7 @@ class DemoDataSeeder extends Seeder
         };
 
         return $factory->create([
-            'reference' => "{$initials}/{$type->code}/".str_pad((string) $sequence, 4, '0', STR_PAD_LEFT)."/{$year}",
+            'reference' => MatterReference::format($initials, $type->code, $sequence, $year),
             'sequence_number' => $sequence,
             'opened_year' => $year,
             'title' => $entry['title'],
@@ -233,7 +234,10 @@ class DemoDataSeeder extends Seeder
 
     protected function seedNarration(Matter $matter, Collection $activityTypes, User $author, int $index): void
     {
-        $type = $activityTypes->random();
+        // Work before a court needs the matter to have one, as it does in the application.
+        $type = $activityTypes
+            ->when($matter->court_id === null, fn (Collection $types) => $types->reject->requires_court)
+            ->random();
 
         Narration::factory()
             ->for($matter)
@@ -243,7 +247,6 @@ class DemoDataSeeder extends Seeder
                 'body' => $this->narrationBody($type->code),
                 'quantity' => $this->quantityFor($type->measure),
                 'occurred_at' => now()->subDays($index * fake()->numberBetween(3, 14)),
-                'court_id' => $type->requires_court ? $matter->court_id : null,
             ]);
 
         /*

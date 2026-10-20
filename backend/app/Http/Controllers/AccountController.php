@@ -8,6 +8,7 @@ use App\Enums\Notification\NotificationType;
 use App\Http\Requests\Account\UpdateNotificationPreferencesRequest;
 use App\Http\Requests\Account\UpdateSignInCodeRequest;
 use App\Models\User;
+use App\Services\Diary\ResolveReminderLead;
 use App\Services\Notifications\ResolveNotificationChannels;
 use App\Services\Notifications\SaveNotificationPreferences;
 use Illuminate\Contracts\View\View;
@@ -21,7 +22,7 @@ use Illuminate\Http\Request;
  */
 class AccountController extends Controller
 {
-    public function show(Request $request, ResolveNotificationChannels $channelsFor): View
+    public function show(Request $request, ResolveNotificationChannels $channelsFor, ResolveReminderLead $resolveLead): View
     {
         /** @var User $user */
         $user = $request->user();
@@ -31,15 +32,20 @@ class AccountController extends Controller
             'notificationTypes' => NotificationType::cases(),
             'channels' => NotificationType::channels(),
             'channelsByType' => $channelsFor->all($user),
+            'reminderLead' => $resolveLead->for($user),
         ]);
     }
 
-    public function updateNotifications(UpdateNotificationPreferencesRequest $request, SaveNotificationPreferences $saveChoices): RedirectResponse
+    public function updateNotifications(UpdateNotificationPreferencesRequest $request, SaveNotificationPreferences $saveChoices, ResolveReminderLead $resolveLead): RedirectResponse
     {
         /** @var User $user */
         $user = $request->user();
 
-        $saveChoices->save($user, $request->validated('channels') ?? []);
+        $saveChoices->save(
+            $user,
+            $request->validated('channels') ?? [],
+            $request->choseReminder() ? $request->reminderMinutes() : $resolveLead->for($user),
+        );
 
         return redirect()->route('account')->with('status', 'Notification choices saved.');
     }

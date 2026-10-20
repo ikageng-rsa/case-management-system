@@ -25,7 +25,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Collections\MediaCollection;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-#[Fillable(['reference', 'sequence_number', 'opened_year', 'title', 'instructed_at', 'prescribes_at', 'closed_at'])]
+#[Fillable(['reference', 'sequence_number', 'opened_year', 'title', 'instructed_at', 'prescribes_at'])]
 #[RouteKey('reference')]
 class Matter extends Model implements HasMedia
 {
@@ -45,6 +45,12 @@ class Matter extends Model implements HasMedia
      *
      * @return array<string, string>
      */
+    /** The court is set through its relation, so it is not fillable, but moving a matter to another court is a change to the file. */
+    protected function auditAlso(): array
+    {
+        return ['court_id'];
+    }
+
     protected function casts(): array
     {
         return [
@@ -79,13 +85,13 @@ class Matter extends Model implements HasMedia
 
     public function matterType(): BelongsTo
     {
-        return $this->belongsTo(MatterType::class);
+        return $this->belongsTo(MatterType::class)->withTrashed();
     }
 
     /** Null for non-litigious matters, which are not before a court. */
     public function court(): BelongsTo
     {
-        return $this->belongsTo(Court::class);
+        return $this->belongsTo(Court::class)->withTrashed();
     }
 
     public function assignments(): HasMany

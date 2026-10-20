@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Roles;
 
+use App\Models\Role;
 use Illuminate\Support\Facades\DB;
-use Spatie\Permission\Models\Role;
 
 class DeleteRole
 {

@@ -166,7 +166,7 @@ return [
     'features' => [
         // Staff accounts are created by an administrator, never self-registered.
         // Features::registration(),
-        // Features::resetPasswords(),
+        Features::resetPasswords(),
         // Features::emailVerification(),
         // Name, email and the rest of the staff record are kept by the firm's
         // directors, so there is no self-service way to change them.
