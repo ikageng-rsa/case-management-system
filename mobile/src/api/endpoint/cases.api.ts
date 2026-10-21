@@ -1,22 +1,88 @@
 import { apiClient } from '@/api/client';
 import { Case } from '@/models/index';
+import {CacheNames} from '@offline/cache';
+import {cachedList,cachedRecord,submitCreate,submitUpdate} from '@offline/repository';
 
-export async function fetchCases(params?: { status?: string; search?: string }): Promise<Case[]> {
-  const { data } = await apiClient.get<Case[]>('/cases', { params });
-  return data;
+type CaseFilter = {status?: string, search?: string}
+
+function filterCases(rows: Case[], params?: CaseFilter): Case[]{
+  const term = params?.search?.trim().toLowerCase() ?? '';
+  return rows.filter(
+    c => 
+        (!params?.status || c.status === params.status) &&
+        (!term || [c.fileReference, c.clientName, c.matterType, c.opposingParty, /*c.courtCaseNumber*/].some(v => (v ?? '').toLowerCase().includes(term))),
+  );
+}
+
+
+
+export async function fetchCases(params?: CaseFilter): Promise<Case[]> {
+  const unfiltered = !params?.status && !params?.search;
+  return cachedList<Case>({
+    name: CacheNames.cases,
+    entity: 'case',
+    cacheable: unfiltered,
+    request: async () => (await apiClient.get<Case[]>('/cases', {params})).data,
+    fitler: unfiltered ? undefined : (rows:any) => filterCases(rows,params),
+  });
 }
 
 export async function fetchCaseById(id: string): Promise<Case> {
-  const { data } = await apiClient.get<Case>(`/cases/${id}`);
-  return data;
+  return cachedRecord<Case>({
+    id,
+    listName: CacheNames.cases,
+    entity: 'case',
+    request: async () => (await apiClient.get<Case>(`/cases/${id}`)).data
+  });
 }
 
 export async function createCase(payload: Partial<Case>): Promise<Case> {
-  const { data } = await apiClient.post<Case>('/cases', payload);
-  return data;
+  const me = getActiveUserId() ?? '';
+  return submitCreate<Case>({
+    entity: 'case',
+    label: `New Case - ${payload.clientName ?? 'untitled'}${payload.matterType? ` (${payload.matterType})` : ''}`,
+    url: '/case',
+    body: payload as Record<string,unknown>,
+    optimistic: (id: string, createdAt:string) =>({
+      status: 'Open',
+      priority: 'Medium',
+      clientName: '',
+      matterType: '',
+      openedDate: createdAt.slice(0,10),
+      ...payload,
+      id,
+      fileReference: 'Awaiting sync',
+      clientId: '',
+      leadAttorneyId: me,
+      //The creator is always on the case
+      assignedUserIds: [...new Set([me,...(payload.assignedUserIds ?? [])])],
+    }) as Case,
+    listName: () => CacheNames.cases,
+  })
+}
+
+export async function updateCase(id: string, payload: Partial<Case>): Promise<Case>{
+  return submitUpdate<Case>({
+    entity: 'case',
+    entityId: id,
+    action: 'Editing a case',
+    label: 'Edit Case',
+    url: `/case/${id}`,
+    body: payload as Record<string, unknown>,
+    patch: {kind: 'merge', figure: payload as Record<string, unknown>},
+    listName: CacheNames.cases
+  })
 }
 
 export async function updateCaseStatus(id: string, status: Case['status']): Promise<Case> {
-  const { data } = await apiClient.patch<Case>(`/cases/${id}/status`, { status });
-  return data;
+  return submitUpdate<Case>({
+    entity: 'case',
+    entityId: id,
+    action: 'Changing a case status',
+    label:  `Set case status to ${status}`,
+    url: `/case/${id}/status`,
+    body: {status},
+    patch: {kind: 'merge', fields: {status}},
+    listName: CacheNames.cases
+  })
 }
