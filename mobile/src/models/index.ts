@@ -13,5 +13,6 @@ export * from './PopiaConsent';
 export * from './Narration';
 export * from './Darzation';
 export * from './CaseDocument';
-export * from './BillingEntry';
 export * from './User';
+export * from './TwoFactor';
+export * from './Notification';
