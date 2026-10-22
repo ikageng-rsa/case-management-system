@@ -1,14 +1,14 @@
 import { apiClient } from '@/api/client';
 import { CaseDocument } from '@/models/index';
-import {CacheNames} from '@offline/cahce';
-import {isDeviceOffline} from '@offline/connectivity';
-import {offlineNotAllowedError} from '@offline/policy';
-import {cachedList} from '@offline/repository';
+import {CacheNames} from '@/offline/cahce';
+import {isDeviceOffline} from '@/offline/connectivity';
+import {offlineNotAllowedError} from '@/offline/policy';
+import {cachedList} from '@/offline/repository';
 
 export async function fetchDocumentsForCase(caseId: string): Promise<CaseDocument[]> {
   return cachedList<CaseDocument>({
     name: CacheNames.documents(caseId),
-    request: async () => (await apiClient.get<CaseDocument[]>(`/cases/${caseId}/documents`)).data;
+    request: async () => (await apiClient.get<CaseDocument[]>(`/cases/${caseId}/documents`)).data,
   });
 }
 
