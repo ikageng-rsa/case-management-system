@@ -14,8 +14,11 @@ export default function MoreLayout() {
       {/* Admin-only: enforced here at the navigator level, not just by hiding the menu item. */}
       <Stack.Protected guard={role ? canAdministerUsers(role) : false}>
         <Stack.Screen name="users" options={{ title: 'Users & Roles' }} />
+        <Stack.Screen name="reports" options={{ title: 'Export Reports' }} />
       </Stack.Protected>
-      <Stack.Screen name="reports" options={{ title: 'Export Reports' }} />
+      <Stack.Screen name="security" options={{ title: 'Two-Factor Authrntication' }} />
+      <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
+      <Stack.Screen name="sync" options={{ title: 'Sync & Offline' }} />
     </Stack>
   );
 }

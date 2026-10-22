@@ -7,7 +7,7 @@ import ChipSelect from '@/components/ChipSelect';
 import { createCase } from '@/api/endpoint/cases.api';
 import { getApiErrorMessage } from '@/api/errors';
 import { useAppSelector } from '@/hooks/useAppDispatch';
-import { useAssignableUsers } from '@hooks/useAssignableUsers';
+import { useAssignableUsers } from '@/hooks/useAssignableUsers';
 import { canEditRecords } from '@/constants/roles';
 import { isValidIsoDate } from '@/utils/validators';
 import { colors, spacing, typography } from '@/theme/index';

@@ -10,6 +10,7 @@ export default function CasesLayout() {
       <Stack.Screen name="[caseId]/index" options={{ title: 'Case' }} />
       <Stack.Screen name="[caseId]/activity" options={{ title: 'Activity Log' }} />
       <Stack.Screen name="[caseId]/add-activity" options={{ title: 'Log Activity' }} />
+      <Stack.Screen name="[caseId]/narrations/[narrationId]" options={{ title: 'Activity Entry' }} />
       <Stack.Screen name="[caseId]/documents/index" options={{ title: 'Documents' }} />
       <Stack.Screen name="[caseId]/documents/[documentId]" options={{ title: 'Document' }} />
     </Stack>

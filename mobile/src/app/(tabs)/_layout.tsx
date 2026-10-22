@@ -20,7 +20,6 @@ const ICONS = {
   home: makeTabIcon('view-dashboard-outline'),
   cases: makeTabIcon('briefcase-outline'),
   diary: makeTabIcon('calendar-clock-outline'),
-  billing: makeTabIcon('cash-multiple'),
   more: makeTabIcon('dots-horizontal-circle-outline'),
 };
 
@@ -44,9 +43,6 @@ export default function TabsLayout() {
       </Tabs.Protected>
       <Tabs.Protected guard={can('Diary')}>
         <Tabs.Screen name="diary" options={{ title: 'Diary', tabBarIcon: ICONS.diary }} />
-      </Tabs.Protected>
-      <Tabs.Protected guard={can('Billing')}>
-        <Tabs.Screen name="billing" options={{ title: 'Billing', tabBarIcon: ICONS.billing }} />
       </Tabs.Protected>
       <Tabs.Screen name="more" options={{ title: 'More', tabBarIcon: ICONS.more }} />
     </Tabs>
