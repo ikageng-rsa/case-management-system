@@ -1,7 +1,8 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import {useNetInfo} from '@/hooks/useNetInfo';
-import {colors, spacing, typography} from '@/theme/index';
+import { useNetInfo } from '@/hooks/useNetInfo';
+import { useSyncStatus } from '@/hooks/useSyncStatus';
+import { colors, spacing, typography } from '@/theme/index';
 
 /**
  * Sits above the navigator (mounted once in App.tsx) so any screen - most
@@ -10,22 +11,26 @@ import {colors, spacing, typography} from '@/theme/index';
  * silently. Renders nothing while online
  */
 
-export default function OfflineBanner(){
-    const { isOnline }:any = useNetInfo;
+export default function OfflineBanner() {
+    const { isOnline }: any = useNetInfo;
+    const { pending } = useSyncStatus();
 
-    if(isOnline){
+    if (isOnline) {
         return null;
     }
 
-    return(
+    return (
         <View style={styles.banner} testID='offline-banner'>
-            <Text style={styles.text}>You're offline - entries will sync once you're back online. </Text>
+            <Text style={styles.text}>
+                {"You're offline - entries will sync once you're back online."}
+                {pending > 0 ? `(${pending} waiting` : ''}
+            </Text>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    banner:{
+    banner: {
         backgroundColor: colors.gold,
         paddingVertical: spacing.xs,
         paddingHorizontal: spacing.md
