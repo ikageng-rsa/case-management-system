@@ -40,7 +40,7 @@ export default function LoginScreen() {
       <Button
         label="Forgot password?"
         variant="secondary"
-        onPress={() => router.push('/reset-password')}
+        onPress={() => router.push('./reset-password')}
         style={styles.secondaryButton}
       />
     </KeyboardAvoidingView>

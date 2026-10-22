@@ -1,14 +1,14 @@
 import { apiClient } from '@/api/client';
 import { Narration } from '@/models/index';
-import {CacheNames} from '@offline/cache';
-import {getActiveUserId} from '@offline/context';
-import {cachedList, cachedRecord, submitCreate} from '@offline/repository';
+import {CacheNames} from '@/offline/cache';
+import {getActiveUserId} from '@/offline/context';
+import {cachedList, cachedRecord, submitCreate} from '@/offline/repository';
 
 export async function fetchNarrationsForCase(caseId: string): Promise<Narration[]> {
   return cachedList<Narration>({
     name: CacheNames.narrations(caseId),
     entity: 'narration',
-    inScope: (row: Narration) => row.caseId === caseId,
+    inScope: (row) => row.caseId === caseId,
     request: async () => ( await apiClient.get<Narration[]>(`/cases/${caseId}/narrations`)).data
   })
 }
@@ -18,8 +18,8 @@ export async function fetchNarrationById(caseId: string, narrationId: string): P
       id: narrationId,
       listName: CacheNames.narrations(caseId),
       entity: 'narration',
-      inScope: (row:Narration) => row.caseId === caseId,
-      request: async () => ( await apiClient.get<Narration[]>(`/cases/${caseId}/narrations/${narrationId}`)).data
+      inScope: (row) => row.caseId === caseId,
+      request: async () => ( await apiClient.get<Narration>(`/cases/${caseId}/narrations/${narrationId}`)).data
   });
 }
 
@@ -30,7 +30,7 @@ export async function addNarration(payload: Omit<Narration, 'id' | 'createdAt' |
     label: `New narration - ${payload.title || payload.description.slice(0,40)}`,
     url: `/case/${payload.caseId}/narrations`,
     body: {...payload, documentIds: []},
-    optimistic: (id:string, createdAt:Date) => ({ ...payload, id, authorId: me, documnetIds: [], createdAt}),
+    optimistic: (id, createdAt) => ({ ...payload, id, authorId: me, documentIds: [], createdAt}),
     listName: (created:Narration) => CacheNames.narrations(created.caseId)
   });
 }

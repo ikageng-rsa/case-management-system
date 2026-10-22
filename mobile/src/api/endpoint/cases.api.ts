@@ -1,7 +1,8 @@
 import { apiClient } from '@/api/client';
 import { Case } from '@/models/index';
-import {CacheNames} from '@offline/cache';
-import {cachedList,cachedRecord,submitCreate,submitUpdate} from '@offline/repository';
+import { getActiveUserId } from '@/offline';
+import {CacheNames} from '@/offline/cache';
+import {cachedList,cachedRecord,submitCreate,submitUpdate} from '@/offline/repository';
 
 type CaseFilter = {status?: string, search?: string}
 
@@ -23,7 +24,7 @@ export async function fetchCases(params?: CaseFilter): Promise<Case[]> {
     entity: 'case',
     cacheable: unfiltered,
     request: async () => (await apiClient.get<Case[]>('/cases', {params})).data,
-    fitler: unfiltered ? undefined : (rows:any) => filterCases(rows,params),
+    filter: unfiltered ? undefined : rows => filterCases(rows,params),
   });
 }
 
@@ -69,7 +70,7 @@ export async function updateCase(id: string, payload: Partial<Case>): Promise<Ca
     label: 'Edit Case',
     url: `/case/${id}`,
     body: payload as Record<string, unknown>,
-    patch: {kind: 'merge', figure: payload as Record<string, unknown>},
+    patch: {kind: 'merge', fields: payload as Record<string, unknown>},
     listName: CacheNames.cases
   })
 }

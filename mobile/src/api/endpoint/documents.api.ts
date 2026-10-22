@@ -1,8 +1,8 @@
 import { apiClient } from '@/api/client';
 import { CaseDocument } from '@/models/index';
-import {CacheNames} from '@/offline/cahce';
+import {CacheNames} from '@/offline/cache';
 import {isDeviceOffline} from '@/offline/connectivity';
-import {offlineNotAllowedError} from '@/offline/policy';
+import {OfflineNotAllowedError} from '@/offline/policy';
 import {cachedList} from '@/offline/repository';
 
 export async function fetchDocumentsForCase(caseId: string): Promise<CaseDocument[]> {
@@ -19,7 +19,7 @@ export async function uploadDocument(
   narrationId?: string
 ): Promise<CaseDocument> {
   if(await isDeviceOffline()){
-    throw new offlineNotAllowedError('Uploading a document');
+    throw new OfflineNotAllowedError('Uploading a document');
   }
   const form = new FormData();
   form.append('file', { uri: file.uri, name: file.name, type: file.type } as any);

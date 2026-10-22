@@ -9,7 +9,7 @@ export default function AuthLayout() {
       <Stack.Screen name="forgot-password" options={{title: 'Reset Password'}}/>
       <Stack.Screen name="verify-reset-code" options={{title: 'Verify Code'}}/>
       <Stack.Screen name="set-new-password" options={{title: 'New Password'}}/>
-      <Stack.Screen name="" options={{title: 'Verify It\'s You', headerBackVisible: false}}/>
+      <Stack.Screen name="two-factor" options={{title: 'Verify It\'s You', headerBackVisible: false}}/>
     </Stack>
   );
 }

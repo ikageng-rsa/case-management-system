@@ -1,9 +1,9 @@
 import { apiClient } from '@/api/client';
 import { Darzation } from '@/models/index';
-import {computeOverDue} from '@models/Darzation';
-import {CacheNames} from '@offline/cache';
-import {getActiveUserId} from '@offline/context';
-import {cachedList, cachedRecord, submitCreate,submitUpdate} from '@offline/repository';
+import {computeOverdue} from '@/models/Darzation';
+import {CacheNames} from '@/offline/cache';
+import {getActiveUserId} from '@/offline/context';
+import {cachedList, cachedRecord, submitCreate,submitUpdate} from '@/offline/repository';
 
 //Server semantics: overdue = not done and due before today. Recomputed so cached rows don't go stale
 
@@ -23,12 +23,12 @@ export async function fetchDiary(ownerId?: string): Promise<Darzation[]> {
   })
 }
 
-export async function fetchDarzationById(Id: string): Promise<Darzation>{
+export async function fetchDarzationById(id: string): Promise<Darzation>{
     return cachedRecord<Darzation>({
-      Id,
+      id,
       listName: CacheNames.diary,
       entity: 'darzation',
-      request: async () => (await apiClient.get<Darzation>(`/darzations/${Id}`)).data
+      request: async () => (await apiClient.get<Darzation>(`/darzations/${id}`)).data
     })
 }
 
@@ -37,7 +37,7 @@ export async function fetchOverdueDarzations(): Promise<Darzation[]> {
     name: CacheNames.diary,
     entity: 'darzation',
     cacheable: false,
-    request: async () => (await apiClient.get<Darzation>('/darzations/overdue')).data,
+    request: async () => (await apiClient.get<Darzation[]>('/darzations/overdue')).data,
     //Offline the list is worked out on the devices from the cached diary
     filter: (rows:Darzation[]) => withLiveOverdue(rows).filter(d => d.overdue)
   })
@@ -55,7 +55,7 @@ export async function createDarzation(payload: Omit<Darzation, 'id' | 'overdue'>
       id,
       ownerId: me,
       assignedUserIds: [...new Set([me, ...(payload.assignedUserIds ?? [])])],
-      overdue: computeOverDue(payload.dueDate, payload.status ?? 'Pending'),
+      overdue: computeOverdue(payload.dueDate, payload.status ?? 'Pending'),
     }),
     listName: () => CacheNames.diary,
   })

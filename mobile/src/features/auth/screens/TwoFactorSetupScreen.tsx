@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
-import Button from '@components/Button';
-import Input from '@components/Input';
-import Card from '@components/Card';
-import { useAppSelector } from '@hooks/useAppDispatch';
+import Button from '@/components/Button';
+import Input from '@/components/Input';
+import Card from '@/components/Card';
+import { useAppSelector } from '@/hooks/useAppDispatch';
 import {
   buildTotpEnrollmentUri,
   disableTwoFactor,
