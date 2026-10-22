@@ -9,18 +9,18 @@ export function useLogin() {
   const router = useRouter();
   const { status, error } = useAppSelector(state => state.auth);
   //Pre-fill the demo account when it's enabled so you can just tap sign in
-  const [email, setEmail] = useState(isDemoLoginEnabled ? DEMO_CREDENTIALS.email:'');
-  const [password, setPassword] = useState(isDemoLoginEnabled ? DEMO_CREDENTIALS.password:'');
-  
-  const submit = async () => {                                              
-    if (!email || !password) {                                              
-      return;                                                               
-    }                                                                       
-    const result = await dispatch(login({ email, password }));              
+  const [email, setEmail] = useState(isDemoLoginEnabled ? DEMO_CREDENTIALS.email : '');
+  const [password, setPassword] = useState(isDemoLoginEnabled ? DEMO_CREDENTIALS.password : '');
+
+  const submit = async () => {
+    if (!email || !password) {
+      return;
+    }
+    const result = await dispatch(login({ email, password }));
     if (login.fulfilled.match(result) && result.payload.twoFactorRequired) {
-      router.push('./two-factor');                                           
-    }                                                                       
-  };                                                                        
+      router.push('/two-factor');
+    }
+  };
   return {
     email,
     setEmail,
