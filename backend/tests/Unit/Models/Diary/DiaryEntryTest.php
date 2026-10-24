@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Models;
+namespace Tests\Unit\Models\Diary;
 
-use App\Models\DiaryEntry;
+use App\Models\Diary\DiaryEntry;
 use App\Models\Matter\Matter;
 use App\Models\Narration;
 use App\Models\User;

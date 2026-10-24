@@ -6,7 +6,7 @@ namespace Tests\Unit\Queries\Matters;
 
 use App\Enums\Auth\Permission;
 use App\Enums\Matter\Assignment;
-use App\Models\DiaryEntry;
+use App\Models\Diary\DiaryEntry;
 use App\Models\Matter\Matter;
 use App\Models\Matter\MatterAssignment;
 use App\Models\Reference\MatterType;

@@ -2,13 +2,15 @@
 
 declare(strict_types=1);
 
-namespace App\Models;
+namespace App\Models\Diary;
 
 use App\Concerns\RecordsActivity;
 use App\Models\Matter\Matter;
+use App\Models\Narration;
+use App\Models\User;
 use App\Observers\DiaryEntryObserver;
 use Carbon\CarbonInterface;
-use Database\Factories\DiaryEntryFactory;
+use Database\Factories\Diary\DiaryEntryFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;

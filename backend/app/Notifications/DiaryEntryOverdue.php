@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Notifications;
 
 use App\Enums\Notification\NotificationType;
-use App\Models\DiaryEntry;
+use App\Models\Diary\DiaryEntry;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;

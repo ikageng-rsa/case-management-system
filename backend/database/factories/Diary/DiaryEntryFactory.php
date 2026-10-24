@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Database\Factories;
+namespace Database\Factories\Diary;
 
-use App\Models\DiaryEntry;
+use App\Models\Diary\DiaryEntry;
 use App\Models\Matter\Matter;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;

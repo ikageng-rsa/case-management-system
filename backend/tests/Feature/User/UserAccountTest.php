@@ -6,7 +6,7 @@ namespace Tests\Feature\User;
 
 use App\Enums\Auth\Role as RoleEnum;
 use App\Enums\Notification\NotificationType;
-use App\Models\DiaryEntry;
+use App\Models\Diary\DiaryEntry;
 use App\Models\NotificationPreference;
 use App\Models\User;
 use App\Notifications\DiaryEntryOverdue;

@@ -13,7 +13,7 @@ use App\Enums\Narration\ActivityMeasure;
 use App\Models\Client\Client;
 use App\Models\Client\ClientContact;
 use App\Models\Client\PopiaConsent;
-use App\Models\DiaryEntry;
+use App\Models\Diary\DiaryEntry;
 use App\Models\Matter\Matter;
 use App\Models\Matter\MatterAssignment;
 use App\Models\Narration;

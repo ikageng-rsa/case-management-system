@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Console;
 
-use App\Models\DiaryEntry;
+use App\Models\Diary\DiaryEntry;
 use App\Models\Matter\Matter;
 use App\Models\NotificationPreference;
 use App\Notifications\DiaryEntryOverdue;

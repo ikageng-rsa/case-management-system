@@ -6,7 +6,7 @@ namespace App\Http\Controllers\Audit;
 
 use App\Enums\Auth\Permission;
 use App\Http\Controllers\Controller;
-use App\Models\DiaryEntry;
+use App\Models\Diary\DiaryEntry;
 use App\Models\Matter\Matter;
 use App\Models\Matter\MatterAssignment;
 use App\Models\Matter\MatterParty;

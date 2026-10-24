@@ -6,7 +6,7 @@ namespace Tests\Feature\Dashboard;
 
 use App\Enums\Auth\Role as RoleEnum;
 use App\Enums\Matter\Assignment;
-use App\Models\DiaryEntry;
+use App\Models\Diary\DiaryEntry;
 use App\Models\Matter\Matter;
 use App\Models\Matter\MatterAssignment;
 use App\Models\User;

@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Casts\Client\EncryptedContact;
 use App\Concerns\RecordsActivity;
+use App\Models\Diary\DiaryEntry;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Models\Matter\Matter;
 use App\Models\Matter\MatterAssignment;
