@@ -18,6 +18,7 @@ use App\Models\Matter;
 use App\Models\MatterType;
 use App\Models\Narration;
 use App\Models\User;
+use App\Queries\Matters\MatterDiary;
 use App\Queries\Matters\MatterDocuments;
 use App\Queries\Matters\MatterLedger;
 use App\Queries\Matters\MatterParties;
@@ -123,6 +124,7 @@ class MatterController extends Controller
         MatterLedger $ledger,
         MatterDocuments $documents,
         MatterParties $parties,
+        MatterDiary $diary,
     ): View {
         Gate::authorize('view', $matter);
 
@@ -172,7 +174,7 @@ class MatterController extends Controller
             'ledger' => $ledger->for($matter, $user, $request->ledgerFilter()),
             'documents' => $documents->for($matter, $request->documentKind()),
             'parties' => $parties->for($matter, $user),
-            'diary' => $this->diary($request, $matter, $user),
+            'diary' => $diary->for($matter, $user, $request->diaryShow()),
             'audit' => $this->audit($matter),
         });
     }
@@ -340,34 +342,6 @@ class MatterController extends Controller
         );
 
         return redirect()->route('matter.show', [$matter, 'tab' => 'parties']);
-    }
-
-    /** @return array<string, mixed> */
-    protected function diary(Request $request, Matter $matter, User $user): array
-    {
-        $show = in_array($request->query('show'), ['pending', 'completed', 'overdue', 'mine'], true)
-            ? $request->query('show')
-            : 'pending';
-
-        $entries = $matter->diaryEntries()
-            ->with(['assignee', 'completedBy'])
-            ->when($show === 'pending', fn (Builder $query) => $query->pending())
-            ->when($show === 'completed', fn (Builder $query) => $query->completed())
-            ->when($show === 'overdue', fn (Builder $query) => $query->overdue())
-            ->when($show === 'mine', fn (Builder $query) => $query->pending()->assignedTo($user))
-            ->orderBy('due_at')
-            ->get();
-
-        return [
-            'entries' => $entries,
-            'show' => $show,
-            'diaryCounts' => [
-                'pending' => $matter->diaryEntries()->pending()->count(),
-                'completed' => $matter->diaryEntries()->completed()->count(),
-                'overdue' => $matter->diaryEntries()->overdue()->count(),
-                'mine' => $matter->diaryEntries()->pending()->assignedTo($user)->count(),
-            ],
-        ];
     }
 
     /** @return array<string, mixed> */

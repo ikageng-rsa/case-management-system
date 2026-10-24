@@ -45,4 +45,12 @@ class ShowMatterRequest extends FormRequest
 
         return is_string($kind) ? DocumentKind::tryFrom($kind) : null;
     }
+
+    /** Which diary entries to list: pending, completed, overdue or mine. Pending unless one of the others. */
+    public function diaryShow(): string
+    {
+        $show = $this->query('show');
+
+        return in_array($show, ['pending', 'completed', 'overdue', 'mine'], true) ? $show : 'pending';
+    }
 }
