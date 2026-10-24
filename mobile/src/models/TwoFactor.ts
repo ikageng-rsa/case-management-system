@@ -6,8 +6,7 @@ export type TwoFactorMethod = 'none' | 'totp' | 'sms';
  * own to verify against. See @features/auth/services/twoFactorService.ts.
  */
 export interface TwoFactorSettings {
-  method: TwoFactorMethod;
-  totpSecret?: string; // base32 secret, shown as a QR code for Google/Microsoft Authenticator
-  phoneNumber?: string; // for SMS OTP
-  enabledAt?: string;
+  token: string;
+  method: Exclude<TwoFactorMethod, 'none'>;
+  maskedPhone?: string
 }
