@@ -132,6 +132,22 @@ class MatterShowTest extends TestCase
             ->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
     }
 
+    public function test_the_ledger_export_carries_the_ledger_filter(): void
+    {
+        $matter = Matter::factory()->create();
+        $director = $this->userWithRole(RoleEnum::Director);
+        Narration::factory()->for($matter)->for($director, 'author')->create(['body' => 'Called the client']);
+        Narration::factory()->for($matter)->create(['body' => 'Drafted the summons']);
+
+        $csv = $this->actingAs($director)
+            ->get(route('matter.narrations.export', [$matter, 'filter' => 'mine']))
+            ->assertOk()
+            ->streamedContent();
+
+        $this->assertStringContainsString('Called the client', $csv);
+        $this->assertStringNotContainsString('Drafted the summons', $csv);
+    }
+
     public function test_parties_shows_the_team_and_lets_an_authorised_user_assign_and_unassign(): void
     {
         $matter = Matter::factory()->create();

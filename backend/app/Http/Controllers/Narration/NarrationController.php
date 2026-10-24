@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Narration;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Narration\ExportLedgerRequest;
 use App\Http\Requests\Narration\StoreNarrationRequest;
 use App\Models\ActivityType;
 use App\Models\Matter;
 use App\Models\Narration;
 use App\Models\User;
+use App\Queries\Matters\MatterLedger;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -38,22 +39,14 @@ class NarrationController extends Controller
             ->with('status', 'Narration added.');
     }
 
-    public function export(Request $request, Matter $matter): StreamedResponse
+    public function export(ExportLedgerRequest $request, Matter $matter, MatterLedger $ledger): StreamedResponse
     {
         Gate::authorize('view', $matter);
 
         /** @var User $user */
         $user = $request->user();
 
-        $narrations = $matter->narrations()
-            ->with(['activityType', 'author'])
-            ->latestFirst()
-            ->get()
-            ->when($request->query('filter') === 'mine', fn ($all) => $all->where('author_id', $user->getKey()))
-            ->when(
-                filled($request->query('filter')) && $request->query('filter') !== 'mine',
-                fn ($all) => $all->filter(fn (Narration $n) => $n->activityType->code === $request->query('filter')),
-            );
+        $narrations = $ledger->for($matter, $user, $request->filter())['narrations'];
 
         $matter->recordAccess('exported', ['ip' => $request->ip()]);
 
