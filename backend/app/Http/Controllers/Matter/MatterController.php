@@ -18,6 +18,7 @@ use App\Models\Matter;
 use App\Models\MatterType;
 use App\Models\Narration;
 use App\Models\User;
+use App\Queries\Matters\MatterAuditTrail;
 use App\Queries\Matters\MatterDiary;
 use App\Queries\Matters\MatterDocuments;
 use App\Queries\Matters\MatterLedger;
@@ -125,6 +126,7 @@ class MatterController extends Controller
         MatterDocuments $documents,
         MatterParties $parties,
         MatterDiary $diary,
+        MatterAuditTrail $auditTrail,
     ): View {
         Gate::authorize('view', $matter);
 
@@ -175,7 +177,7 @@ class MatterController extends Controller
             'documents' => $documents->for($matter, $request->documentKind()),
             'parties' => $parties->for($matter, $user),
             'diary' => $diary->for($matter, $user, $request->diaryShow()),
-            'audit' => $this->audit($matter),
+            'audit' => ['activities' => $auditTrail->for($matter)],
         });
     }
 
@@ -342,36 +344,5 @@ class MatterController extends Controller
         );
 
         return redirect()->route('matter.show', [$matter, 'tab' => 'parties']);
-    }
-
-    /** @return array<string, mixed> */
-    protected function audit(Matter $matter): array
-    {
-        $related = [
-            'narration' => $matter->narrations()->pluck('id'),
-            'diary_entry' => $matter->diaryEntries()->pluck('id'),
-            'matter_assignment' => $matter->assignments()->pluck('id'),
-            'matter_party' => $matter->parties()->pluck('id'),
-            'document' => $matter->media()->pluck('id'),
-        ];
-
-        $activities = Activity::query()
-            ->where(function (Builder $query) use ($matter, $related): void {
-                $query->where(fn (Builder $query) => $query
-                    ->where('subject_type', $matter->getMorphClass())
-                    ->where('subject_id', $matter->getKey()));
-
-                foreach ($related as $type => $ids) {
-                    $query->orWhere(fn (Builder $query) => $query
-                        ->where('subject_type', $type)
-                        ->whereIn('subject_id', $ids->map(fn ($id) => (string) $id)->all()));
-                }
-            })
-            ->with('causer')
-            ->latest('id')
-            ->paginate(8, ['*'], 'audit_page')
-            ->withQueryString();
-
-        return ['activities' => $activities];
     }
 }
