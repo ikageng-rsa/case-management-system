@@ -23,6 +23,7 @@ use App\Queries\Matters\MatterAuditTrail;
 use App\Queries\Matters\MatterDiary;
 use App\Queries\Matters\MatterDocuments;
 use App\Queries\Matters\MatterLedger;
+use App\Queries\Matters\MatterList;
 use App\Queries\Matters\MatterParties;
 use App\Queries\Matters\MatterRecentReads;
 use App\Services\Diary\ResolveReminderLead;
@@ -50,7 +51,7 @@ class MatterController extends Controller
     /** The activity an opening narration is filed under. */
     private const OPENING_ACTIVITY = 'ADMIN';
 
-    public function index(ListMattersRequest $request): View
+    public function index(ListMattersRequest $request, MatterList $matterList): View
     {
         /** @var User $user */
         $user = $request->user();
@@ -59,40 +60,7 @@ class MatterController extends Controller
         $sort = $request->sort();
         $matterTypeId = $request->matterTypeId();
 
-        $visible = fn (): Builder => Matter::query()
-            ->when(! $user->can('viewAny', Matter::class), fn (Builder $query) => $query->assignedTo($user));
-
-        $unassigned = fn (Builder $query) => $query->whereDoesntHave(
-            'assignments',
-            fn (Builder $query) => $query->active()->inCapacity(Assignment::Responsible),
-        );
-
-        $matters = $visible()
-            ->when($matterTypeId, fn (Builder $query) => $query->where('matter_type_id', $matterTypeId))
-            ->tap(fn (Builder $query) => match ($filter) {
-                'mine' => $query->open()->assignedTo($user),
-                'unassigned' => $unassigned($query->open()),
-                'closed' => $query->closed(),
-                default => $query->open(),
-            })
-            ->with([
-                'client',
-                'matterType',
-                'assignments.user',
-                'diaryEntries' => fn ($query) => $query->pending(),
-            ])
-            ->withCount('media')
-            ->tap(fn (Builder $query) => match ($sort) {
-                'opened' => $query->latest('instructed_at'),
-                'reference' => $query->orderBy('reference'),
-                // Matters with no pending diary entry sort last.
-                default => $query
-                    ->withMin(['diaryEntries as next_due_at' => fn ($query) => $query->pending()], 'due_at')
-                    ->orderByRaw('next_due_at is null')
-                    ->orderBy('next_due_at'),
-            })
-            ->paginate()
-            ->appends($request->except('new'));
+        $list = $matterList->for($user, $filter, $sort, $matterTypeId);
 
         $canOpen = $user->can('create', Matter::class);
 
@@ -100,18 +68,12 @@ class MatterController extends Controller
             'courts' => $canOpen ? Court::query()->orderBy('name')->get() : collect(),
             'attorneys' => $user->can('assign_matters') ? User::query()->orderBy('name')->get() : collect(),
             'selectedClient' => $request->old('client_id') ? Client::find($request->old('client_id')) : null,
-            'matters' => $matters,
+            'matters' => $list['matters']->appends($request->except('new')),
             'filter' => $filter,
             'sort' => $sort,
             'matterTypeId' => $matterTypeId,
             'matterTypes' => MatterType::query()->orderBy('name')->get(),
-            'counts' => [
-                'open' => $visible()->open()->count(),
-                'mine' => $visible()->open()->assignedTo($user)->count(),
-                'unassigned' => $unassigned($visible()->open())->count(),
-                'closed' => $visible()->closed()->count(),
-                'closed_this_year' => $visible()->closed()->whereYear('closed_at', now()->year)->count(),
-            ],
+            'counts' => $list['counts'],
         ]);
     }
 
