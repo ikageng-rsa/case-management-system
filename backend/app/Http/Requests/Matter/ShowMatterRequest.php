@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Matter;
 
+use App\Enums\Document\DocumentKind;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -35,5 +36,13 @@ class ShowMatterRequest extends FormRequest
         $filter = $this->query('filter');
 
         return is_string($filter) && $filter !== '' ? $filter : null;
+    }
+
+    /** The kind of document to narrow to; null, or a kind that doesn't exist, shows them all. */
+    public function documentKind(): ?DocumentKind
+    {
+        $kind = $this->query('kind');
+
+        return is_string($kind) ? DocumentKind::tryFrom($kind) : null;
     }
 }

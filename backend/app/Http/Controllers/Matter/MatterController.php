@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Matter;
 
-use App\Enums\Document\DocumentKind;
 use App\Enums\Matter\Assignment;
 use App\Enums\Matter\PartyRole;
 use App\Http\Controllers\Controller;
@@ -20,6 +19,7 @@ use App\Models\Matter;
 use App\Models\MatterType;
 use App\Models\Narration;
 use App\Models\User;
+use App\Queries\Matters\MatterDocuments;
 use App\Queries\Matters\MatterLedger;
 use App\Services\Diary\ResolveReminderLead;
 use App\Services\Matters\AssignUserToMatter;
@@ -116,7 +116,7 @@ class MatterController extends Controller
         ]);
     }
 
-    public function show(ShowMatterRequest $request, Matter $matter, ResolveReminderLead $resolveLead, MatterLedger $ledger): View
+    public function show(ShowMatterRequest $request, Matter $matter, ResolveReminderLead $resolveLead, MatterLedger $ledger, MatterDocuments $documents): View
     {
         Gate::authorize('view', $matter);
 
@@ -164,7 +164,7 @@ class MatterController extends Controller
                 ->get(),
         ] + match ($tab) {
             'ledger' => $ledger->for($matter, $user, $request->ledgerFilter()),
-            'documents' => $this->documents($request, $matter),
+            'documents' => $documents->for($matter, $request->documentKind()),
             'parties' => $this->parties($matter, $user),
             'diary' => $this->diary($request, $matter, $user),
             'audit' => $this->audit($matter),
@@ -334,27 +334,6 @@ class MatterController extends Controller
         );
 
         return redirect()->route('matter.show', [$matter, 'tab' => 'parties']);
-    }
-
-    /** @return array<string, mixed> */
-    protected function documents(Request $request, Matter $matter): array
-    {
-        $kind = DocumentKind::tryFrom((string) $request->query('kind'));
-
-        $all = $matter->documents();
-
-        return [
-            'documents' => $all
-                ->when($kind, fn ($documents) => $documents->filter(
-                    fn ($media) => $media->getCustomProperty('kind') === $kind->value,
-                ))
-                ->sortByDesc('created_at')
-                ->values(),
-            'allDocumentsCount' => $all->count(),
-            'kind' => $kind,
-            'kindCounts' => $all->countBy(fn ($media) => $media->getCustomProperty('kind')),
-            'kinds' => DocumentKind::cases(),
-        ];
     }
 
     /** @return array<string, mixed> */
