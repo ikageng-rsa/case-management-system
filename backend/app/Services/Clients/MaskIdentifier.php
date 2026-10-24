@@ -62,6 +62,12 @@ class MaskIdentifier
             : Str::mask($value, self::DOT, 0, -$keep);
     }
 
+    /** A date of birth gives nothing away until it is read in full: "·· ··· ····". */
+    public static function dateOfBirth(): string
+    {
+        return '·· ··· ····';
+    }
+
     /** 2011/123456/07 reads as "2011/······/07". */
     public static function registrationNumber(string $value): string
     {

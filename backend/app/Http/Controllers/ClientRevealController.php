@@ -37,7 +37,7 @@ class ClientRevealController extends Controller
     }
 
     /**
-     * What is being asked for: "identifier", "contact:{id}" or "person:{id}:{mobile|email}".
+     * What is being asked for: "identifier", "date_of_birth", "contact:{id}" or "person:{id}:{mobile|email}".
      *
      * @return array{0: Client|ClientContact|ClientContactPerson, 1: string, 2: ?string}
      */
@@ -47,6 +47,10 @@ class ClientRevealController extends Controller
             return $client->isEntity()
                 ? [$client, 'registration_number', $client->registration_number]
                 : [$client, 'id_number', $client->id_number];
+        }
+
+        if ($target === 'date_of_birth') {
+            return [$client, 'date_of_birth', $client->date_of_birth?->format('d M Y')];
         }
 
         Gate::authorize(Permission::ViewClientContacts->value);

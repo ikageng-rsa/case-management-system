@@ -7,18 +7,23 @@ namespace App\Http\Requests\Client;
 use App\Enums\Auth\Permission;
 use App\Enums\Client\ClientType;
 use App\Enums\Client\ContactKind;
+use App\Enums\Client\FicaDocument;
+use App\Enums\Client\PopiaConsentMethod;
+use App\Http\Requests\Client\Concerns\ValidatesIdentity;
 use App\Models\MatterType;
-use App\Rules\Client\UniqueClientIdNumber;
 use App\Rules\Client\UniqueClientRegistrationNumber;
 use App\Rules\Client\ValidContactValue;
 use App\Rules\Client\ValidRegistrationNumber;
-use App\Rules\Client\ValidSouthAfricanId;
+use App\Rules\Document\AllowedDocument;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Rule;
 
 class StoreClientRequest extends FormRequest
 {
+    use ValidatesIdentity;
+
     protected $errorBag = 'client';
 
     /**
@@ -41,7 +46,39 @@ class StoreClientRequest extends FormRequest
             ClientType::Individual => $this->individualRules(),
             ClientType::Entity => $this->entityRules(),
             default => ['type' => ['required', Rule::enum(ClientType::class)]],
-        } + $this->contactRules() + $this->intakeRules();
+        } + $this->contactRules() + $this->ficaRules() + $this->intakeRules();
+    }
+
+    /**
+     * FICA documents can be filed at intake, one file for each the kind of client
+     * is asked for. None is required: the rest can be added on the client later.
+     *
+     * @return array<string, ValidationRule|array<mixed>|string>
+     */
+    protected function ficaRules(): array
+    {
+        $type = $this->clientType();
+
+        if ($type === null) {
+            return [];
+        }
+
+        return collect(FicaDocument::forType($type))
+            ->mapWithKeys(fn (FicaDocument $document) => [
+                'fica.'.$document->value => ['nullable', 'file', 'max:'.config('documents.max_kilobytes'), new AllowedDocument],
+            ])
+            ->all();
+    }
+
+    /** @return array<string, UploadedFile> */
+    public function ficaFiles(): array
+    {
+        $type = $this->clientType();
+
+        return $type === null ? [] : collect(FicaDocument::forType($type))
+            ->mapWithKeys(fn (FicaDocument $document) => [$document->value => $this->file('fica.'.$document->value)])
+            ->filter()
+            ->all();
     }
 
     /**
@@ -53,8 +90,17 @@ class StoreClientRequest extends FormRequest
             'type' => ['required', Rule::enum(ClientType::class)],
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            'id_number' => ['required', 'string', new ValidSouthAfricanId, new UniqueClientIdNumber],
-        ];
+        ] + $this->identityRules();
+    }
+
+    /** @return array<int, callable> */
+    public function after(): array
+    {
+        return [function ($validator): void {
+            if ($this->clientType() === ClientType::Individual) {
+                $this->checkBirthDateAgainstId($validator);
+            }
+        }];
     }
 
     /**
@@ -85,20 +131,27 @@ class StoreClientRequest extends FormRequest
     }
 
     /**
-     * The client's consent is recorded by whoever is cleared to record it, and
-     * they have to confirm it before the client is registered. The matter is
-     * only validated when the user is going on to open one.
+     * Consent is optional at intake and can be recorded on the client later. Given
+     * now, it says how it was given, and a signed mandate has to be attached, as
+     * when it is recorded on the client. A matter is opened, and so validated,
+     * only when a matter type is chosen.
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
     protected function intakeRules(): array
     {
-        $rules = [
-            'intent' => ['nullable', Rule::in(['client', 'matter'])],
-            'popia_consent' => [$this->user()->can(Permission::RecordPopiaConsent->value) ? 'accepted' : 'nullable'],
-        ];
+        $rules = $this->user()->can(Permission::RecordPopiaConsent->value) && $this->boolean('popia_consent')
+            ? [
+                'popia_consent' => ['accepted'],
+                'popia_method' => ['required', Rule::enum(PopiaConsentMethod::class)],
+                'popia_mandate' => [
+                    Rule::requiredIf($this->input('popia_method') === PopiaConsentMethod::Signed->value),
+                    'nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:20480',
+                ],
+            ]
+            : ['popia_consent' => ['nullable', 'boolean']];
 
-        if ($this->input('intent') !== 'matter') {
+        if (! $this->opensMatter()) {
             return $rules;
         }
 
@@ -111,6 +164,11 @@ class StoreClientRequest extends FormRequest
                 Rule::exists('courts', 'id')->withoutTrashed(),
             ],
         ];
+    }
+
+    public function opensMatter(): bool
+    {
+        return $this->filled('matter_type_id');
     }
 
     protected function courtIsRequired(): bool

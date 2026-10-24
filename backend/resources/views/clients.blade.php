@@ -11,7 +11,8 @@
 
         $showMobile = fn (string $value) => \App\Services\Clients\MaskIdentifier::mobile($value);
         $showEmail = fn (string $value) => \App\Services\Clients\MaskIdentifier::email($value);
-        $showId = fn (string $value) => \App\Services\Clients\MaskIdentifier::idNumber($value);
+        // A passport or other document is named, so its number is not taken for a South African ID.
+        $showId = fn (\App\Models\Client $person) => ltrim($person->id_type?->prefix().' '.\App\Services\Clients\MaskIdentifier::idNumber($person->id_number));
         $showRegistration = fn (string $value) => \App\Services\Clients\MaskIdentifier::registrationNumber($value);
 
         $details = function (\App\Models\Client $person) use ($canSeeContacts, $mobile, $email, $showMobile, $showEmail, $showId, $showRegistration) {
@@ -20,23 +21,27 @@
                 $canSeeContacts && $email($person) ? $showEmail($email($person)) : null,
                 $person->isEntity()
                     ? ($person->registration_number ? 'reg '.$showRegistration($person->registration_number) : null)
-                    : ($person->id_number ? $showId($person->id_number) : null),
+                    : ($person->id_number ? $showId($person) : null),
             ])->filter()->implode(' · ');
         };
     @endphp
 
-    <div class="row g-0">
-        <div class="col-12 col-lg-4 border-end pe-lg-4">
+    {{-- On a wide screen the page holds still at the height of the window: the list and the client
+         each scroll on their own. Stacked on a narrow one, the page scrolls as usual. --}}
+    <div class="row g-0" x-data="fillHeight">
+        <div class="col-12 col-lg-4 border-end pe-lg-4 h-100">
             {{-- The heading, search and intake button stay put while the clients scroll beneath them. --}}
-            <div class="card" style="max-height: calc(100vh - 9rem);">
+            <div class="card h-100" style="max-height: calc(100vh - 2rem);">
                 <div class="card-body d-flex flex-column overflow-hidden">
                     <div class="d-flex align-items-center justify-content-between mb-3 flex-shrink-0">
                         <h1 class="mb-0">Clients</h1>
                         <span class="text-meta">{{ $total }}</span>
                     </div>
 
-                    <form method="GET" action="{{ route('clients') }}" class="flex-shrink-0">
-                        <x-ui.search-field name="q" :value="$query" placeholder="Name, ID number, phone…" :shortcut="false" wrapper="mb-3" class="w-100" />
+                    {{-- The button is for touch keyboards that have no enter key to submit with. --}}
+                    <form method="GET" action="{{ route('clients') }}" class="d-flex gap-2 mb-3 flex-shrink-0">
+                        <x-ui.search-field name="q" :value="$query" placeholder="Name, ID number, phone…" :shortcut="false" wrapper="flex-fill" class="w-100" />
+                        <x-ui.button type="submit" variant="outline-secondary" icon="search" aria-label="Search" title="Search" size="sm" />
                     </form>
 
                     @can('create', \App\Models\Client::class)
@@ -78,7 +83,7 @@
             </div>
         </div>
 
-        <div class="col-12 col-lg-8 ps-lg-4">
+        <div class="col-12 col-lg-8 ps-lg-4 h-100 overflow-y-auto overflow-x-hidden">
             @if ($client)
                 <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-3">
                     <div class="d-flex align-items-center gap-3">
@@ -96,11 +101,15 @@
                                         ]),
                                     $client->isEntity()
                                         ? ($client->registration_number ? ['masked' => 'reg '.$showRegistration($client->registration_number), 'target' => 'identifier'] : null)
-                                        : ($client->id_number ? ['masked' => $showId($client->id_number), 'target' => 'identifier'] : null),
+                                        : ($client->id_number ? ['masked' => $showId($client), 'target' => 'identifier'] : null),
+                                    $client->date_of_birth ? ['label' => 'born', 'masked' => \App\Services\Clients\MaskIdentifier::dateOfBirth(), 'target' => 'date_of_birth'] : null,
                                 ])->filter()->values();
                             @endphp
                             <p class="text-meta mb-0 d-flex flex-wrap align-items-center gap-1">
                                 @foreach ($headerItems as $item)
+                                    @isset ($item['label'])
+                                        <span>{{ $item['label'] }}</span>
+                                    @endisset
                                     <x-client.reveal :masked="$item['masked']" :target="$item['target']" :client="$client" :can-reveal="$canReveal" />
                                     @unless ($loop->last)
                                         <span>·</span>
@@ -160,14 +169,15 @@
 
                     <div class="row mb-3">
                         <div class="col">
-                            <div class="card">
+                            {{-- The latest few are shown; the rest stay folded away until asked for. --}}
+                            <div class="card" x-data="{ allMatters: false }">
                                 <div class="card-body">
                                     <h3 class="text-meta text-uppercase mb-2">Matters</h3>
                                     <div class="table-responsive">
                                         <table class="table table-vcenter">
                                             <tbody>
                                                 @forelse ($matters as $matter)
-                                                    <tr>
+                                                    <tr @if ($loop->index >= 4) x-show="allMatters" x-cloak @endif>
                                                         <td class="text-meta text-nowrap"><a href="{{ route('matter.show', $matter) }}">{{ $matter->reference }}</a></td>
                                                         <td>{{ $matter->title }}</td>
                                                         <td>
@@ -184,6 +194,82 @@
                                                         <td class="text-center text-secondary py-3">No matters for this client.</td>
                                                     </tr>
                                                 @endforelse
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    @if ($matters->count() > 4)
+                                        <x-ui.button variant="ghost-secondary" size="sm" x-on:click="allMatters = ! allMatters"
+                                            x-text="allMatters ? 'Show fewer' : 'Show all {{ $matters->count() }} matters'">Show all {{ $matters->count() }} matters</x-ui.button>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @php
+                        $outstanding = count($client->outstandingFicaDocuments());
+                    @endphp
+
+                    <div class="row mb-3">
+                        <div class="col">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <h3 class="text-meta text-uppercase mb-0">FICA documents</h3>
+                                            @if ($outstanding === 0)
+                                                <x-ui.stage-badge tone="success">Complete</x-ui.stage-badge>
+                                            @else
+                                                <x-ui.stage-badge tone="danger">{{ $outstanding }} outstanding</x-ui.stage-badge>
+                                            @endif
+                                        </div>
+
+                                        @can('update', $client)
+                                            <x-ui.button variant="outline-secondary" size="sm" icon="upload"
+                                                x-data x-on:click="$dispatch('sheet-open', 'upload-fica')">Upload</x-ui.button>
+                                        @endcan
+                                    </div>
+
+                                    <div class="table-responsive">
+                                        <table class="table table-vcenter">
+                                            <tbody>
+                                                @foreach (\App\Enums\Client\FicaDocument::forType($client->type) as $document)
+                                                    @php
+                                                        $files = $client->ficaDocuments($document);
+                                                    @endphp
+                                                    <tr>
+                                                        <td>
+                                                            <div>{{ $document->label() }}</div>
+                                                            <div class="text-meta text-secondary">{{ $document->hint() }}</div>
+                                                        </td>
+                                                        <td>
+                                                            @forelse ($files as $file)
+                                                                <div class="d-flex align-items-center justify-content-end gap-2 text-nowrap">
+                                                                    {{-- A copy of an ID shows the number in full, so only those cleared to see it may open one. --}}
+                                                                    @if ($canDownloadFica)
+                                                                        <a href="{{ route('client.fica.download', [$client, $file->getKey()]) }}">{{ $file->file_name }}</a>
+                                                                    @else
+                                                                        <span>{{ $file->file_name }}</span>
+                                                                    @endif
+                                                                    <span class="text-meta">{{ $file->created_at->format('d M Y') }}</span>
+
+                                                                    @if ($canDeleteFica)
+                                                                        <form method="POST" action="{{ route('client.fica.destroy', [$client, $file->getKey()]) }}" class="d-inline"
+                                                                            data-confirm="Delete {{ $file->file_name }}? This cannot be undone."
+                                                                            data-confirm-title="Delete FICA document" data-confirm-action="Delete" data-confirm-tone="danger" data-confirm-icon="trash">
+                                                                            @csrf
+                                                                            @method('DELETE')
+                                                                            <x-ui.button type="submit" variant="ghost-danger" size="sm">Delete</x-ui.button>
+                                                                        </form>
+                                                                    @endif
+                                                                </div>
+                                                            @empty
+                                                                <div class="text-end"><x-ui.stage-badge>Outstanding</x-ui.stage-badge></div>
+                                                            @endforelse
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
                                             </tbody>
                                         </table>
                                     </div>
@@ -304,17 +390,51 @@
                     <x-ui.input label="Last name" name="last_name" id="edit_last_name"
                         :value="$field('last_name', $client->last_name)" :error="$errors->client_edit->first('last_name')" />
 
-                    <x-ui.input label="ID number" name="id_number" id="edit_id_number"
+                    <x-ui.select label="Identity document" name="id_type" id="edit_id_type" :error="$errors->client_edit->first('id_type')">
+                        @foreach (\App\Enums\Client\IdentityType::cases() as $identity)
+                            <option value="{{ $identity->value }}" @selected($field('id_type', ($client->id_type ?? \App\Enums\Client\IdentityType::SouthAfricanId)->value) === $identity->value)>{{ $identity->label() }}</option>
+                        @endforeach
+                    </x-ui.select>
+
+                    <x-ui.input label="ID or passport number" name="id_number" id="edit_id_number"
                         :value="$field('id_number', '')"
-                        :placeholder="\App\Services\Clients\MaskIdentifier::idNumber((string) $client->id_number)"
-                        hint="Leave empty to keep the current number. Use the eye on the client to read it."
+                        :placeholder="$client->id_number ? \App\Services\Clients\MaskIdentifier::idNumber($client->id_number) : 'Not on file'"
+                        :hint="$client->id_number ? 'Leave empty to keep the current number. Use the eye on the client to read it.' : 'Optional.'"
                         :error="$errors->client_edit->first('id_number')" />
+
+                    {{-- Like the number, the date on file is never printed into the form. --}}
+                    <x-ui.input label="Date of birth" name="date_of_birth" id="edit_date_of_birth" type="date"
+                        :value="$field('date_of_birth', '')" max="{{ now()->subDay()->toDateString() }}"
+                        :hint="$client->date_of_birth ? 'Leave empty to keep the date on file. Use the eye on the client to read it.' : 'Optional. Read from a South African ID number when left empty.'"
+                        :error="$errors->client_edit->first('date_of_birth')" />
                 @endif
 
                 <x-slot:footer>
                     <div class="d-flex align-items-center justify-content-between">
                         <x-ui.button variant="outline-secondary" x-on:click="close()">Cancel</x-ui.button>
                         <x-ui.button type="submit" variant="primary">Save changes</x-ui.button>
+                    </div>
+                </x-slot:footer>
+            </x-ui.sheet>
+        @endcan
+
+        @can('update', $client)
+            <x-ui.sheet name="upload-fica" title="Upload FICA document" :lede="$client->full_name" bag="fica"
+                :action="route('client.fica.store', $client)" enctype="multipart/form-data">
+                <x-ui.select label="Document" name="document" id="fica_document" :error="$errors->fica->first('document')">
+                    @foreach (\App\Enums\Client\FicaDocument::forType($client->type) as $document)
+                        <option value="{{ $document->value }}" @selected(old('document') === $document->value)>{{ $document->label() }}</option>
+                    @endforeach
+                </x-ui.select>
+
+                <x-ui.input label="File" name="file" id="fica_file" type="file"
+                    accept="{{ collect(array_keys(config('documents.allowed')))->map(fn ($extension) => '.'.$extension)->implode(',') }}"
+                    hint="PDF or a scan, up to 50 MB." :error="$errors->fica->first('file')" />
+
+                <x-slot:footer>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <x-ui.button variant="outline-secondary" x-on:click="close()">Cancel</x-ui.button>
+                        <x-ui.button type="submit" variant="primary">Upload</x-ui.button>
                     </div>
                 </x-slot:footer>
             </x-ui.sheet>
@@ -359,6 +479,9 @@
 
             $intakeConfig = [
                 'type' => old('type', 'individual'),
+                'idType' => old('id_type', \App\Enums\Client\IdentityType::SouthAfricanId->value),
+                'consent' => (bool) old('popia_consent'),
+                'consentMethod' => old('popia_method', \App\Enums\Client\PopiaConsentMethod::Signed->value),
                 'matterTypeId' => (string) old('matter_type_id', ''),
                 'matterTypes' => $matterTypes->mapWithKeys(fn ($type) => [
                     $type->getKey() => ['litigation' => (bool) $type->is_litigation],
@@ -367,7 +490,7 @@
         @endphp
 
         <x-ui.sheet name="new-client" title="New client intake" lede="Register a client, and open their matter if you are ready to." bag="client" wide
-            :action="route('client.store')" :form-data="'clientIntake('.\Illuminate\Support\Js::from($intakeConfig).')'">
+            :action="route('client.store')" enctype="multipart/form-data" :form-data="'clientIntake('.\Illuminate\Support\Js::from($intakeConfig).')'">
             {{-- Planned: shown beside the title once drafts can be saved
             <span class="badge">draft autosaved</span>
             --}}
@@ -376,6 +499,12 @@
             --}}
 
             <h3 class="text-meta text-uppercase mb-2">Identity</h3>
+
+            {{-- The type comes first: it decides which of the fields below apply. --}}
+            <x-ui.select label="Client type" name="type" x-model="type" :error="$intake->first('type')">
+                <option value="individual">Individual</option>
+                <option value="entity">Entity</option>
+            </x-ui.select>
 
             <div x-show="type === 'individual'">
                 <div class="row">
@@ -386,29 +515,41 @@
                         <x-ui.input label="Surname" name="last_name" :value="old('last_name')" :error="$intake->first('last_name')" />
                     </div>
                 </div>
-            </div>
 
-            <div x-show="type === 'entity'" x-cloak>
-                <x-ui.input label="Registered name" name="entity_name" :value="old('entity_name')" :error="$intake->first('entity_name')" />
-            </div>
-
-            <div class="row">
-                <div class="col-md-6">
-                    <div x-show="type === 'individual'">
-                        <x-ui.input label="ID number" name="id_number" :value="old('id_number')" :error="$intake->first('id_number')" />
+                {{-- Clients come from several countries and do not always have their document with them,
+                     so none of this is required; it can be added on the client later. --}}
+                <div class="row">
+                    <div class="col-md-6">
+                        <x-ui.select label="Identity document" name="id_type" id="intake_id_type" x-model="idType" :error="$intake->first('id_type')">
+                            @foreach (\App\Enums\Client\IdentityType::cases() as $identity)
+                                <option value="{{ $identity->value }}">{{ $identity->label() }}</option>
+                            @endforeach
+                        </x-ui.select>
                     </div>
-
-                    <div x-show="type === 'entity'" x-cloak>
-                        <x-ui.input label="Registration number" name="registration_number" :value="old('registration_number')"
-                            hint="e.g. 2011/123456/07" :error="$intake->first('registration_number')" />
+                    <div class="col-md-6">
+                        <x-ui.input label="ID or passport number" name="id_number" id="intake_id_number" :value="old('id_number')"
+                            hint="Optional" :error="$intake->first('id_number')" />
                     </div>
                 </div>
 
-                <div class="col-md-6">
-                    <x-ui.select label="Client type" name="type" x-model="type" :error="$intake->first('type')">
-                        <option value="individual">Individual</option>
-                        <option value="entity">Entity</option>
-                    </x-ui.select>
+                <div class="row">
+                    <div class="col-md-6">
+                        <x-ui.input label="Date of birth" name="date_of_birth" id="intake_date_of_birth" type="date" :value="old('date_of_birth')"
+                            max="{{ now()->subDay()->toDateString() }}" hint="Optional. Read from an SA ID number when left empty."
+                            :error="$intake->first('date_of_birth')" />
+                    </div>
+                </div>
+            </div>
+
+            <div x-show="type === 'entity'" x-cloak>
+                <div class="row">
+                    <div class="col-md-6">
+                        <x-ui.input label="Registered name" name="entity_name" :value="old('entity_name')" :error="$intake->first('entity_name')" />
+                    </div>
+                    <div class="col-md-6">
+                        <x-ui.input label="Registration number" name="registration_number" :value="old('registration_number')"
+                            hint="e.g. 2011/123456/07" :error="$intake->first('registration_number')" />
+                    </div>
                 </div>
             </div>
 
@@ -427,11 +568,30 @@
 
             <x-ui.input label="Physical address" name="physical_address" :value="old('physical_address')" maxlength="500" :error="$intake->first('physical_address')" />
 
+            <hr>
+
+            <h3 class="text-meta text-uppercase mb-2">FICA documents</h3>
+            <p class="text-meta">Optional. Anything not on hand can be uploaded on the client later.</p>
+
+            {{-- Each kind of client is asked for its own documents; the other kind's are disabled, so they are never sent. --}}
+            @foreach (\App\Enums\Client\ClientType::cases() as $clientType)
+                <div class="row" x-show="type === '{{ $clientType->value }}'" @if ($clientType !== \App\Enums\Client\ClientType::Individual) x-cloak @endif>
+                    @foreach (\App\Enums\Client\FicaDocument::forType($clientType) as $document)
+                        <div class="col-md-6">
+                            <x-ui.input :label="$document->label()" name="fica[{{ $document->value }}]" id="intake_fica_{{ $document->value }}" type="file"
+                                accept="{{ collect(array_keys(config('documents.allowed')))->map(fn ($extension) => '.'.$extension)->implode(',') }}"
+                                x-bind:disabled="type !== '{{ $clientType->value }}'" :hint="$document->hint()"
+                                :error="$intake->first('fica.'.$document->value)" />
+                        </div>
+                    @endforeach
+                </div>
+            @endforeach
+
             @can('create', \App\Models\Matter::class)
                 <hr>
 
                 <h3 class="text-meta text-uppercase mb-2">Matter</h3>
-                <p class="text-meta">Only needed when you choose Save &amp; open matter.</p>
+                <p class="text-meta">Choose a matter type to open the client's matter now, or leave it to register the client only.</p>
 
                 <x-ui.select label="Nature of instruction" name="matter_type_id" id="intake_matter_type_id" x-model="matterTypeId"
                     :error="$intake->first('matter_type_id')">
@@ -465,7 +625,7 @@
 
                 <div class="form-check">
                     <input class="form-check-input @if ($intake->has('popia_consent')) is-invalid @endif" type="checkbox"
-                        id="intake_popia_consent" name="popia_consent" value="1" @checked(old('popia_consent'))>
+                        id="intake_popia_consent" name="popia_consent" value="1" x-model="consent">
                     <label class="form-check-label" for="intake_popia_consent">
                         Client confirms the information above is correct and consents to the firm processing their
                         personal information for the purposes of this matter (POPIA s.11). Consent is timestamped and
@@ -475,20 +635,33 @@
                         <div class="invalid-feedback d-block">{{ $intake->first('popia_consent') }}</div>
                     @endif
                 </div>
+
+                {{-- Optional at intake; left unticked, consent is recorded on the client later. Disabled while
+                     hidden, so nothing about a consent that was not given is sent. --}}
+                <div class="row mt-3" x-show="consent" x-cloak>
+                    <div class="col-md-6">
+                        <x-ui.select label="How consent was given" name="popia_method" id="intake_popia_method" x-model="consentMethod"
+                            x-bind:disabled="! consent" :error="$intake->first('popia_method')">
+                            @foreach (\App\Enums\Client\PopiaConsentMethod::cases() as $method)
+                                <option value="{{ $method->value }}">{{ Str::headline($method->value) }}</option>
+                            @endforeach
+                        </x-ui.select>
+                    </div>
+                    <div class="col-md-6">
+                        <x-ui.input label="Signed mandate" name="popia_mandate" id="intake_popia_mandate" type="file" accept=".pdf,.jpg,.jpeg,.png"
+                            x-bind:disabled="! consent" :error="$intake->first('popia_mandate')" />
+                        <p class="form-hint" x-show="consentMethod === 'signed_mandate'">Required for a signed mandate. PDF or image, up to 20 MB.</p>
+                        <p class="form-hint" x-show="consentMethod !== 'signed_mandate'" x-cloak>Optional. PDF or image, up to 20 MB.</p>
+                    </div>
+                </div>
             @endcan
 
             <x-slot:footer>
                 <div class="d-flex align-items-center justify-content-between">
                     <x-ui.button variant="outline-secondary" x-on:click="close()">Cancel</x-ui.button>
 
-                    <div class="d-flex gap-2">
-                        @can('create', \App\Models\Matter::class)
-                            <x-ui.button type="submit" name="intent" value="client" variant="outline-secondary">Save client only</x-ui.button>
-                            <x-ui.button type="submit" name="intent" value="matter" variant="primary">Save &amp; open matter →</x-ui.button>
-                        @else
-                            <x-ui.button type="submit" name="intent" value="client" variant="primary">Save client</x-ui.button>
-                        @endcan
-                    </div>
+                    {{-- One save: the matter is opened too when a matter type was chosen. --}}
+                    <x-ui.button type="submit" variant="primary">Save client</x-ui.button>
                 </div>
             </x-slot:footer>
         </x-ui.sheet>

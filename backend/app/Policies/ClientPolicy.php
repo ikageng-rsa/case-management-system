@@ -29,4 +29,15 @@ class ClientPolicy
     {
         return $user->can(Permission::EditClients->value);
     }
+
+    /** A FICA document shows identifiers in full, so reading one is for those cleared to see them. */
+    public function downloadFicaDocument(User $user, Client $client): bool
+    {
+        return $this->view($user, $client) && $user->can(Permission::ViewUnmaskedClientData->value);
+    }
+
+    public function deleteFicaDocument(User $user, Client $client): bool
+    {
+        return $this->update($user, $client) && $user->can(Permission::DeleteDocuments->value);
+    }
 }

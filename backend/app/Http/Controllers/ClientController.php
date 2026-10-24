@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\Client\ClientType;
 use App\Enums\Client\ContactKind;
+use App\Enums\Client\FicaDocument;
 use App\Enums\Client\PopiaConsentMethod;
 use App\Http\Requests\Client\StoreClientRequest;
 use App\Http\Requests\Client\UpdateClientRequest;
@@ -64,7 +65,7 @@ class ClientController extends Controller
     ): RedirectResponse {
         Gate::authorize('create', Client::class);
 
-        $opensMatter = $request->input('intent') === 'matter';
+        $opensMatter = $request->opensMatter();
 
         if ($opensMatter) {
             Gate::authorize('create', Matter::class);
@@ -86,8 +87,17 @@ class ClientController extends Controller
                     }
                 }
 
+                foreach ($request->ficaFiles() as $document => $file) {
+                    $client->addFicaDocument($file, FicaDocument::from($document))->recordAccess('uploaded');
+                }
+
                 if ($request->boolean('popia_consent') && $request->user()->can('record_popia_consent')) {
-                    $recordConsent->record($client, true, PopiaConsentMethod::Verbal);
+                    $recordConsent->record(
+                        $client,
+                        true,
+                        PopiaConsentMethod::from($request->validated('popia_method')),
+                        mandate: $request->file('popia_mandate'),
+                    );
                 }
 
                 $matter = $opensMatter
@@ -139,7 +149,7 @@ class ClientController extends Controller
                     'name' => $client->full_name,
                     'detail' => $client->isEntity()
                         ? ($client->registration_number ? 'reg '.MaskIdentifier::registrationNumber($client->registration_number) : '')
-                        : ($client->id_number ? MaskIdentifier::idNumber($client->id_number) : ''),
+                        : ($client->id_number ? ltrim($client->id_type?->prefix().' '.MaskIdentifier::idNumber($client->id_number)) : ''),
                     'matters' => $client->matters_count,
                 ]),
         );
@@ -182,7 +192,7 @@ class ClientController extends Controller
     /** @return array<string, mixed> */
     protected function detail(Client $client, User $user): array
     {
-        $client->load('contacts');
+        $client->load('contacts', 'media');
 
         $matters = $client->matters()
             ->with('matterType')
@@ -198,6 +208,8 @@ class ClientController extends Controller
             : collect();
 
         return [
+            'canDownloadFica' => $user->can('downloadFicaDocument', $client),
+            'canDeleteFica' => $user->can('deleteFicaDocument', $client),
             'contactPersons' => $user->can('view_client_contacts') ? $client->contactPersons()->orderByDesc('is_primary')->oldest()->get() : collect(),
             'matters' => $matters,
             'openMattersCount' => $matters->filter->isOpen()->count(),
