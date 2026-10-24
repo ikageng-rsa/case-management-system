@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Models;
+namespace App\Models\Client;
 
 use App\Casts\Client\EncryptedContact;
 use App\Concerns\RecordsActivity;
-use Database\Factories\ClientContactPersonFactory;
+use Database\Factories\Client\ClientContactPersonFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

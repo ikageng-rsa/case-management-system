@@ -6,8 +6,8 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Client\SaveContactPersonRequest;
-use App\Models\Client;
-use App\Models\ClientContactPerson;
+use App\Models\Client\Client;
+use App\Models\Client\ClientContactPerson;
 use App\Services\Clients\AddContactPerson;
 use App\Services\Clients\RemoveContactPerson;
 use App\Services\Clients\UpdateContactPerson;

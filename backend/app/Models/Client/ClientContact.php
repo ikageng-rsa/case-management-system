@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Models;
+namespace App\Models\Client;
 
 use App\Casts\Client\ContactValue;
 use App\Concerns\RecordsActivity;
@@ -10,7 +10,7 @@ use App\Enums\Client\ContactKind;
 use App\Observers\ClientContactObserver;
 use App\Support\Clients\GenerateBlindIndex;
 use App\Support\Clients\NormaliseIdentifier;
-use Database\Factories\ClientContactFactory;
+use Database\Factories\Client\ClientContactFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;

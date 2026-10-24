@@ -7,7 +7,7 @@ namespace App\Models\Matter;
 use App\Concerns\RecordsActivity;
 use App\Enums\Document\DocumentKind;
 use App\Enums\Matter\Assignment;
-use App\Models\Client;
+use App\Models\Client\Client;
 use App\Models\Court;
 use App\Models\DiaryEntry;
 use App\Models\MatterType;

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Database\Factories;
+namespace Database\Factories\Client;
 
 use App\Enums\Client\ClientType;
 use App\Enums\Client\IdentityType;
-use App\Models\Client;
+use App\Models\Client\Client;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Models\Matter;
 
 use App\Enums\Matter\Assignment;
-use App\Models\Client;
+use App\Models\Client\Client;
 use App\Models\Matter\Matter;
 use App\Models\Matter\MatterAssignment;
 use App\Models\MatterType;

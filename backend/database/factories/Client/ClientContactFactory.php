@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Database\Factories;
+namespace Database\Factories\Client;
 
 use App\Enums\Client\ContactKind;
-use App\Models\Client;
-use App\Models\ClientContact;
+use App\Models\Client\Client;
+use App\Models\Client\ClientContact;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

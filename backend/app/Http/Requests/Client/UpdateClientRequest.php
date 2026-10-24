@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Client;
 
 use App\Http\Requests\Client\Concerns\ValidatesIdentity;
-use App\Models\Client;
+use App\Models\Client\Client;
 use App\Rules\Client\UniqueClientRegistrationNumber;
 use App\Rules\Client\ValidRegistrationNumber;
 use Illuminate\Contracts\Validation\ValidationRule;

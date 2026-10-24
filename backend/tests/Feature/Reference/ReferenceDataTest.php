@@ -7,7 +7,7 @@ namespace Tests\Feature\Reference;
 use App\Enums\Auth\Role as RoleEnum;
 use App\Enums\Matter\Assignment;
 use App\Models\ActivityType;
-use App\Models\Client;
+use App\Models\Client\Client;
 use App\Models\Court;
 use App\Models\Matter\Matter;
 use App\Models\Matter\MatterAssignment;

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Services\Clients;
 
 use App\Enums\Client\ClientType;
-use App\Models\Client;
+use App\Models\Client\Client;
 use App\Services\Clients\DuplicateClientException;
 use App\Services\Clients\RegisterClient;
 use App\Support\Clients\GenerateBlindIndex;

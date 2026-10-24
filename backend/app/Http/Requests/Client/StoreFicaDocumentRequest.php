@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Client;
 
 use App\Enums\Client\FicaDocument;
-use App\Models\Client;
+use App\Models\Client\Client;
 use App\Rules\Document\AllowedDocument;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;

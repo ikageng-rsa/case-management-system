@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories\Matter;
 
-use App\Models\Client;
+use App\Models\Client\Client;
 use App\Models\Court;
 use App\Models\Matter\Matter;
 use App\Models\MatterType;

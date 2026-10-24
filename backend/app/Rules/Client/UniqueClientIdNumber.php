@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Rules\Client;
 
 use App\Enums\Client\IdentityType;
-use App\Models\Client;
+use App\Models\Client\Client;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 

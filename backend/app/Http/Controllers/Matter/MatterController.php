@@ -13,7 +13,7 @@ use App\Http\Requests\Matter\ShowMatterRequest;
 use App\Http\Requests\Matter\StoreMatterRequest;
 use App\Http\Requests\Matter\UpdateMatterRequest;
 use App\Models\ActivityType;
-use App\Models\Client;
+use App\Models\Client\Client;
 use App\Models\Court;
 use App\Models\Matter\Matter;
 use App\Models\MatterType;

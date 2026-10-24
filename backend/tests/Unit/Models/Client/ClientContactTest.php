@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Models;
+namespace Tests\Unit\Models\Client;
 
 use App\Enums\Client\ContactKind;
-use App\Models\Client;
-use App\Models\ClientContact;
+use App\Models\Client\Client;
+use App\Models\Client\ClientContact;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;

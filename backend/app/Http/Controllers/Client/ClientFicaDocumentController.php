@@ -7,7 +7,7 @@ namespace App\Http\Controllers\Client;
 use App\Enums\Client\FicaDocument;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Client\StoreFicaDocumentRequest;
-use App\Models\Client;
+use App\Models\Client\Client;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;

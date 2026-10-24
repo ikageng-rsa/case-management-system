@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Queries\Matters;
 
-use App\Models\ClientContact;
+use App\Models\Client\ClientContact;
 use App\Models\Matter\Matter;
 use App\Models\Matter\MatterParty;
 use App\Models\User;

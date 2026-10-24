@@ -6,9 +6,9 @@ namespace App\Http\Controllers\Client;
 
 use App\Enums\Auth\Permission;
 use App\Http\Controllers\Controller;
-use App\Models\Client;
-use App\Models\ClientContact;
-use App\Models\ClientContactPerson;
+use App\Models\Client\Client;
+use App\Models\Client\ClientContact;
+use App\Models\Client\ClientContactPerson;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;

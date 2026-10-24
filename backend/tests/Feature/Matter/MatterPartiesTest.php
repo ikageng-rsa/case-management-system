@@ -6,7 +6,7 @@ namespace Tests\Feature\Matter;
 
 use App\Enums\Auth\Role as RoleEnum;
 use App\Enums\Matter\PartyRole;
-use App\Models\Client;
+use App\Models\Client\Client;
 use App\Models\Matter\Matter;
 use App\Models\Matter\MatterParty;
 use App\Models\MatterType;

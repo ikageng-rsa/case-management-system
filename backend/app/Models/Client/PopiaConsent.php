@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Models;
+namespace App\Models\Client;
 
 use App\Concerns\RecordsActivity;
 use App\Enums\Client\PopiaConsentMethod;
-use Database\Factories\PopiaConsentFactory;
+use Database\Factories\Client\PopiaConsentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;

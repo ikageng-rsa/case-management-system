@@ -7,7 +7,7 @@ namespace Tests\Feature\Notifications;
 use App\Enums\Auth\Role as RoleEnum;
 use App\Enums\Matter\Assignment;
 use App\Enums\Notification\NotificationType;
-use App\Models\Client;
+use App\Models\Client\Client;
 use App\Models\Matter\Matter;
 use App\Models\Matter\MatterAssignment;
 use App\Models\MatterType;

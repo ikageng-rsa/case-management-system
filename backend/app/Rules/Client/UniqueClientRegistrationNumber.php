@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Rules\Client;
 
-use App\Models\Client;
+use App\Models\Client\Client;
 use App\Support\Clients\NormaliseIdentifier;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;

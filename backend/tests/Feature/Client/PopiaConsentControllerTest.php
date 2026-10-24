@@ -6,8 +6,8 @@ namespace Tests\Feature\Client;
 
 use App\Enums\Auth\Role as RoleEnum;
 use App\Enums\Client\PopiaConsentMethod;
-use App\Models\Client;
-use App\Models\PopiaConsent;
+use App\Models\Client\Client;
+use App\Models\Client\PopiaConsent;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;

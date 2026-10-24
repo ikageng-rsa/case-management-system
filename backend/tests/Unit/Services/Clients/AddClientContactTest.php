@@ -6,8 +6,8 @@ namespace Tests\Feature\Services\Clients;
 
 use App\Enums\Client\ClientType;
 use App\Enums\Client\ContactKind;
-use App\Models\Client;
-use App\Models\ClientContact;
+use App\Models\Client\Client;
+use App\Models\Client\ClientContact;
 use App\Services\Clients\AddClientContact;
 use App\Services\Clients\ContactKindLimitException;
 use App\Support\Clients\GenerateBlindIndex;

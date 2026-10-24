@@ -28,7 +28,7 @@
                 <x-ui.nav-section>Practice</x-ui.nav-section>
                 <x-ui.nav-item :href="route('dashboard')" label="Dashboard" icon="layout-dashboard" :active="request()->routeIs('dashboard')" />
                 <x-ui.nav-item :href="route('matters')" label="Matters" icon="briefcase" :active="request()->routeIs('matter*')" />
-                @can('viewAny', \App\Models\Client::class)
+                @can('viewAny', \App\Models\Client\Client::class)
                     <x-ui.nav-item :href="route('clients')" label="Clients" icon="users" :active="request()->routeIs('client*', 'clients')"/>
                 @endcan
                 <x-ui.nav-item :href="route('documents')" label="Documents" icon="file-text" :active="request()->routeIs('documents')"/>

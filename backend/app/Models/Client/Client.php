@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Models;
+namespace App\Models\Client;
 
 use App\Casts\Client\EncryptedDate;
 use App\Casts\Client\IdNumber;
@@ -16,7 +16,7 @@ use App\Models\Matter\Matter;
 use App\Observers\ClientObserver;
 use App\Support\Clients\GenerateBlindIndex;
 use App\Support\Clients\NormaliseIdentifier;
-use Database\Factories\ClientFactory;
+use Database\Factories\Client\ClientFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
