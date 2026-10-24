@@ -146,6 +146,44 @@ document.addEventListener('click', (event) => {
 
 
 /*
+ * An element as tall as the window from its top edge down, less a gap, so it
+ * ends at the bottom of the screen whether the page header is showing above it
+ * or has scrolled away. On a wide screen it is fitted again as the page scrolls
+ * and resizes; on a narrow one, where it sits in the flow of a stacked page, it
+ * is fitted once so the page does not shift while being scrolled.
+ */
+Alpine.data('fillHeight', ({ gap = 16 } = {}) => ({
+    frame: null,
+    wide: window.matchMedia('(min-width: 992px)'),
+
+    init() {
+        this.refit = () => {
+            cancelAnimationFrame(this.frame);
+            this.frame = requestAnimationFrame(() => this.fit());
+        };
+
+        this.fit();
+        window.addEventListener('resize', this.refit, { passive: true });
+        window.addEventListener('scroll', this.refit, { passive: true });
+    },
+
+    destroy() {
+        window.removeEventListener('resize', this.refit);
+        window.removeEventListener('scroll', this.refit);
+    },
+
+    fit() {
+        if (! this.wide.matches && this.$el.style.height.endsWith('px')) {
+            return;
+        }
+
+        const top = Math.max(this.$el.getBoundingClientRect().top, 0);
+
+        this.$el.style.height = `${window.innerHeight - top - gap}px`;
+    },
+}));
+
+/*
  * The client intake form: which identity fields apply to the kind of client,
  * which document an individual's number belongs to, how consent was given
  * when it was, and whether the matter being opened alongside is before a court.

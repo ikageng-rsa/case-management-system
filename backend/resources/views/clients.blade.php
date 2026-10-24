@@ -28,16 +28,20 @@
 
     <div class="row g-0">
         <div class="col-12 col-lg-4 border-end pe-lg-4">
-            {{-- The heading, search and intake button stay put while the clients scroll beneath them. --}}
-            <div class="card" style="max-height: calc(100vh - 9rem);">
+            {{-- The card holds still and fills the height of the screen however many clients are listed,
+                 while the client beside it scrolls; the heading, search and intake button stay put while
+                 the clients scroll beneath them. --}}
+            <div class="card sticky-lg-top" style="top: 1rem; z-index: 1; height: calc(100vh - 2rem);" x-data="fillHeight">
                 <div class="card-body d-flex flex-column overflow-hidden">
                     <div class="d-flex align-items-center justify-content-between mb-3 flex-shrink-0">
                         <h1 class="mb-0">Clients</h1>
                         <span class="text-meta">{{ $total }}</span>
                     </div>
 
-                    <form method="GET" action="{{ route('clients') }}" class="flex-shrink-0">
-                        <x-ui.search-field name="q" :value="$query" placeholder="Name, ID number, phone…" :shortcut="false" wrapper="mb-3" class="w-100" />
+                    {{-- The button is for touch keyboards that have no enter key to submit with. --}}
+                    <form method="GET" action="{{ route('clients') }}" class="d-flex gap-2 mb-3 flex-shrink-0">
+                        <x-ui.search-field name="q" :value="$query" placeholder="Name, ID number, phone…" :shortcut="false" wrapper="flex-fill" class="w-100" />
+                        <x-ui.button type="submit" variant="outline-secondary" icon="search" aria-label="Search" title="Search" size="sm" />
                     </form>
 
                     @can('create', \App\Models\Client::class)
@@ -165,14 +169,15 @@
 
                     <div class="row mb-3">
                         <div class="col">
-                            <div class="card">
+                            {{-- The latest few are shown; the rest stay folded away until asked for. --}}
+                            <div class="card" x-data="{ allMatters: false }">
                                 <div class="card-body">
                                     <h3 class="text-meta text-uppercase mb-2">Matters</h3>
                                     <div class="table-responsive">
                                         <table class="table table-vcenter">
                                             <tbody>
                                                 @forelse ($matters as $matter)
-                                                    <tr>
+                                                    <tr @if ($loop->index >= 4) x-show="allMatters" x-cloak @endif>
                                                         <td class="text-meta text-nowrap"><a href="{{ route('matter.show', $matter) }}">{{ $matter->reference }}</a></td>
                                                         <td>{{ $matter->title }}</td>
                                                         <td>
@@ -192,6 +197,11 @@
                                             </tbody>
                                         </table>
                                     </div>
+
+                                    @if ($matters->count() > 4)
+                                        <x-ui.button variant="ghost-secondary" size="sm" x-on:click="allMatters = ! allMatters"
+                                            x-text="allMatters ? 'Show fewer' : 'Show all {{ $matters->count() }} matters'">Show all {{ $matters->count() }} matters</x-ui.button>
+                                    @endif
                                 </div>
                             </div>
                         </div>
