@@ -9,7 +9,6 @@ use App\Http\Requests\Diary\StoreDiaryEntryRequest;
 use App\Http\Requests\Diary\UpdateDiaryReminderRequest;
 use App\Models\DiaryEntry;
 use App\Models\Matter;
-use App\Models\User;
 use App\Notifications\DiaryEntryAssigned;
 use App\Services\Diary\CompleteDiaryEntry;
 use App\Services\Diary\ResolveReminderLead;
@@ -31,9 +30,7 @@ class DiaryEntryController extends Controller
             : $resolveLead->for($request->user());
 
         $entry->matter()->associate($matter);
-        $entry->assignee()->associate(
-            $request->filled('assigned_to') ? User::findOrFail($request->validated('assigned_to')) : $request->user(),
-        );
+        $entry->assignee()->associate($request->assignee());
 
         $entry->save();
 
