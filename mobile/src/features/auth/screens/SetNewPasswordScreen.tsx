@@ -6,12 +6,14 @@ import Input from '@/components/Input';
 import { confirmPasswordReset } from '@/api/endpoint/auth.api';
 import { checkPasswordStrength } from '@/utils/validators';
 import { forgetOfflineCredential } from '@/features/auth/services/offlineAuth';
+import { setResetToken, takeResetToken } from '@/features/auth/services/resetSession'
+import { getApiErrorMessage } from '@/api/errors';
 import { colors, spacing, typography } from '@/theme/index';
 
 /** Step 3 of 3: only reachable after a correct code was verified (see VerifyResetCodeScreen). */
 export default function SetNewPasswordScreen() {
     const router = useRouter();
-    const { resetToken, email } = useLocalSearchParams<{ email: string; resetToken: string }>();
+    const { email } = useLocalSearchParams<{ email: string }>();
     const [password, setPassword] = useState('');
     const [confirm, setConfirm] = useState('');
     const [loading, setLoading] = useState(false);
@@ -29,18 +31,24 @@ export default function SetNewPasswordScreen() {
         }
         setLoading(true);
         try {
-            if (resetToken !== 'local-dev-token') {
-                await confirmPasswordReset(resetToken, password);
+            const resetToken = takeResetToken();
+            if (!resetToken) {
+                Alert.alert('Session expired', 'Please request a new verification code.', [{ text: 'OK', onPress: () => router.replace('/forgot-password') }]);
+                return;
             }
-            // The old password must stop working for offline sign-in too.
-            if (email) {
-                await forgetOfflineCredential(email).catch(() => { });
+            await confirmPasswordReset(resetToken, password);
+            setResetToken(null);
+            //The old password must stop working for offline sign-in too.
+            if(email){
+                await forgetOfflineCredential(email).catch(()=>{});
             }
-            Alert.alert('Password updated', 'You can now sign in with your new password.', [
-                { text: 'OK', onPress: () => router.replace('/login') },
+
+            Alert.alert('Password updated', 'You can now sign in with your new password',[
+                {text: 'OK', onPress: () => router.replace('/login')},
             ]);
-        } catch {
-            Alert.alert('Could not update password', 'Please try the reset flow again.');
+
+        } catch (e) {
+            Alert.alert('could not update password', getApiErrorMessage(e, 'Please try the reset flow again'));
         } finally {
             setLoading(false);
         }

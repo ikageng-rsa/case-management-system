@@ -17,7 +17,7 @@ export function useLogin() {
       return;
     }
     const result = await dispatch(login({ email, password }));
-    if (login.fulfilled.match(result) && result.payload.twoFactorRequired) {
+    if (login.fulfilled.match(result) && result.payload.kind === 'challenge') {
       router.push('/two-factor');
     }
   };

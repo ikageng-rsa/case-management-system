@@ -12,6 +12,7 @@
  * sign-in for five minutes; a password reset removes the saved credential.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { encGetJson, encSetJson } from '@/utils/encryptedStorage';
 import { getRandomBytes } from 'expo-crypto';
 import { pbkdf2Async } from '@noble/hashes/pbkdf2.js';
 import { sha256 } from '@noble/hashes/sha2.js';
@@ -78,6 +79,23 @@ export async function saveOfflineCredential(params: { email: string; password: s
     await AsyncStorage.removeItem(ATTEMPTS_PREFIX + idFor(params.email));
 }
 
+/**
+ * After a normal sign-out the saved session token is removed (the server revokes it too), so a stolen phone
+ * can't use it. Offline sign-in still works; unsent changes then wait for an online sign-in before syncing.
+ */
+export async function stripSavedToken(email: string): Promise<void> {
+    const key = CRED_PREFIX + idFor(email);
+    const raw = await secureGet(key);
+    if (!raw) {
+        return;
+    }
+    try {
+        await secureSet(key, JSON.stringify({ ...(JSON.parse(raw) as StoredCredential), token: '' }));
+    } catch {
+        await secureDelete(key);
+    }
+}
+
 export async function forgetOfflineCredential(email: string): Promise<void> {
     await secureDelete(CRED_PREFIX + idFor(email));
 }
@@ -136,16 +154,11 @@ export async function verifyOfflineLogin(email: string, password: string, now = 
 /* --- the profile of whoever is signed in, so a cold start without internet can restore the session --- */
 
 export async function saveSessionUser(user: User): Promise<void> {
-    await AsyncStorage.setItem(SESSION_USER_KEY, JSON.stringify(user));
+    await encSetJson(SESSION_USER_KEY, user);
 }
 
 export async function getSessionUser(): Promise<User | null> {
-    const raw = await AsyncStorage.getItem(SESSION_USER_KEY);
-    try {
-        return raw ? (JSON.parse(raw) as User) : null;
-    } catch {
-        return null;
-    }
+    return encGetJson<User>(SESSION_USER_KEY);
 }
 
 export async function clearSessionUser(): Promise<void> {

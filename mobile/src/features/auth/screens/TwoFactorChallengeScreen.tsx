@@ -3,81 +3,68 @@ import { Alert, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
+import { resendTwoFactorCode } from '@/api/endpoint/auth.api';
+import { getApiErrorMessage } from '@/api/errors';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
-import { cancelTwoFactor, confirmTwoFactor } from '@/features/auth/store/authSlice';
-import { setTwoFactorPending } from '@/features/auth/services/twoFactorPending';
-import { clearAuthToken } from '@/api/client';
-import {
-    getTwoFactorSettings,
-    sendTwoFactorSmsChallenge,
-    verifyTwoFactorChallenge,
-} from '@/features/auth/services/twoFactorService';
-import { TwoFactorSettings } from '@/models/index';
+import { cancelTwoFactor, clearPendingLogin, completeTwoFactor } from '@/features/auth/store/authSlice';
 import { colors, spacing, typography } from '@/theme/index';
 
-/** Shown after a correct password when the account has TOTP or SMS 2FA enabled. */
+/**
+ * Shown after a correct password when the account has two-factor on. The BACKEND checks the code (and sent
+ * the SMS, if that is the method); the app only relays what the user types. No session token exists until
+ * the backend accepts it.
+ */
 export default function TwoFactorChallengeScreen() {
     const router = useRouter();
     const dispatch = useAppDispatch();
-    const pendingUser = useAppSelector(state => state.auth.pendingUser);
+    const challenge = useAppSelector(state => state.auth.challenge);
 
-    const [settings, setSettings] = useState<TwoFactorSettings | null>(null);
     const [code, setCode] = useState('');
     const [loading, setLoading] = useState(false);
-    const [smsSent, setSmsSent] = useState(false);
 
     useEffect(() => {
-        if (!pendingUser) {
+        if (!challenge) {
             router.replace('/login');
-            return;
         }
-        getTwoFactorSettings(pendingUser.id).then(setSettings);
-    }, [pendingUser]);
+    }, [challenge, router]);
 
-    const sendSms = async () => {
-        if (!pendingUser?.phoneNumber) {
-            Alert.alert('No phone number', 'Add a phone number in your profile to use SMS 2FA.');
+    const verify = async () => {
+        if (code.trim().length < 6) {
             return;
         }
         setLoading(true);
-        const result = await sendTwoFactorSmsChallenge(pendingUser.id, pendingUser.phoneNumber);
+        const result = await dispatch(completeTwoFactor({ code }));
         setLoading(false);
-        setSmsSent(true);
-        if (!result.delivered) {
-            Alert.alert(
-                'Could not send SMS',
-                result.devCode ? `No SMS provider configured — dev code: ${result.devCode}` : result.deliveryError ?? 'Try again.',
-            );
+        if (completeTwoFactor.rejected.match(result)) {
+            setCode('');
+            Alert.alert('Could not verify', result.error.message ?? 'Check the code and try again.');
+        } else {
+            router.replace('/');
         }
     };
 
-    const verify = async () => {
-        if (!pendingUser || !settings) {
+    const resend = async () => {
+        if (!challenge) {
             return;
         }
         setLoading(true);
         try {
-            const ok = await verifyTwoFactorChallenge(pendingUser.id, settings, code);
-            if (ok) {
-                await setTwoFactorPending(false);
-                dispatch(confirmTwoFactor());
-                router.replace('/');
-            } else {
-                Alert.alert('Incorrect code', 'Check the code and try again.');
-            }
+            await resendTwoFactorCode(challenge.token);
+            Alert.alert('Code sent', 'A new code is on its way.');
+        } catch (e) {
+            Alert.alert('Could not send', getApiErrorMessage(e, 'Try again in a moment.'));
         } finally {
             setLoading(false);
         }
     };
 
-    const cancel = async () => {
-        await clearAuthToken();
-        await setTwoFactorPending(false);
+    const cancel = () => {
+        clearPendingLogin();
         dispatch(cancelTwoFactor());
         router.replace('/login');
     };
 
-    if (!settings) {
+    if (!challenge) {
         return null;
     }
 
@@ -85,23 +72,24 @@ export default function TwoFactorChallengeScreen() {
         <View style={styles.container}>
             <Text style={styles.title}>Two-factor verification</Text>
             <Text style={styles.subtitle}>
-                {settings.method === 'totp'
+                {challenge.method === 'totp'
                     ? 'Enter the 6-digit code from your authenticator app.'
-                    : 'Enter the 6-digit code sent to your phone.'}
+                    : `Enter the 6-digit code we sent to ${challenge.maskedPhone ?? 'your phone'}.`}
             </Text>
 
-            {settings.method === 'sms' ? (
-                <Button
-                    label={smsSent ? 'Resend code' : 'Send code'}
-                    variant="secondary"
-                    onPress={sendSms}
-                    loading={loading}
-                    style={styles.sendButton}
-                />
-            ) : null}
-
-            <Input label="Verification code" value={code} onChangeText={setCode} keyboardType="number-pad" maxLength={6} />
+            <Input
+                label="Verification code"
+                value={code}
+                onChangeText={setCode}
+                keyboardType="number-pad"
+                maxLength={6}
+                textContentType="oneTimeCode"
+                autoComplete="one-time-code"
+            />
             <Button label="Verify" onPress={verify} loading={loading} />
+            {challenge.method === 'sms' ? (
+                <Button label="Send a new code" variant="secondary" onPress={resend} disabled={loading} style={styles.secondary} />
+            ) : null}
             <Button label="Cancel" variant="secondary" onPress={cancel} style={styles.cancelButton} />
         </View>
     );
@@ -111,6 +99,6 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background, padding: spacing.lg },
     title: { ...typography.h2, color: colors.navy, marginBottom: spacing.xs },
     subtitle: { ...typography.body, color: colors.textSecondary, marginBottom: spacing.lg },
-    sendButton: { marginBottom: spacing.md },
+    secondary: { marginTop: spacing.sm },
     cancelButton: { marginTop: spacing.sm, borderColor: 'transparent' },
 });

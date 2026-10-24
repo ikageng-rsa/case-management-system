@@ -3,8 +3,7 @@ import { Alert, StyleSheet, Text, View } from 'react-native';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
 import { useRouter } from 'expo-router';
-import { requestPasswordReset, requestPasswordResetCode } from '@/api/endpoint/auth.api';
-import { issueOtp } from '@/services/notifications/otpStore';
+import { requestPasswordResetCode } from '@/api/endpoint/auth.api';
 import { getApiErrorMessage } from '@/api/errors';
 import { colors, spacing, typography } from '@/theme/index';
 
@@ -26,20 +25,16 @@ export default function ForgotPasswordScreen() {
       return;
     }
     setLoading(true);
-    try {
-      try {
-        await requestPasswordResetCode(email);
-      } catch {
-        // Backend doesn't yet expose this endpoint (mobile-only change) - dall back to an
-        //On-device  code so the flow still works end-to-end for development/demo purpose.
-        await issueOtp('password-reset', email, undefined);
-      }
-      router.push({ pathname: '/verify-reset-code', params: { email } });
-    } catch (error) {
-      Alert.alert('Could not send code', getApiErrorMessage(error));
-    } finally {
+    try{
+      //Backend generates the code and delivers it (e-mail/SMS). It answers the same way whether or not the
+      //account exists, so this screen can't be used to find out who has an account
+      await requestPasswordResetCode(email.trim());
+      router.push({pathname: '/verify-reset-code', params: {email: email.trim()}});
+    }catch(error){
+        Alert.alert('Could not send code', getApiErrorMessage(error));
+    }finally{
       setLoading(false);
-    };
+    }
   }
     return (
       <View style={styles.container}>
