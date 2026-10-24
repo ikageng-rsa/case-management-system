@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Models\Activity;
+use App\Models\Audit\Activity;
 use Spatie\Activitylog\Actions\CleanActivityLogAction;
 use Spatie\Activitylog\Actions\LogActivityAction;
 
