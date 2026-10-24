@@ -200,6 +200,20 @@ class CompleteDiaryEntryController
 }
 ```
 
+Optional input is read through a method on the form request, not with `filled()` in the
+controller. The method returns the value, the model, or a default.
+
+```php
+// StoreDiaryEntryRequest
+public function assignee(): User
+{
+    return $this->filled('assigned_to') ? User::findOrFail($this->validated('assigned_to')) : $this->user();
+}
+
+// DiaryEntriesController
+$entry->assignee()->associate($request->assignee());
+```
+
 ## 9. Views
 
 camelCase filenames, four-space indent, no space after `@if`/`@foreach`.
@@ -308,19 +322,82 @@ Standard Laravel structure.
 ```
 app/
   Http/
-    Controllers/     (LegalCasesController, NarrationsController, DiaryEntriesController, ...)
-    Requests/         (StoreNarrationRequest, ...)
-  Models/             (LegalCase, Narration, DiaryEntry, CaseDocument, User)
+    Controllers/      (Controller, DashboardController)
+      Cases/          (LegalCasesController, CaseDocumentsController, ...)
+      Diary/          (DiaryEntriesController, ...)
+    Requests/
+      Cases/          (StoreLegalCaseRequest, ...)
+      Diary/          (StoreDiaryEntryRequest, ...)
+  Models/
+    Cases/            (LegalCase, CaseDocument, ...)
+    Diary/            (DiaryEntry, ...)
   Services/
     Cases/            (GenerateCaseReference, ...)
     Diary/            (SendOverdueDiaryAlert, CompleteDiaryEntry, ...)
+  Queries/
+    Cases/            (CaseLedger, CaseDiary, ...)
+  Support/
+    Cases/            (NormaliseCaseNumber, ...)
   Policies/
 routes/
   web.php
   api.php
 ```
 
-## 16. Git & Commits
+Controllers, form requests and models are grouped into the same area folders, and
+`database/factories` and `tests/Unit/Models` mirror the model folders, so Laravel still finds
+each model's factory by name. A class keeps its full name inside its folder
+(`Cases/CaseDocumentsController`, not `Cases/DocumentsController`), so it stays unique when
+searched for or imported. Only the base `Controller` and pages that span every area, such as
+the dashboard, sit at the root.
+
+Polymorphic columns store the aliases in `Relation::enforceMorphMap()`, not class names, so a
+model can move folders without touching the database.
+
+Services change state; queries only read it. A query class is named for what it returns,
+exposes a single `for()` method, and takes typed values rather than the `Request`. The
+controller parses and whitelists the input, then passes it in.
+
+```php
+class CaseDiary
+{
+    /** @return array<string, mixed> */
+    public function for(LegalCase $legalCase, User $user, string $show): array
+    {
+        // ...
+    }
+}
+```
+
+## 16. Boundaries
+
+Layers depend inwards: controllers and form requests use services, queries and models;
+services and queries use models; models use neither. A helper that more than one layer
+needs, such as hashing or normalising a value, sits in `app/Support`, which uses nothing
+above it.
+
+Three tests in `tests/Unit/Architecture/` hold these lines. They read the code without
+booting the app, and each failure names the file, what it did, and the fix.
+
+| Test | Fails when |
+|---|---|
+| `LayeringTest` | `app/Services` or `app/Queries` uses `App\Http`, or `app/Models` uses `App\Services` or `App\Queries` |
+| `QueriesAreReadOnlyTest` | a query uses a service, or calls `->save(`, `->create(`, `->update(`, `->delete(` or `DB::transaction(` |
+| `ServiceBoundariesTest` | a service uses another area's services without that link being allowed, or an allowed link is no longer used |
+
+A service folder is one area. When one area needs another, add the link to
+`ServiceBoundariesTest::ALLOWED` in the same PR, with the reason, so the reviewer decides on
+it rather than finding it later. Remove the link when the dependency goes.
+
+```php
+private const ALLOWED = [
+    'Cases' => [
+        'Notifications' => 'Assigning someone to a case tells them.',
+    ],
+];
+```
+
+## 17. Git & Commits
 
 Present-tense, descriptive commit messages. Granular commits over one large one. Branching,
 PR, and release process: `CONTRIBUTING.md`.

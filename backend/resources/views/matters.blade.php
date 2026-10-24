@@ -9,7 +9,7 @@
             <p class="text-secondary mb-4">{{ $counts['open'] }} open · {{ $counts['unassigned'] }} unassigned · {{ $counts['closed_this_year'] }} closed this year</p>
         </div>
         
-        @can('create', \App\Models\Matter::class)
+        @can('create', \App\Models\Matter\Matter::class)
             <x-ui.button variant="primary" icon="plus" size="sm"
                 x-data x-on:click="$dispatch('sheet-open', 'new-matter')">New Matter</x-ui.button>
         @endcan
@@ -127,7 +127,7 @@
         </div>
     </div>
 
-    @can('create', \App\Models\Matter::class)
+    @can('create', \App\Models\Matter\Matter::class)
         {{-- Arriving from the New matter button elsewhere in the app: the form opens by itself, and the
              address is cleaned at once so that closing it, or reloading, does not open it again. --}}
         @if (request()->boolean('new'))

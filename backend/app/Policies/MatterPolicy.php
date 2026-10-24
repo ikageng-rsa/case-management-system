@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Policies;
 
 use App\Enums\Auth\Permission;
-use App\Models\Matter;
-use App\Models\User;
+use App\Models\Matter\Matter;
+use App\Models\User\User;
 
 class MatterPolicy
 {

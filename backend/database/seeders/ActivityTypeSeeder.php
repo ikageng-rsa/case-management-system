@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use App\Enums\Narration\ActivityMeasure;
-use App\Models\ActivityType;
+use App\Models\Reference\ActivityType;
 use Illuminate\Database\Seeder;
 
 class ActivityTypeSeeder extends Seeder

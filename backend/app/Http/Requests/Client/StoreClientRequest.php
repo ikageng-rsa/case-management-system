@@ -10,7 +10,8 @@ use App\Enums\Client\ContactKind;
 use App\Enums\Client\FicaDocument;
 use App\Enums\Client\PopiaConsentMethod;
 use App\Http\Requests\Client\Concerns\ValidatesIdentity;
-use App\Models\MatterType;
+use App\Models\Reference\Court;
+use App\Models\Reference\MatterType;
 use App\Rules\Client\UniqueClientRegistrationNumber;
 use App\Rules\Client\ValidContactValue;
 use App\Rules\Client\ValidRegistrationNumber;
@@ -131,6 +132,25 @@ class StoreClientRequest extends FormRequest
     }
 
     /**
+     * The ways to reach the client that were given, keyed by contact kind.
+     *
+     * @return array<string, string>
+     */
+    public function contacts(): array
+    {
+        $fields = [
+            'mobile' => ContactKind::Mobile,
+            'email' => ContactKind::Email,
+            'physical_address' => ContactKind::Physical,
+        ];
+
+        return collect($fields)
+            ->filter(fn (ContactKind $kind, string $field) => $this->filled($field))
+            ->mapWithKeys(fn (ContactKind $kind, string $field) => [$kind->value => $this->validated($field)])
+            ->all();
+    }
+
+    /**
      * Consent is optional at intake and can be recorded on the client later. Given
      * now, it says how it was given, and a signed mandate has to be attached, as
      * when it is recorded on the client. A matter is opened, and so validated,
@@ -169,6 +189,12 @@ class StoreClientRequest extends FormRequest
     public function opensMatter(): bool
     {
         return $this->filled('matter_type_id');
+    }
+
+    /** The court the new matter is before; null when it isn't litigious or no matter is opened. */
+    public function court(): ?Court
+    {
+        return $this->filled('court_id') ? Court::findOrFail($this->validated('court_id')) : null;
     }
 
     protected function courtIsRequired(): bool

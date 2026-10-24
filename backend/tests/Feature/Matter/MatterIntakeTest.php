@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Feature\Matter;
 
 use App\Enums\Auth\Role as RoleEnum;
-use App\Models\ActivityType;
-use App\Models\Client;
-use App\Models\Matter;
-use App\Models\MatterType;
-use App\Models\User;
+use App\Models\Client\Client;
+use App\Models\Matter\Matter;
+use App\Models\Reference\ActivityType;
+use App\Models\Reference\MatterType;
+use App\Models\User\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;

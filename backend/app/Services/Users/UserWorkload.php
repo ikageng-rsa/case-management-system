@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Services\Users;
 
 use App\Enums\Matter\Assignment;
-use App\Models\DiaryEntry;
-use App\Models\Matter;
-use App\Models\MatterAssignment;
-use App\Models\User;
+use App\Models\Diary\DiaryEntry;
+use App\Models\Matter\Matter;
+use App\Models\Matter\MatterAssignment;
+use App\Models\User\User;
 use Illuminate\Support\Collection;
 
 /*

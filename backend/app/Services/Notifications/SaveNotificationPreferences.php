@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Notifications;
 
 use App\Enums\Notification\NotificationType;
-use App\Models\User;
+use App\Models\User\User;
 use Illuminate\Support\Facades\DB;
 
 class SaveNotificationPreferences

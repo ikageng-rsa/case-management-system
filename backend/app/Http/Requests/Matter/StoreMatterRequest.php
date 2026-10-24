@@ -6,7 +6,9 @@ namespace App\Http\Requests\Matter;
 
 use App\Enums\Auth\Permission;
 use App\Enums\Matter\PartyRole;
-use App\Models\MatterType;
+use App\Models\Reference\Court;
+use App\Models\Reference\MatterType;
+use App\Models\User\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -53,6 +55,24 @@ class StoreMatterRequest extends FormRequest
             'parties.*.role' => ['required', Rule::enum(PartyRole::class)],
             'parties.*.representative' => ['nullable', 'string', 'max:255'],
         ];
+    }
+
+    /** The court the matter is before; null for a non-litigious matter. */
+    public function court(): ?Court
+    {
+        return $this->filled('court_id') ? Court::findOrFail($this->validated('court_id')) : null;
+    }
+
+    /** Who carries the file from the start, if anyone was chosen. */
+    public function responsibleAttorney(): ?User
+    {
+        return $this->filled('responsible_attorney_id') ? User::findOrFail($this->validated('responsible_attorney_id')) : null;
+    }
+
+    /** The first ledger entry, if one was written. */
+    public function openingNarration(): ?string
+    {
+        return $this->filled('narration') ? $this->validated('narration') : null;
     }
 
     /**

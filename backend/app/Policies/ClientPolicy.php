@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Policies;
 
 use App\Enums\Auth\Permission;
-use App\Models\Client;
-use App\Models\User;
+use App\Models\Client\Client;
+use App\Models\User\User;
 
 class ClientPolicy
 {

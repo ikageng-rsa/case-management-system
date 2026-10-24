@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Courts;
 
-use App\Models\Court;
+use App\Models\Reference\Court;
 
 class RetireCourt
 {

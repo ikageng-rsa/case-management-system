@@ -4,18 +4,18 @@
 
 @section('content')
     @php
-        $initials = fn (\App\Models\Client $person) => mb_substr($person->initials, 0, 2);
+        $initials = fn (\App\Models\Client\Client $person) => mb_substr($person->initials, 0, 2);
 
-        $mobile = fn (\App\Models\Client $person) => $person->primaryContact(\App\Enums\Client\ContactKind::Mobile)?->value;
-        $email = fn (\App\Models\Client $person) => $person->primaryContact(\App\Enums\Client\ContactKind::Email)?->value;
+        $mobile = fn (\App\Models\Client\Client $person) => $person->primaryContact(\App\Enums\Client\ContactKind::Mobile)?->value;
+        $email = fn (\App\Models\Client\Client $person) => $person->primaryContact(\App\Enums\Client\ContactKind::Email)?->value;
 
         $showMobile = fn (string $value) => \App\Services\Clients\MaskIdentifier::mobile($value);
         $showEmail = fn (string $value) => \App\Services\Clients\MaskIdentifier::email($value);
         // A passport or other document is named, so its number is not taken for a South African ID.
-        $showId = fn (\App\Models\Client $person) => ltrim($person->id_type?->prefix().' '.\App\Services\Clients\MaskIdentifier::idNumber($person->id_number));
+        $showId = fn (\App\Models\Client\Client $person) => ltrim($person->id_type?->prefix().' '.\App\Services\Clients\MaskIdentifier::idNumber($person->id_number));
         $showRegistration = fn (string $value) => \App\Services\Clients\MaskIdentifier::registrationNumber($value);
 
-        $details = function (\App\Models\Client $person) use ($canSeeContacts, $mobile, $email, $showMobile, $showEmail, $showId, $showRegistration) {
+        $details = function (\App\Models\Client\Client $person) use ($canSeeContacts, $mobile, $email, $showMobile, $showEmail, $showId, $showRegistration) {
             return collect([
                 $canSeeContacts && $mobile($person) ? $showMobile($mobile($person)) : null,
                 $canSeeContacts && $email($person) ? $showEmail($email($person)) : null,
@@ -44,7 +44,7 @@
                         <x-ui.button type="submit" variant="outline-secondary" icon="search" aria-label="Search" title="Search" size="sm" />
                     </form>
 
-                    @can('create', \App\Models\Client::class)
+                    @can('create', \App\Models\Client\Client::class)
                         <x-ui.button variant="primary" icon="plus" class="w-100 mb-3 flex-shrink-0"
                             x-data x-on:click="$dispatch('sheet-open', 'new-client')">New client intake</x-ui.button>
                     @endcan
@@ -124,7 +124,7 @@
                             <x-ui.button variant="outline-secondary" size="sm"
                                 x-data x-on:click="$dispatch('sheet-open', 'edit-client')">Edit</x-ui.button>
                         @endcan
-                        @can('create', \App\Models\Matter::class)
+                        @can('create', \App\Models\Matter\Matter::class)
                             <x-ui.button variant="primary" icon="plus" size="sm"
                                 x-data x-on:click="$dispatch('sheet-open', 'new-client-matter')">New matter</x-ui.button>
                         @endcan
@@ -468,12 +468,12 @@
             </x-ui.sheet>
         @endif
 
-        @can('create', \App\Models\Matter::class)
+        @can('create', \App\Models\Matter\Matter::class)
             <x-matter.intake name="new-client-matter" :client="$client" :matter-types="$matterTypes" :courts="$courts" :attorneys="$attorneys" :action="route('matter.store')" />
         @endcan
     @endif
 
-    @can('create', \App\Models\Client::class)
+    @can('create', \App\Models\Client\Client::class)
         @php
             $intake = $errors->client;
 
@@ -587,7 +587,7 @@
                 </div>
             @endforeach
 
-            @can('create', \App\Models\Matter::class)
+            @can('create', \App\Models\Matter\Matter::class)
                 <hr>
 
                 <h3 class="text-meta text-uppercase mb-2">Matter</h3>

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Invitations;
 
-use App\Models\UserInvitation;
+use App\Models\Invitation\UserInvitation;
 use Illuminate\Support\Facades\Auth;
 
 class RevokeInvitation

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Invitation;
 
 use App\Enums\Auth\Permission;
-use App\Models\UserInvitation;
+use App\Models\Invitation\UserInvitation;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;

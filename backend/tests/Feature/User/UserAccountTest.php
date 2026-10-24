@@ -6,9 +6,9 @@ namespace Tests\Feature\User;
 
 use App\Enums\Auth\Role as RoleEnum;
 use App\Enums\Notification\NotificationType;
-use App\Models\DiaryEntry;
-use App\Models\NotificationPreference;
-use App\Models\User;
+use App\Models\Diary\DiaryEntry;
+use App\Models\User\NotificationPreference;
+use App\Models\User\User;
 use App\Notifications\DiaryEntryOverdue;
 use App\Services\Notifications\ResolveNotificationChannels;
 use Database\Seeders\RoleSeeder;

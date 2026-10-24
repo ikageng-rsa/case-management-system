@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use App\Enums\Court\CourtTier;
-use App\Models\Court;
+use App\Models\Reference\Court;
 use Illuminate\Database\Seeder;
 
 class CourtSeeder extends Seeder

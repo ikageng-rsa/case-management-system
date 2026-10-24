@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\MatterTypes;
 
-use App\Models\MatterType;
+use App\Models\Reference\MatterType;
 use App\Services\Reference\ReferenceDataLocked;
 
 class SaveMatterType

@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace App\Services\Clients;
 
 use App\Enums\Client\IdentityType;
-use App\Models\Client;
+use App\Models\Client\Client;
+use App\Support\Clients\NormaliseIdentifier;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\UniqueConstraintViolationException;
 

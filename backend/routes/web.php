@@ -2,30 +2,30 @@
 
 declare(strict_types=1);
 
-use App\Http\Controllers\AcceptInvitationController;
-use App\Http\Controllers\AccountController;
-use App\Http\Controllers\ActivityTypeController;
-use App\Http\Controllers\AuditLogController;
-use App\Http\Controllers\ClientContactController;
-use App\Http\Controllers\ClientController;
-use App\Http\Controllers\ClientFicaDocumentController;
-use App\Http\Controllers\ClientRevealController;
-use App\Http\Controllers\ContactPersonController;
-use App\Http\Controllers\CourtController;
+use App\Http\Controllers\Account\AccountController;
+use App\Http\Controllers\Account\NotificationController;
+use App\Http\Controllers\Account\SignInCodeController;
+use App\Http\Controllers\Audit\AuditLogController;
+use App\Http\Controllers\Client\ClientContactController;
+use App\Http\Controllers\Client\ClientController;
+use App\Http\Controllers\Client\ClientFicaDocumentController;
+use App\Http\Controllers\Client\ClientRevealController;
+use App\Http\Controllers\Client\ContactPersonController;
+use App\Http\Controllers\Client\PopiaConsentController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\DiaryEntryController;
-use App\Http\Controllers\DocumentController;
-use App\Http\Controllers\InvitationController;
-use App\Http\Controllers\MatterController;
-use App\Http\Controllers\MatterDocumentController;
-use App\Http\Controllers\MatterPartyController;
-use App\Http\Controllers\MatterTypeController;
-use App\Http\Controllers\NarrationController;
-use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\PopiaConsentController;
-use App\Http\Controllers\ReferenceDataController;
-use App\Http\Controllers\SignInCodeController;
-use App\Http\Controllers\UserController;
+use App\Http\Controllers\Diary\DiaryEntryController;
+use App\Http\Controllers\Document\DocumentController;
+use App\Http\Controllers\Invitation\AcceptInvitationController;
+use App\Http\Controllers\Invitation\InvitationController;
+use App\Http\Controllers\Matter\MatterController;
+use App\Http\Controllers\Matter\MatterDocumentController;
+use App\Http\Controllers\Matter\MatterPartyController;
+use App\Http\Controllers\Narration\NarrationController;
+use App\Http\Controllers\Reference\ActivityTypeController;
+use App\Http\Controllers\Reference\CourtController;
+use App\Http\Controllers\Reference\MatterTypeController;
+use App\Http\Controllers\Reference\ReferenceDataController;
+use App\Http\Controllers\User\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {

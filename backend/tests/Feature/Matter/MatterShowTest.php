@@ -7,12 +7,12 @@ namespace Tests\Feature\Matter;
 use App\Enums\Auth\Role as RoleEnum;
 use App\Enums\Document\DocumentKind;
 use App\Enums\Matter\Assignment;
-use App\Models\ActivityType;
-use App\Models\DiaryEntry;
-use App\Models\Matter;
-use App\Models\MatterAssignment;
-use App\Models\Narration;
-use App\Models\User;
+use App\Models\Diary\DiaryEntry;
+use App\Models\Matter\Matter;
+use App\Models\Matter\MatterAssignment;
+use App\Models\Narration\Narration;
+use App\Models\Reference\ActivityType;
+use App\Models\User\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -130,6 +130,22 @@ class MatterShowTest extends TestCase
             ->assertOk()
             ->assertDownload()
             ->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
+    }
+
+    public function test_the_ledger_export_carries_the_ledger_filter(): void
+    {
+        $matter = Matter::factory()->create();
+        $director = $this->userWithRole(RoleEnum::Director);
+        Narration::factory()->for($matter)->for($director, 'author')->create(['body' => 'Called the client']);
+        Narration::factory()->for($matter)->create(['body' => 'Drafted the summons']);
+
+        $csv = $this->actingAs($director)
+            ->get(route('matter.narrations.export', [$matter, 'filter' => 'mine']))
+            ->assertOk()
+            ->streamedContent();
+
+        $this->assertStringContainsString('Called the client', $csv);
+        $this->assertStringNotContainsString('Drafted the summons', $csv);
     }
 
     public function test_parties_shows_the_team_and_lets_an_authorised_user_assign_and_unassign(): void

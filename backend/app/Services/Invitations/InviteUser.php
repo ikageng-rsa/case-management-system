@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Invitations;
 
-use App\Models\User;
-use App\Models\UserInvitation;
+use App\Models\Invitation\UserInvitation;
+use App\Models\User\User;
 use Illuminate\Support\Facades\DB;
 
 class InviteUser

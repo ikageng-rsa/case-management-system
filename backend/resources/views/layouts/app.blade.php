@@ -28,7 +28,7 @@
                 <x-ui.nav-section>Practice</x-ui.nav-section>
                 <x-ui.nav-item :href="route('dashboard')" label="Dashboard" icon="layout-dashboard" :active="request()->routeIs('dashboard')" />
                 <x-ui.nav-item :href="route('matters')" label="Matters" icon="briefcase" :active="request()->routeIs('matter*')" />
-                @can('viewAny', \App\Models\Client::class)
+                @can('viewAny', \App\Models\Client\Client::class)
                     <x-ui.nav-item :href="route('clients')" label="Clients" icon="users" :active="request()->routeIs('client*', 'clients')"/>
                 @endcan
                 <x-ui.nav-item :href="route('documents')" label="Documents" icon="file-text" :active="request()->routeIs('documents')"/>
@@ -102,7 +102,7 @@
                 </div>
 
                 {{-- A matter can be opened from anywhere; the form lives on the matters page, which this opens. --}}
-                @can('create', \App\Models\Matter::class)
+                @can('create', \App\Models\Matter\Matter::class)
                     @if (request()->routeIs('matters'))
                         <x-ui.button variant="dark" icon="plus"
                             x-data x-on:click="$dispatch('sheet-open', 'new-matter')">New matter</x-ui.button>

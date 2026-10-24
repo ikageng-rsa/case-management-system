@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Users;
 
 use App\Enums\Matter\Assignment;
-use App\Models\User;
+use App\Models\User\User;
 use App\Notifications\DiaryEntryAssigned;
 use App\Services\Matters\AssignUserToMatter;
 use App\Services\Notifications\NotifyUser;

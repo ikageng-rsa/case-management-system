@@ -6,11 +6,11 @@ namespace Tests\Feature\User;
 
 use App\Enums\Auth\Role as RoleEnum;
 use App\Enums\Matter\Assignment;
-use App\Models\DiaryEntry;
-use App\Models\Matter;
-use App\Models\MatterAssignment;
-use App\Models\Narration;
-use App\Models\User;
+use App\Models\Diary\DiaryEntry;
+use App\Models\Matter\Matter;
+use App\Models\Matter\MatterAssignment;
+use App\Models\Narration\Narration;
+use App\Models\User\User;
 use App\Notifications\DiaryEntryAssigned;
 use App\Notifications\MatterAssigned;
 use Database\Seeders\RoleSeeder;
