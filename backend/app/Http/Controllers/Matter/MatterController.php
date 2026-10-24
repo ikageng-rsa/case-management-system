@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Matter;
 
 use App\Enums\Document\DocumentKind;
 use App\Enums\Matter\Assignment;
 use App\Enums\Matter\PartyRole;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Matter\AssignUserRequest;
 use App\Http\Requests\Matter\ReopenMatterRequest;
 use App\Http\Requests\Matter\StoreMatterRequest;

@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Matter;
 
 use App\Enums\Document\DocumentKind;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Document\StoreDocumentRequest;
 use App\Models\Matter;
 use Illuminate\Http\RedirectResponse;
