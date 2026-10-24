@@ -23,6 +23,7 @@ use App\Queries\Matters\MatterDiary;
 use App\Queries\Matters\MatterDocuments;
 use App\Queries\Matters\MatterLedger;
 use App\Queries\Matters\MatterParties;
+use App\Queries\Matters\MatterRecentReads;
 use App\Services\Diary\ResolveReminderLead;
 use App\Services\Matters\AssignUserToMatter;
 use App\Services\Matters\CannotAssignToClosedMatter;
@@ -42,7 +43,6 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
-use Spatie\Activitylog\Models\Activity;
 
 class MatterController extends Controller
 {
@@ -127,6 +127,7 @@ class MatterController extends Controller
         MatterParties $parties,
         MatterDiary $diary,
         MatterAuditTrail $auditTrail,
+        MatterRecentReads $recentReads,
     ): View {
         Gate::authorize('view', $matter);
 
@@ -164,14 +165,7 @@ class MatterController extends Controller
             'capacities' => Assignment::cases(),
             'team' => $matter->assignments->pluck('user')->unique('id')->values(),
             'recentDocuments' => $matter->documents(),
-            'recentReads' => Activity::query()
-                ->where('subject_type', $matter->getMorphClass())
-                ->where('subject_id', $matter->getKey())
-                ->where('event', 'read')
-                ->with('causer')
-                ->latest('id')
-                ->limit(3)
-                ->get(),
+            'recentReads' => $recentReads->for($matter),
         ] + match ($tab) {
             'ledger' => $ledger->for($matter, $user, $request->ledgerFilter()),
             'documents' => $documents->for($matter, $request->documentKind()),
