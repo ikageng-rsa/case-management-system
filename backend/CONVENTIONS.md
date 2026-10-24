@@ -200,6 +200,20 @@ class CompleteDiaryEntryController
 }
 ```
 
+Optional input is read through a method on the form request, not with `filled()` in the
+controller. The method returns the value, the model, or a default.
+
+```php
+// StoreDiaryEntryRequest
+public function assignee(): User
+{
+    return $this->filled('assigned_to') ? User::findOrFail($this->validated('assigned_to')) : $this->user();
+}
+
+// DiaryEntriesController
+$entry->assignee()->associate($request->assignee());
+```
+
 ## 9. Views
 
 camelCase filenames, four-space indent, no space after `@if`/`@foreach`.
@@ -308,8 +322,12 @@ Standard Laravel structure.
 ```
 app/
   Http/
-    Controllers/     (LegalCasesController, NarrationsController, DiaryEntriesController, ...)
-    Requests/         (StoreNarrationRequest, ...)
+    Controllers/      (Controller, DashboardController)
+      Cases/          (LegalCasesController, CaseDocumentsController, ...)
+      Diary/          (DiaryEntriesController, ...)
+    Requests/
+      Cases/          (StoreLegalCaseRequest, ...)
+      Diary/          (StoreDiaryEntryRequest, ...)
   Models/             (LegalCase, Narration, DiaryEntry, CaseDocument, User)
   Services/
     Cases/            (GenerateCaseReference, ...)
@@ -321,6 +339,11 @@ routes/
   web.php
   api.php
 ```
+
+Controllers and form requests are grouped into the same area folders. A class keeps its full
+name inside its folder (`Cases/CaseDocumentsController`, not `Cases/DocumentsController`), so
+it stays unique when searched for or imported. Only the base `Controller` and pages that span
+every area, such as the dashboard, sit at the root.
 
 Services change state; queries only read it. A query class is named for what it returns,
 exposes a single `for()` method, and takes typed values rather than the `Request`. The
