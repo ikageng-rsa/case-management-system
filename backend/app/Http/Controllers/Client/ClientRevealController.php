@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Client;
 
 use App\Enums\Auth\Permission;
+use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\ClientContact;
 use App\Models\ClientContactPerson;

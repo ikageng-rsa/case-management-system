@@ -2,12 +2,13 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Client;
 
 use App\Enums\Client\ClientType;
 use App\Enums\Client\ContactKind;
 use App\Enums\Client\FicaDocument;
 use App\Enums\Client\PopiaConsentMethod;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Client\StoreClientRequest;
 use App\Http\Requests\Client\UpdateClientRequest;
 use App\Models\Client;

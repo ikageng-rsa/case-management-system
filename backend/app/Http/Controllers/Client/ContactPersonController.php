@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Client;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Client\SaveContactPersonRequest;
 use App\Models\Client;
 use App\Models\ClientContactPerson;

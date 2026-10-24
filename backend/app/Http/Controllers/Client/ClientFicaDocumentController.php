@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Client;
 
 use App\Enums\Client\FicaDocument;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Client\StoreFicaDocumentRequest;
 use App\Models\Client;
 use Illuminate\Http\RedirectResponse;

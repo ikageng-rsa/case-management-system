@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Client;
 
 use App\Enums\Client\ContactKind;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Client\StoreClientContactRequest;
 use App\Http\Requests\Client\UpdateClientContactRequest;
 use App\Models\Client;
