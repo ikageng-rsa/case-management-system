@@ -5,7 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Account\AccountController;
 use App\Http\Controllers\Account\NotificationController;
 use App\Http\Controllers\Account\SignInCodeController;
-use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\Audit\AuditLogController;
 use App\Http\Controllers\Client\ClientContactController;
 use App\Http\Controllers\Client\ClientController;
 use App\Http\Controllers\Client\ClientFicaDocumentController;

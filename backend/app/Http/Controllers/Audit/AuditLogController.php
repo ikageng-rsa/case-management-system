@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Audit;
 
 use App\Enums\Auth\Permission;
+use App\Http\Controllers\Controller;
 use App\Models\DiaryEntry;
 use App\Models\Matter;
 use App\Models\MatterAssignment;
