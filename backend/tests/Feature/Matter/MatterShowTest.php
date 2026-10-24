@@ -10,7 +10,7 @@ use App\Enums\Matter\Assignment;
 use App\Models\Diary\DiaryEntry;
 use App\Models\Matter\Matter;
 use App\Models\Matter\MatterAssignment;
-use App\Models\Narration;
+use App\Models\Narration\Narration;
 use App\Models\Reference\ActivityType;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;

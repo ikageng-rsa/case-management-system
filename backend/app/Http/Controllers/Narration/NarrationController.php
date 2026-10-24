@@ -8,7 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Narration\ExportLedgerRequest;
 use App\Http\Requests\Narration\StoreNarrationRequest;
 use App\Models\Matter\Matter;
-use App\Models\Narration;
+use App\Models\Narration\Narration;
 use App\Models\Reference\ActivityType;
 use App\Models\User;
 use App\Queries\Matters\MatterLedger;

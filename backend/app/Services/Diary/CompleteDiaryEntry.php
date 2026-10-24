@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Diary;
 
 use App\Models\Diary\DiaryEntry;
-use App\Models\Narration;
+use App\Models\Narration\Narration;
 use App\Models\User;
 
 /*

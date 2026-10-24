@@ -11,7 +11,7 @@ use App\Models\Matter\Matter;
 use App\Models\Matter\MatterAssignment;
 use App\Models\Matter\MatterParty;
 use App\Models\Media;
-use App\Models\Narration;
+use App\Models\Narration\Narration;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;

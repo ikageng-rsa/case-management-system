@@ -16,7 +16,7 @@ use App\Models\Client\PopiaConsent;
 use App\Models\Diary\DiaryEntry;
 use App\Models\Matter\Matter;
 use App\Models\Matter\MatterAssignment;
-use App\Models\Narration;
+use App\Models\Narration\Narration;
 use App\Models\Reference\ActivityType;
 use App\Models\Reference\Court;
 use App\Models\Reference\MatterType;

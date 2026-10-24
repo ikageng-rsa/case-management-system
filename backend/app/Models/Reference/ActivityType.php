@@ -6,7 +6,7 @@ namespace App\Models\Reference;
 
 use App\Concerns\RecordsActivity;
 use App\Enums\Narration\ActivityMeasure;
-use App\Models\Narration;
+use App\Models\Narration\Narration;
 use Database\Factories\Reference\ActivityTypeFactory;
 use Illuminate\Database\Eloquent\Attributes\Appends;
 use Illuminate\Database\Eloquent\Attributes\Fillable;

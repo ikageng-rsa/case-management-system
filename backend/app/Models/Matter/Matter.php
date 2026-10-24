@@ -9,7 +9,7 @@ use App\Enums\Document\DocumentKind;
 use App\Enums\Matter\Assignment;
 use App\Models\Client\Client;
 use App\Models\Diary\DiaryEntry;
-use App\Models\Narration;
+use App\Models\Narration\Narration;
 use App\Models\Reference\Court;
 use App\Models\Reference\MatterType;
 use App\Models\User;

@@ -9,7 +9,7 @@ use App\Models\Diary\DiaryEntry;
 use App\Models\Matter\Matter;
 use App\Models\Matter\MatterAssignment;
 use App\Models\Matter\MatterParty;
-use App\Models\Narration;
+use App\Models\Narration\Narration;
 use App\Queries\Matters\MatterAuditTrail;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;

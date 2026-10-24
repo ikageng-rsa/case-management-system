@@ -6,7 +6,7 @@ namespace Tests\Unit\Queries\Matters;
 
 use App\Enums\Narration\ActivityMeasure;
 use App\Models\Matter\Matter;
-use App\Models\Narration;
+use App\Models\Narration\Narration;
 use App\Models\Reference\ActivityType;
 use App\Models\User;
 use App\Queries\Matters\MatterLedger;

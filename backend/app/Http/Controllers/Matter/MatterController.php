@@ -14,7 +14,7 @@ use App\Http\Requests\Matter\StoreMatterRequest;
 use App\Http\Requests\Matter\UpdateMatterRequest;
 use App\Models\Client\Client;
 use App\Models\Matter\Matter;
-use App\Models\Narration;
+use App\Models\Narration\Narration;
 use App\Models\Reference\ActivityType;
 use App\Models\Reference\Court;
 use App\Models\Reference\MatterType;

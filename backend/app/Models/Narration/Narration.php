@@ -2,12 +2,13 @@
 
 declare(strict_types=1);
 
-namespace App\Models;
+namespace App\Models\Narration;
 
 use App\Concerns\RecordsActivity;
 use App\Models\Matter\Matter;
 use App\Models\Reference\ActivityType;
-use Database\Factories\NarrationFactory;
+use App\Models\User;
+use Database\Factories\Narration\NarrationFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;

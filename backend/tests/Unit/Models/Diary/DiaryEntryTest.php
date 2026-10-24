@@ -6,7 +6,7 @@ namespace Tests\Unit\Models\Diary;
 
 use App\Models\Diary\DiaryEntry;
 use App\Models\Matter\Matter;
-use App\Models\Narration;
+use App\Models\Narration\Narration;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
