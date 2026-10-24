@@ -18,6 +18,7 @@ use App\Models\Matter;
 use App\Models\MatterType;
 use App\Models\Narration;
 use App\Models\User;
+use App\Queries\Matters\MatterLedger;
 use App\Services\Diary\ResolveReminderLead;
 use App\Services\Matters\AssignUserToMatter;
 use App\Services\Matters\CannotAssignToClosedMatter;
@@ -160,7 +161,7 @@ class MatterController extends Controller
                 ->limit(3)
                 ->get(),
         ] + match ($tab) {
-            'ledger' => $this->ledger($request, $matter, $user),
+            'ledger' => app(MatterLedger::class)->for($matter, $user, $this->ledgerFilter($request)),
             'documents' => $this->documents($request, $matter),
             'parties' => $this->parties($matter, $user),
             'diary' => $this->diary($request, $matter, $user),
@@ -329,32 +330,12 @@ class MatterController extends Controller
         return redirect()->route('matter.show', [$matter, 'tab' => 'parties']);
     }
 
-    /** @return array<string, mixed> */
-    protected function ledger(Request $request, Matter $matter, User $user): array
+    /** The ledger filter is `mine` or an activity code; blank shows everything. */
+    protected function ledgerFilter(Request $request): ?string
     {
-        $all = $matter->narrations()->with(['activityType', 'author'])->latestFirst()->get();
-
         $filter = $request->query('filter');
 
-        $narrations = match (true) {
-            $filter === 'mine' => $all->where('author_id', $user->getKey()),
-            filled($filter) => $all->filter(fn (Narration $narration) => $narration->activityType->code === $filter),
-            default => $all,
-        };
-
-        $filters = $all->groupBy(fn (Narration $narration) => $narration->activityType->code)
-            ->map(fn ($group) => ['label' => strtolower($group->first()->activityType->name), 'count' => $group->count()]);
-
-        return [
-            'narrations' => $narrations->values(),
-            'allCount' => $all->count(),
-            'filter' => $filter,
-            'filters' => $filters,
-            'mineCount' => $all->where('author_id', $user->getKey())->count(),
-            'minutesRecorded' => (float) $all
-                ->filter(fn (Narration $narration) => $narration->activityType->measure->isTimed())
-                ->sum('quantity'),
-        ];
+        return is_string($filter) && $filter !== '' ? $filter : null;
     }
 
     /** @return array<string, mixed> */
