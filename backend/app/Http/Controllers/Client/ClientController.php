@@ -76,16 +76,8 @@ class ClientController extends Controller
             [$client, $matter] = DB::transaction(function () use ($request, $registerClient, $addContact, $recordConsent, $openMatter, $opensMatter): array {
                 $client = $registerClient->register(ClientType::from($request->validated('type')), $request->validated());
 
-                $contacts = [
-                    'mobile' => ContactKind::Mobile,
-                    'email' => ContactKind::Email,
-                    'physical_address' => ContactKind::Physical,
-                ];
-
-                foreach ($contacts as $field => $kind) {
-                    if ($request->filled($field)) {
-                        $addContact->add($client, $kind, $request->validated($field));
-                    }
+                foreach ($request->contacts() as $kind => $value) {
+                    $addContact->add($client, ContactKind::from($kind), $value);
                 }
 
                 foreach ($request->ficaFiles() as $document => $file) {
@@ -105,7 +97,7 @@ class ClientController extends Controller
                     ? $openMatter->open(
                         $client,
                         MatterType::findOrFail($request->validated('matter_type_id')),
-                        court: $request->filled('court_id') ? Court::findOrFail($request->validated('court_id')) : null,
+                        court: $request->court(),
                     )
                     : null;
 
