@@ -7,6 +7,7 @@ namespace App\Http\Requests\Client;
 use App\Enums\Auth\Permission;
 use App\Enums\Client\ClientType;
 use App\Enums\Client\ContactKind;
+use App\Enums\Client\PopiaConsentMethod;
 use App\Http\Requests\Client\Concerns\ValidatesIdentity;
 use App\Models\MatterType;
 use App\Rules\Client\UniqueClientRegistrationNumber;
@@ -95,20 +96,27 @@ class StoreClientRequest extends FormRequest
     }
 
     /**
-     * The client's consent is recorded by whoever is cleared to record it, and
-     * they have to confirm it before the client is registered. The matter is
-     * only validated when the user is going on to open one.
+     * Consent is optional at intake and can be recorded on the client later. Given
+     * now, it says how it was given, and a signed mandate has to be attached, as
+     * when it is recorded on the client. A matter is opened, and so validated,
+     * only when a matter type is chosen.
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
     protected function intakeRules(): array
     {
-        $rules = [
-            'intent' => ['nullable', Rule::in(['client', 'matter'])],
-            'popia_consent' => [$this->user()->can(Permission::RecordPopiaConsent->value) ? 'accepted' : 'nullable'],
-        ];
+        $rules = $this->user()->can(Permission::RecordPopiaConsent->value) && $this->boolean('popia_consent')
+            ? [
+                'popia_consent' => ['accepted'],
+                'popia_method' => ['required', Rule::enum(PopiaConsentMethod::class)],
+                'popia_mandate' => [
+                    Rule::requiredIf($this->input('popia_method') === PopiaConsentMethod::Signed->value),
+                    'nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:20480',
+                ],
+            ]
+            : ['popia_consent' => ['nullable', 'boolean']];
 
-        if ($this->input('intent') !== 'matter') {
+        if (! $this->opensMatter()) {
             return $rules;
         }
 
@@ -121,6 +129,11 @@ class StoreClientRequest extends FormRequest
                 Rule::exists('courts', 'id')->withoutTrashed(),
             ],
         ];
+    }
+
+    public function opensMatter(): bool
+    {
+        return $this->filled('matter_type_id');
     }
 
     protected function courtIsRequired(): bool

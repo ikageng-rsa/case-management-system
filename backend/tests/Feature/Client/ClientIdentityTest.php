@@ -43,7 +43,6 @@ class ClientIdentityTest extends TestCase
                 'type' => 'individual',
                 'first_name' => 'Amara',
                 'last_name' => 'Okafor',
-                'popia_consent' => '1',
             ]);
     }
 

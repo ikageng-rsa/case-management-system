@@ -377,6 +377,8 @@
             $intakeConfig = [
                 'type' => old('type', 'individual'),
                 'idType' => old('id_type', \App\Enums\Client\IdentityType::SouthAfricanId->value),
+                'consent' => (bool) old('popia_consent'),
+                'consentMethod' => old('popia_method', \App\Enums\Client\PopiaConsentMethod::Signed->value),
                 'matterTypeId' => (string) old('matter_type_id', ''),
                 'matterTypes' => $matterTypes->mapWithKeys(fn ($type) => [
                     $type->getKey() => ['litigation' => (bool) $type->is_litigation],
@@ -385,7 +387,7 @@
         @endphp
 
         <x-ui.sheet name="new-client" title="New client intake" lede="Register a client, and open their matter if you are ready to." bag="client" wide
-            :action="route('client.store')" :form-data="'clientIntake('.\Illuminate\Support\Js::from($intakeConfig).')'">
+            :action="route('client.store')" enctype="multipart/form-data" :form-data="'clientIntake('.\Illuminate\Support\Js::from($intakeConfig).')'">
             {{-- Planned: shown beside the title once drafts can be saved
             <span class="badge">draft autosaved</span>
             --}}
@@ -467,7 +469,7 @@
                 <hr>
 
                 <h3 class="text-meta text-uppercase mb-2">Matter</h3>
-                <p class="text-meta">Only needed when you choose Save &amp; open matter.</p>
+                <p class="text-meta">Choose a matter type to open the client's matter now, or leave it to register the client only.</p>
 
                 <x-ui.select label="Nature of instruction" name="matter_type_id" id="intake_matter_type_id" x-model="matterTypeId"
                     :error="$intake->first('matter_type_id')">
@@ -501,7 +503,7 @@
 
                 <div class="form-check">
                     <input class="form-check-input @if ($intake->has('popia_consent')) is-invalid @endif" type="checkbox"
-                        id="intake_popia_consent" name="popia_consent" value="1" @checked(old('popia_consent'))>
+                        id="intake_popia_consent" name="popia_consent" value="1" x-model="consent">
                     <label class="form-check-label" for="intake_popia_consent">
                         Client confirms the information above is correct and consents to the firm processing their
                         personal information for the purposes of this matter (POPIA s.11). Consent is timestamped and
@@ -511,20 +513,33 @@
                         <div class="invalid-feedback d-block">{{ $intake->first('popia_consent') }}</div>
                     @endif
                 </div>
+
+                {{-- Optional at intake; left unticked, consent is recorded on the client later. Disabled while
+                     hidden, so nothing about a consent that was not given is sent. --}}
+                <div class="row mt-3" x-show="consent" x-cloak>
+                    <div class="col-md-6">
+                        <x-ui.select label="How consent was given" name="popia_method" id="intake_popia_method" x-model="consentMethod"
+                            x-bind:disabled="! consent" :error="$intake->first('popia_method')">
+                            @foreach (\App\Enums\Client\PopiaConsentMethod::cases() as $method)
+                                <option value="{{ $method->value }}">{{ Str::headline($method->value) }}</option>
+                            @endforeach
+                        </x-ui.select>
+                    </div>
+                    <div class="col-md-6">
+                        <x-ui.input label="Signed mandate" name="popia_mandate" id="intake_popia_mandate" type="file" accept=".pdf,.jpg,.jpeg,.png"
+                            x-bind:disabled="! consent" :error="$intake->first('popia_mandate')" />
+                        <p class="form-hint" x-show="consentMethod === 'signed_mandate'">Required for a signed mandate. PDF or image, up to 20 MB.</p>
+                        <p class="form-hint" x-show="consentMethod !== 'signed_mandate'" x-cloak>Optional. PDF or image, up to 20 MB.</p>
+                    </div>
+                </div>
             @endcan
 
             <x-slot:footer>
                 <div class="d-flex align-items-center justify-content-between">
                     <x-ui.button variant="outline-secondary" x-on:click="close()">Cancel</x-ui.button>
 
-                    <div class="d-flex gap-2">
-                        @can('create', \App\Models\Matter::class)
-                            <x-ui.button type="submit" name="intent" value="client" variant="outline-secondary">Save client only</x-ui.button>
-                            <x-ui.button type="submit" name="intent" value="matter" variant="primary">Save &amp; open matter →</x-ui.button>
-                        @else
-                            <x-ui.button type="submit" name="intent" value="client" variant="primary">Save client</x-ui.button>
-                        @endcan
-                    </div>
+                    {{-- One save: the matter is opened too when a matter type was chosen. --}}
+                    <x-ui.button type="submit" variant="primary">Save client</x-ui.button>
                 </div>
             </x-slot:footer>
         </x-ui.sheet>

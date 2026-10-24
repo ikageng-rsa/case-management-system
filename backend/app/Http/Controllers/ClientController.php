@@ -64,7 +64,7 @@ class ClientController extends Controller
     ): RedirectResponse {
         Gate::authorize('create', Client::class);
 
-        $opensMatter = $request->input('intent') === 'matter';
+        $opensMatter = $request->opensMatter();
 
         if ($opensMatter) {
             Gate::authorize('create', Matter::class);
@@ -87,7 +87,12 @@ class ClientController extends Controller
                 }
 
                 if ($request->boolean('popia_consent') && $request->user()->can('record_popia_consent')) {
-                    $recordConsent->record($client, true, PopiaConsentMethod::Verbal);
+                    $recordConsent->record(
+                        $client,
+                        true,
+                        PopiaConsentMethod::from($request->validated('popia_method')),
+                        mandate: $request->file('popia_mandate'),
+                    );
                 }
 
                 $matter = $opensMatter
