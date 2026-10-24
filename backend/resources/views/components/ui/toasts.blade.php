@@ -17,10 +17,12 @@
     }
 
     // Errors may sit in a named bag when a sheet has to reopen on its own fields.
+    /** 
     collect($errors->getBags())
         ->flatMap(fn ($bag) => $bag->all())
         ->unique()
         ->each(fn ($error) => $seed->push(['tone' => 'danger', 'message' => $error]));
+    */
 @endphp
 
 
