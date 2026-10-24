@@ -336,6 +336,8 @@ app/
     Diary/            (SendOverdueDiaryAlert, CompleteDiaryEntry, ...)
   Queries/
     Cases/            (CaseLedger, CaseDiary, ...)
+  Support/
+    Cases/            (NormaliseCaseNumber, ...)
   Policies/
 routes/
   web.php
@@ -367,7 +369,35 @@ class CaseDiary
 }
 ```
 
-## 16. Git & Commits
+## 16. Boundaries
+
+Layers depend inwards: controllers and form requests use services, queries and models;
+services and queries use models; models use neither. A helper that more than one layer
+needs, such as hashing or normalising a value, sits in `app/Support`, which uses nothing
+above it.
+
+Three tests in `tests/Unit/Architecture/` hold these lines. They read the code without
+booting the app, and each failure names the file, what it did, and the fix.
+
+| Test | Fails when |
+|---|---|
+| `LayeringTest` | `app/Services` or `app/Queries` uses `App\Http`, or `app/Models` uses `App\Services` or `App\Queries` |
+| `QueriesAreReadOnlyTest` | a query uses a service, or calls `->save(`, `->create(`, `->update(`, `->delete(` or `DB::transaction(` |
+| `ServiceBoundariesTest` | a service uses another area's services without that link being allowed, or an allowed link is no longer used |
+
+A service folder is one area. When one area needs another, add the link to
+`ServiceBoundariesTest::ALLOWED` in the same PR, with the reason, so the reviewer decides on
+it rather than finding it later. Remove the link when the dependency goes.
+
+```php
+private const ALLOWED = [
+    'Cases' => [
+        'Notifications' => 'Assigning someone to a case tells them.',
+    ],
+];
+```
+
+## 17. Git & Commits
 
 Present-tense, descriptive commit messages. Granular commits over one large one. Branching,
 PR, and release process: `CONTRIBUTING.md`.
