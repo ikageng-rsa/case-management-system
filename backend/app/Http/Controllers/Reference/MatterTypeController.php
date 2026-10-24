@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Reference;
 
 use App\Enums\Auth\Permission;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Reference\SaveMatterTypeRequest;
 use App\Models\MatterType;
 use App\Services\MatterTypes\RetireMatterType;

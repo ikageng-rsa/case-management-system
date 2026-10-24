@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Reference;
 
 use App\Enums\Auth\Permission;
 use App\Enums\Court\CourtTier;
 use App\Enums\Narration\ActivityMeasure;
+use App\Http\Controllers\Controller;
 use App\Models\ActivityType;
 use App\Models\Court;
 use App\Models\MatterType;
