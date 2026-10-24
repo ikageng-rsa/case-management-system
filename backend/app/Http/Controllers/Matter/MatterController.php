@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Matter;
 use App\Enums\Matter\Assignment;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Matter\AssignUserRequest;
+use App\Http\Requests\Matter\ListMattersRequest;
 use App\Http\Requests\Matter\ReopenMatterRequest;
 use App\Http\Requests\Matter\ShowMatterRequest;
 use App\Http\Requests\Matter\StoreMatterRequest;
@@ -46,21 +47,17 @@ use Illuminate\Validation\Rule;
 
 class MatterController extends Controller
 {
-    private const FILTERS = ['all', 'mine', 'unassigned', 'closed'];
-
-    private const SORTS = ['next_date', 'opened', 'reference'];
-
     /** The activity an opening narration is filed under. */
     private const OPENING_ACTIVITY = 'ADMIN';
 
-    public function index(Request $request): View
+    public function index(ListMattersRequest $request): View
     {
         /** @var User $user */
         $user = $request->user();
 
-        $filter = in_array($request->query('filter'), self::FILTERS, true) ? $request->query('filter') : 'all';
-        $sort = in_array($request->query('sort'), self::SORTS, true) ? $request->query('sort') : 'next_date';
-        $matterTypeId = $request->integer('type') ?: null;
+        $filter = $request->filter();
+        $sort = $request->sort();
+        $matterTypeId = $request->matterTypeId();
 
         $visible = fn (): Builder => Matter::query()
             ->when(! $user->can('viewAny', Matter::class), fn (Builder $query) => $query->assignedTo($user));
