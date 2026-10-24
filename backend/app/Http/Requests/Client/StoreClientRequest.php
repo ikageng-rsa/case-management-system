@@ -7,14 +7,17 @@ namespace App\Http\Requests\Client;
 use App\Enums\Auth\Permission;
 use App\Enums\Client\ClientType;
 use App\Enums\Client\ContactKind;
+use App\Enums\Client\FicaDocument;
 use App\Enums\Client\PopiaConsentMethod;
 use App\Http\Requests\Client\Concerns\ValidatesIdentity;
 use App\Models\MatterType;
 use App\Rules\Client\UniqueClientRegistrationNumber;
 use App\Rules\Client\ValidContactValue;
 use App\Rules\Client\ValidRegistrationNumber;
+use App\Rules\Document\AllowedDocument;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\Rule;
 
 class StoreClientRequest extends FormRequest
@@ -43,7 +46,39 @@ class StoreClientRequest extends FormRequest
             ClientType::Individual => $this->individualRules(),
             ClientType::Entity => $this->entityRules(),
             default => ['type' => ['required', Rule::enum(ClientType::class)]],
-        } + $this->contactRules() + $this->intakeRules();
+        } + $this->contactRules() + $this->ficaRules() + $this->intakeRules();
+    }
+
+    /**
+     * FICA documents can be filed at intake, one file for each the kind of client
+     * is asked for. None is required: the rest can be added on the client later.
+     *
+     * @return array<string, ValidationRule|array<mixed>|string>
+     */
+    protected function ficaRules(): array
+    {
+        $type = $this->clientType();
+
+        if ($type === null) {
+            return [];
+        }
+
+        return collect(FicaDocument::forType($type))
+            ->mapWithKeys(fn (FicaDocument $document) => [
+                'fica.'.$document->value => ['nullable', 'file', 'max:'.config('documents.max_kilobytes'), new AllowedDocument],
+            ])
+            ->all();
+    }
+
+    /** @return array<string, UploadedFile> */
+    public function ficaFiles(): array
+    {
+        $type = $this->clientType();
+
+        return $type === null ? [] : collect(FicaDocument::forType($type))
+            ->mapWithKeys(fn (FicaDocument $document) => [$document->value => $this->file('fica.'.$document->value)])
+            ->filter()
+            ->all();
     }
 
     /**

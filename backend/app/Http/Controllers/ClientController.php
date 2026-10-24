@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\Client\ClientType;
 use App\Enums\Client\ContactKind;
+use App\Enums\Client\FicaDocument;
 use App\Enums\Client\PopiaConsentMethod;
 use App\Http\Requests\Client\StoreClientRequest;
 use App\Http\Requests\Client\UpdateClientRequest;
@@ -84,6 +85,10 @@ class ClientController extends Controller
                     if ($request->filled($field)) {
                         $addContact->add($client, $kind, $request->validated($field));
                     }
+                }
+
+                foreach ($request->ficaFiles() as $document => $file) {
+                    $client->addFicaDocument($file, FicaDocument::from($document))->recordAccess('uploaded');
                 }
 
                 if ($request->boolean('popia_consent') && $request->user()->can('record_popia_consent')) {
@@ -187,7 +192,7 @@ class ClientController extends Controller
     /** @return array<string, mixed> */
     protected function detail(Client $client, User $user): array
     {
-        $client->load('contacts');
+        $client->load('contacts', 'media');
 
         $matters = $client->matters()
             ->with('matterType')
@@ -203,6 +208,8 @@ class ClientController extends Controller
             : collect();
 
         return [
+            'canDownloadFica' => $user->can('downloadFicaDocument', $client),
+            'canDeleteFica' => $user->can('deleteFicaDocument', $client),
             'contactPersons' => $user->can('view_client_contacts') ? $client->contactPersons()->orderByDesc('is_primary')->oldest()->get() : collect(),
             'matters' => $matters,
             'openMattersCount' => $matters->filter->isOpen()->count(),

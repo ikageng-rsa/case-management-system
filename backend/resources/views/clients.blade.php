@@ -197,6 +197,77 @@
                         </div>
                     </div>
 
+                    @php
+                        $outstanding = count($client->outstandingFicaDocuments());
+                    @endphp
+
+                    <div class="row mb-3">
+                        <div class="col">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <h3 class="text-meta text-uppercase mb-0">FICA documents</h3>
+                                            @if ($outstanding === 0)
+                                                <x-ui.stage-badge tone="success">Complete</x-ui.stage-badge>
+                                            @else
+                                                <x-ui.stage-badge tone="danger">{{ $outstanding }} outstanding</x-ui.stage-badge>
+                                            @endif
+                                        </div>
+
+                                        @can('update', $client)
+                                            <x-ui.button variant="outline-secondary" size="sm" icon="upload"
+                                                x-data x-on:click="$dispatch('sheet-open', 'upload-fica')">Upload</x-ui.button>
+                                        @endcan
+                                    </div>
+
+                                    <div class="table-responsive">
+                                        <table class="table table-vcenter">
+                                            <tbody>
+                                                @foreach (\App\Enums\Client\FicaDocument::forType($client->type) as $document)
+                                                    @php
+                                                        $files = $client->ficaDocuments($document);
+                                                    @endphp
+                                                    <tr>
+                                                        <td>
+                                                            <div>{{ $document->label() }}</div>
+                                                            <div class="text-meta text-secondary">{{ $document->hint() }}</div>
+                                                        </td>
+                                                        <td>
+                                                            @forelse ($files as $file)
+                                                                <div class="d-flex align-items-center justify-content-end gap-2 text-nowrap">
+                                                                    {{-- A copy of an ID shows the number in full, so only those cleared to see it may open one. --}}
+                                                                    @if ($canDownloadFica)
+                                                                        <a href="{{ route('client.fica.download', [$client, $file->getKey()]) }}">{{ $file->file_name }}</a>
+                                                                    @else
+                                                                        <span>{{ $file->file_name }}</span>
+                                                                    @endif
+                                                                    <span class="text-meta">{{ $file->created_at->format('d M Y') }}</span>
+
+                                                                    @if ($canDeleteFica)
+                                                                        <form method="POST" action="{{ route('client.fica.destroy', [$client, $file->getKey()]) }}" class="d-inline"
+                                                                            data-confirm="Delete {{ $file->file_name }}? This cannot be undone."
+                                                                            data-confirm-title="Delete FICA document" data-confirm-action="Delete" data-confirm-tone="danger" data-confirm-icon="trash">
+                                                                            @csrf
+                                                                            @method('DELETE')
+                                                                            <x-ui.button type="submit" variant="ghost-danger" size="sm">Delete</x-ui.button>
+                                                                        </form>
+                                                                    @endif
+                                                                </div>
+                                                            @empty
+                                                                <div class="text-end"><x-ui.stage-badge>Outstanding</x-ui.stage-badge></div>
+                                                            @endforelse
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="row">
                         @if ($showConsent)
                             @php
@@ -337,6 +408,28 @@
             </x-ui.sheet>
         @endcan
 
+        @can('update', $client)
+            <x-ui.sheet name="upload-fica" title="Upload FICA document" :lede="$client->full_name" bag="fica"
+                :action="route('client.fica.store', $client)" enctype="multipart/form-data">
+                <x-ui.select label="Document" name="document" id="fica_document" :error="$errors->fica->first('document')">
+                    @foreach (\App\Enums\Client\FicaDocument::forType($client->type) as $document)
+                        <option value="{{ $document->value }}" @selected(old('document') === $document->value)>{{ $document->label() }}</option>
+                    @endforeach
+                </x-ui.select>
+
+                <x-ui.input label="File" name="file" id="fica_file" type="file"
+                    accept="{{ collect(array_keys(config('documents.allowed')))->map(fn ($extension) => '.'.$extension)->implode(',') }}"
+                    hint="PDF or a scan, up to 50 MB." :error="$errors->fica->first('file')" />
+
+                <x-slot:footer>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <x-ui.button variant="outline-secondary" x-on:click="close()">Cancel</x-ui.button>
+                        <x-ui.button type="submit" variant="primary">Upload</x-ui.button>
+                    </div>
+                </x-slot:footer>
+            </x-ui.sheet>
+        @endcan
+
         @if ($showConsent && $canRecordConsent)
             <x-ui.sheet name="record-consent" title="Record consent" lede="Record how {{ $client->full_name }} gave their POPIA consent." bag="popia"
                 :action="route('client.consent.store', $client)" enctype="multipart/form-data"
@@ -464,6 +557,25 @@
             </div>
 
             <x-ui.input label="Physical address" name="physical_address" :value="old('physical_address')" maxlength="500" :error="$intake->first('physical_address')" />
+
+            <hr>
+
+            <h3 class="text-meta text-uppercase mb-2">FICA documents</h3>
+            <p class="text-meta">Optional. Anything not on hand can be uploaded on the client later.</p>
+
+            {{-- Each kind of client is asked for its own documents; the other kind's are disabled, so they are never sent. --}}
+            @foreach (\App\Enums\Client\ClientType::cases() as $clientType)
+                <div class="row" x-show="type === '{{ $clientType->value }}'" @if ($clientType !== \App\Enums\Client\ClientType::Individual) x-cloak @endif>
+                    @foreach (\App\Enums\Client\FicaDocument::forType($clientType) as $document)
+                        <div class="col-md-6">
+                            <x-ui.input :label="$document->label()" name="fica[{{ $document->value }}]" id="intake_fica_{{ $document->value }}" type="file"
+                                accept="{{ collect(array_keys(config('documents.allowed')))->map(fn ($extension) => '.'.$extension)->implode(',') }}"
+                                x-bind:disabled="type !== '{{ $clientType->value }}'" :hint="$document->hint()"
+                                :error="$intake->first('fica.'.$document->value)" />
+                        </div>
+                    @endforeach
+                </div>
+            @endforeach
 
             @can('create', \App\Models\Matter::class)
                 <hr>

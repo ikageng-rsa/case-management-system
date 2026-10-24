@@ -8,6 +8,7 @@ use App\Http\Controllers\ActivityTypeController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\ClientContactController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\ClientFicaDocumentController;
 use App\Http\Controllers\ClientRevealController;
 use App\Http\Controllers\ContactPersonController;
 use App\Http\Controllers\CourtController;
@@ -98,6 +99,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/clients/{client}/popia-consent', [PopiaConsentController::class, 'store'])->name('client.consent.store');
     Route::post('/clients/{client}/popia-consent/withdraw', [PopiaConsentController::class, 'withdraw'])->name('client.consent.withdraw');
     Route::get('/clients/{client}/popia-consent/{popiaConsent}/mandate', [PopiaConsentController::class, 'mandate'])->name('client.consent.mandate');
+    Route::post('/clients/{client}/fica-documents', [ClientFicaDocumentController::class, 'store'])->name('client.fica.store');
+    Route::get('/clients/{client}/fica-documents/{document}', [ClientFicaDocumentController::class, 'download'])->name('client.fica.download');
+    Route::delete('/clients/{client}/fica-documents/{document}', [ClientFicaDocumentController::class, 'destroy'])->name('client.fica.destroy');
 
     Route::get('/documents', [DocumentController::class, 'index'])->name('documents');
     Route::post('/documents', [DocumentController::class, 'store'])->name('documents.store');
