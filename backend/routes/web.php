@@ -14,7 +14,7 @@ use App\Http\Controllers\Client\ContactPersonController;
 use App\Http\Controllers\Client\PopiaConsentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Diary\DiaryEntryController;
-use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\Document\DocumentController;
 use App\Http\Controllers\Invitation\AcceptInvitationController;
 use App\Http\Controllers\Invitation\InvitationController;
 use App\Http\Controllers\Matter\MatterController;

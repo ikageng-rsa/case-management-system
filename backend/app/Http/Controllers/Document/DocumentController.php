@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Document;
 
 use App\Enums\Document\DocumentKind;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Document\UploadDocumentRequest;
 use App\Models\Matter;
 use App\Models\Media;
