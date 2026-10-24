@@ -3,7 +3,9 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\AcceptInvitationController;
-use App\Http\Controllers\AccountController;
+use App\Http\Controllers\Account\AccountController;
+use App\Http\Controllers\Account\NotificationController;
+use App\Http\Controllers\Account\SignInCodeController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\Client\ClientContactController;
 use App\Http\Controllers\Client\ClientController;
@@ -19,12 +21,10 @@ use App\Http\Controllers\Matter\MatterController;
 use App\Http\Controllers\Matter\MatterDocumentController;
 use App\Http\Controllers\Matter\MatterPartyController;
 use App\Http\Controllers\NarrationController;
-use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Reference\ActivityTypeController;
 use App\Http\Controllers\Reference\CourtController;
 use App\Http\Controllers\Reference\MatterTypeController;
 use App\Http\Controllers\Reference\ReferenceDataController;
-use App\Http\Controllers\SignInCodeController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
