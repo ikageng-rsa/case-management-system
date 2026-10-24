@@ -8,7 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Diary\StoreDiaryEntryRequest;
 use App\Http\Requests\Diary\UpdateDiaryReminderRequest;
 use App\Models\DiaryEntry;
-use App\Models\Matter;
+use App\Models\Matter\Matter;
 use App\Notifications\DiaryEntryAssigned;
 use App\Services\Diary\CompleteDiaryEntry;
 use App\Services\Diary\ResolveReminderLead;

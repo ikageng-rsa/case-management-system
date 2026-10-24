@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Matters;
 
 use App\Enums\Matter\Assignment;
-use App\Models\Matter;
+use App\Models\Matter\Matter;
 use App\Models\User;
 use App\Notifications\MatterUnassigned;
 use App\Services\Notifications\NotifyUser;

@@ -6,7 +6,7 @@ namespace App\Services\Matters;
 
 use App\Models\Client;
 use App\Models\Court;
-use App\Models\Matter;
+use App\Models\Matter\Matter;
 use App\Models\MatterType;
 use Carbon\CarbonInterface;
 use Illuminate\Database\QueryException;

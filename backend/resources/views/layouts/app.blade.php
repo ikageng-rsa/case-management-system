@@ -102,7 +102,7 @@
                 </div>
 
                 {{-- A matter can be opened from anywhere; the form lives on the matters page, which this opens. --}}
-                @can('create', \App\Models\Matter::class)
+                @can('create', \App\Models\Matter\Matter::class)
                     @if (request()->routeIs('matters'))
                         <x-ui.button variant="dark" icon="plus"
                             x-data x-on:click="$dispatch('sheet-open', 'new-matter')">New matter</x-ui.button>

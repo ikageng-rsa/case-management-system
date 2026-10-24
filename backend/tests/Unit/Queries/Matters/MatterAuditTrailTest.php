@@ -6,9 +6,9 @@ namespace Tests\Unit\Queries\Matters;
 
 use App\Enums\Document\DocumentKind;
 use App\Models\DiaryEntry;
-use App\Models\Matter;
-use App\Models\MatterAssignment;
-use App\Models\MatterParty;
+use App\Models\Matter\Matter;
+use App\Models\Matter\MatterAssignment;
+use App\Models\Matter\MatterParty;
 use App\Models\Narration;
 use App\Queries\Matters\MatterAuditTrail;
 use Illuminate\Database\Eloquent\Model;

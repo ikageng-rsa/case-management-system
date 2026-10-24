@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Queries\Matters;
 
 use App\Enums\Matter\Assignment;
-use App\Models\Matter;
+use App\Models\Matter\Matter;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;

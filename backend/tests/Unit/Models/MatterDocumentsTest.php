@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Models;
 
 use App\Enums\Document\DocumentKind;
-use App\Models\Matter;
+use App\Models\Matter\Matter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;

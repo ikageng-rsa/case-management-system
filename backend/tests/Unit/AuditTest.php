@@ -7,7 +7,7 @@ namespace Tests\Unit;
 use App\Enums\Auth\Role as RoleEnum;
 use App\Enums\Document\DocumentKind;
 use App\Models\Client;
-use App\Models\Matter;
+use App\Models\Matter\Matter;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;

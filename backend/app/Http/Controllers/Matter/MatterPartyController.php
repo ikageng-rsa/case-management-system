@@ -6,8 +6,8 @@ namespace App\Http\Controllers\Matter;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Matter\SaveMatterPartyRequest;
-use App\Models\Matter;
-use App\Models\MatterParty;
+use App\Models\Matter\Matter;
+use App\Models\Matter\MatterParty;
 use App\Services\Matters\CannotChangePartiesOfClosedMatter;
 use App\Services\Matters\SaveMatterParty;
 use Illuminate\Http\RedirectResponse;

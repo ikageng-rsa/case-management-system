@@ -6,7 +6,7 @@ namespace Tests\Unit\Models;
 
 use App\Enums\Court\CourtTier;
 use App\Models\Court;
-use App\Models\Matter;
+use App\Models\Matter\Matter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

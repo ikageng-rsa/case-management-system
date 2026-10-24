@@ -13,7 +13,7 @@ use App\Http\Requests\Client\StoreClientRequest;
 use App\Http\Requests\Client\UpdateClientRequest;
 use App\Models\Client;
 use App\Models\Court;
-use App\Models\Matter;
+use App\Models\Matter\Matter;
 use App\Models\MatterType;
 use App\Models\User;
 use App\Services\Clients\AddClientContact;

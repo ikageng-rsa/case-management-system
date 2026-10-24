@@ -15,7 +15,7 @@ use App\Http\Requests\Matter\UpdateMatterRequest;
 use App\Models\ActivityType;
 use App\Models\Client;
 use App\Models\Court;
-use App\Models\Matter;
+use App\Models\Matter\Matter;
 use App\Models\MatterType;
 use App\Models\Narration;
 use App\Models\User;

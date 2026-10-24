@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Queries\Matters;
 
 use App\Enums\Matter\PartyRole;
-use App\Models\Matter;
+use App\Models\Matter\Matter;
 use App\Models\User;
 
 /*

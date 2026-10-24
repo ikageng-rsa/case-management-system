@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Database\Factories;
+namespace Database\Factories\Matter;
 
 use App\Enums\Matter\Assignment;
-use App\Models\Matter;
-use App\Models\MatterAssignment;
+use App\Models\Matter\Matter;
+use App\Models\Matter\MatterAssignment;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

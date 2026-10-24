@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\Models;
+namespace App\Models\Matter;
 
 use App\Concerns\RecordsActivity;
 use App\Enums\Matter\Assignment;
-use Database\Factories\MatterAssignmentFactory;
+use App\Models\User;
+use Database\Factories\Matter\MatterAssignmentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

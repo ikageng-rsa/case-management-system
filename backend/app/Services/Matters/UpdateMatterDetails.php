@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Matters;
 
 use App\Models\Court;
-use App\Models\Matter;
+use App\Models\Matter\Matter;
 use Illuminate\Support\Facades\DB;
 
 /*

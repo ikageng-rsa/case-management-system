@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Queries\Matters;
 
 use App\Enums\Document\DocumentKind;
-use App\Models\Matter;
+use App\Models\Matter\Matter;
 
 /*
  * The documents on a matter's documents tab, newest first, narrowed to one

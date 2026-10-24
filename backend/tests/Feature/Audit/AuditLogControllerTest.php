@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Audit;
 
 use App\Enums\Auth\Role as RoleEnum;
-use App\Models\Matter;
+use App\Models\Matter\Matter;
 use App\Models\Narration;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;

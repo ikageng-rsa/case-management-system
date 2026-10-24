@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\Unit\Queries\Matters;
 
 use App\Models\ClientContact;
-use App\Models\Matter;
-use App\Models\MatterParty;
+use App\Models\Matter\Matter;
+use App\Models\Matter\MatterParty;
 use App\Models\User;
 use App\Queries\Matters\MatterParties;
 use Database\Seeders\RoleSeeder;

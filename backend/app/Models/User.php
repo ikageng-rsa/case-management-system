@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Casts\Client\EncryptedContact;
 use App\Concerns\RecordsActivity;
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\Matter\Matter;
+use App\Models\Matter\MatterAssignment;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;

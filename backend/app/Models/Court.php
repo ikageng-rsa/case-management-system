@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Concerns\RecordsActivity;
 use App\Enums\Court\CourtTier;
+use App\Models\Matter\Matter;
 use Database\Factories\CourtFactory;
 use Illuminate\Database\Eloquent\Attributes\Appends;
 use Illuminate\Database\Eloquent\Attributes\Fillable;

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Models;
+namespace Tests\Unit\Models\Matter;
 
 use App\Enums\Matter\Assignment;
-use App\Models\Matter;
-use App\Models\MatterAssignment;
+use App\Models\Matter\Matter;
+use App\Models\Matter\MatterAssignment;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;

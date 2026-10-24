@@ -7,7 +7,7 @@ namespace App\Http\Controllers\Matter;
 use App\Enums\Document\DocumentKind;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Document\StoreDocumentRequest;
-use App\Models\Matter;
+use App\Models\Matter\Matter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;

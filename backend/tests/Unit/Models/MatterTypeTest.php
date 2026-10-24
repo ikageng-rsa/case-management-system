@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Models;
 
-use App\Models\Matter;
+use App\Models\Matter\Matter;
 use App\Models\MatterType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;

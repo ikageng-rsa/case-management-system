@@ -6,7 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\Narration\ActivityMeasure;
 use App\Models\DiaryEntry;
-use App\Models\Matter;
+use App\Models\Matter\Matter;
 use App\Models\Narration;
 use App\Models\User;
 use Illuminate\Contracts\View\View;

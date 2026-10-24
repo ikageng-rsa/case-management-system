@@ -2,12 +2,18 @@
 
 declare(strict_types=1);
 
-namespace App\Models;
+namespace App\Models\Matter;
 
 use App\Concerns\RecordsActivity;
 use App\Enums\Document\DocumentKind;
 use App\Enums\Matter\Assignment;
-use Database\Factories\MatterFactory;
+use App\Models\Client;
+use App\Models\Court;
+use App\Models\DiaryEntry;
+use App\Models\MatterType;
+use App\Models\Narration;
+use App\Models\User;
+use Database\Factories\Matter\MatterFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\RouteKey;
 use Illuminate\Database\Eloquent\Builder;

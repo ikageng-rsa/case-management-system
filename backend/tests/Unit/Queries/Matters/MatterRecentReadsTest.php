@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Queries\Matters;
 
-use App\Models\Matter;
+use App\Models\Matter\Matter;
 use App\Queries\Matters\MatterRecentReads;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Activitylog\Models\Activity;

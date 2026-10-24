@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Models;
+namespace App\Models\Matter;
 
 use App\Concerns\RecordsActivity;
 use App\Enums\Matter\PartyRole;
-use Database\Factories\MatterPartyFactory;
+use Database\Factories\Matter\MatterPartyFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

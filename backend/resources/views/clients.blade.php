@@ -124,7 +124,7 @@
                             <x-ui.button variant="outline-secondary" size="sm"
                                 x-data x-on:click="$dispatch('sheet-open', 'edit-client')">Edit</x-ui.button>
                         @endcan
-                        @can('create', \App\Models\Matter::class)
+                        @can('create', \App\Models\Matter\Matter::class)
                             <x-ui.button variant="primary" icon="plus" size="sm"
                                 x-data x-on:click="$dispatch('sheet-open', 'new-client-matter')">New matter</x-ui.button>
                         @endcan
@@ -468,7 +468,7 @@
             </x-ui.sheet>
         @endif
 
-        @can('create', \App\Models\Matter::class)
+        @can('create', \App\Models\Matter\Matter::class)
             <x-matter.intake name="new-client-matter" :client="$client" :matter-types="$matterTypes" :courts="$courts" :attorneys="$attorneys" :action="route('matter.store')" />
         @endcan
     @endif
@@ -587,7 +587,7 @@
                 </div>
             @endforeach
 
-            @can('create', \App\Models\Matter::class)
+            @can('create', \App\Models\Matter\Matter::class)
                 <hr>
 
                 <h3 class="text-meta text-uppercase mb-2">Matter</h3>

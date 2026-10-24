@@ -12,6 +12,7 @@ use App\Enums\Client\ClientType;
 use App\Enums\Client\ContactKind;
 use App\Enums\Client\FicaDocument;
 use App\Enums\Client\IdentityType;
+use App\Models\Matter\Matter;
 use App\Observers\ClientObserver;
 use App\Support\Clients\GenerateBlindIndex;
 use App\Support\Clients\NormaliseIdentifier;

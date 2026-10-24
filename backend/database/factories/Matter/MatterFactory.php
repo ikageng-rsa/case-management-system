@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Database\Factories;
+namespace Database\Factories\Matter;
 
 use App\Models\Client;
 use App\Models\Court;
-use App\Models\Matter;
+use App\Models\Matter\Matter;
 use App\Models\MatterType;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

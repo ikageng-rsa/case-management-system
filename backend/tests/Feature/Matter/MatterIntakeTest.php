@@ -7,7 +7,7 @@ namespace Tests\Feature\Matter;
 use App\Enums\Auth\Role as RoleEnum;
 use App\Models\ActivityType;
 use App\Models\Client;
-use App\Models\Matter;
+use App\Models\Matter\Matter;
 use App\Models\MatterType;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Models;
 
 use App\Models\DiaryEntry;
-use App\Models\Matter;
+use App\Models\Matter\Matter;
 use App\Models\Narration;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;

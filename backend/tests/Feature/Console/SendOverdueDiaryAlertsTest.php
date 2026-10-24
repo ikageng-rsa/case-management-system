@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Console;
 
 use App\Models\DiaryEntry;
-use App\Models\Matter;
+use App\Models\Matter\Matter;
 use App\Models\NotificationPreference;
 use App\Notifications\DiaryEntryOverdue;
 use App\Services\Notifications\NotifyUser;

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Narrations;
 
 use App\Models\ActivityType;
-use App\Models\Matter;
+use App\Models\Matter\Matter;
 use App\Models\Narration;
 use App\Models\User;
 use Carbon\CarbonInterface;

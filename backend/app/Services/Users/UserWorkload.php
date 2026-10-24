@@ -6,8 +6,8 @@ namespace App\Services\Users;
 
 use App\Enums\Matter\Assignment;
 use App\Models\DiaryEntry;
-use App\Models\Matter;
-use App\Models\MatterAssignment;
+use App\Models\Matter\Matter;
+use App\Models\Matter\MatterAssignment;
 use App\Models\User;
 use Illuminate\Support\Collection;
 

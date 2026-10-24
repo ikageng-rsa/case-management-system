@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Concerns\RecordsActivity;
+use App\Models\Matter\Matter;
 use App\Observers\DiaryEntryObserver;
 use Carbon\CarbonInterface;
 use Database\Factories\DiaryEntryFactory;
