@@ -6,7 +6,7 @@ namespace App\Policies;
 
 use App\Enums\Auth\Permission;
 use App\Models\Matter\Matter;
-use App\Models\User;
+use App\Models\User\User;
 
 class MatterPolicy
 {

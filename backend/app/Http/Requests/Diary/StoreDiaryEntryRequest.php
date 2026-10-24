@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Diary;
 
 use App\Http\Requests\Diary\Concerns\ChoosesReminder;
-use App\Models\User;
+use App\Models\User\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;

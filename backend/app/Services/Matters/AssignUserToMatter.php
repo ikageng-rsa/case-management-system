@@ -7,7 +7,7 @@ namespace App\Services\Matters;
 use App\Enums\Matter\Assignment;
 use App\Models\Matter\Matter;
 use App\Models\Matter\MatterAssignment;
-use App\Models\User;
+use App\Models\User\User;
 use App\Notifications\MatterAssigned;
 use App\Services\Notifications\NotifyUser;
 use Illuminate\Support\Facades\Auth;

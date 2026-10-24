@@ -8,7 +8,7 @@ use App\Enums\Auth\Permission;
 use App\Enums\Matter\PartyRole;
 use App\Models\Reference\Court;
 use App\Models\Reference\MatterType;
-use App\Models\User;
+use App\Models\User\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\Feature\Invitation;
 
 use App\Enums\Auth\Role as RoleEnum;
-use App\Models\Role;
-use App\Models\User;
+use App\Models\User\Role;
+use App\Models\User\User;
 use App\Models\UserInvitation;
 use App\Notifications\UserInvitationNotification;
 use Database\Seeders\RoleSeeder;

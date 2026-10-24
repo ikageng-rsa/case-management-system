@@ -15,7 +15,7 @@ use App\Models\Client\Client;
 use App\Models\Matter\Matter;
 use App\Models\Reference\Court;
 use App\Models\Reference\MatterType;
-use App\Models\User;
+use App\Models\User\User;
 use App\Services\Clients\AddClientContact;
 use App\Services\Clients\DuplicateClientException;
 use App\Services\Clients\MaskIdentifier;

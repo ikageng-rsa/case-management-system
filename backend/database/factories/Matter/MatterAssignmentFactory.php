@@ -7,7 +7,7 @@ namespace Database\Factories\Matter;
 use App\Enums\Matter\Assignment;
 use App\Models\Matter\Matter;
 use App\Models\Matter\MatterAssignment;
-use App\Models\User;
+use App\Models\User\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

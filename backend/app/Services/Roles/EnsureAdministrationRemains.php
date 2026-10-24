@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Roles;
 
 use App\Enums\Auth\Permission;
-use App\Models\User;
+use App\Models\User\User;
 
 /*
  * Roles can be reshaped by the people who hold them, so a change must never

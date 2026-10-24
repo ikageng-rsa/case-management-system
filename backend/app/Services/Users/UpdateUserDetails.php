@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Users;
 
 use App\Enums\Client\ContactKind;
-use App\Models\User;
+use App\Models\User\User;
 use App\Support\Clients\NormaliseIdentifier;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;

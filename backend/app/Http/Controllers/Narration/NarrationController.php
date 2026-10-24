@@ -10,7 +10,7 @@ use App\Http\Requests\Narration\StoreNarrationRequest;
 use App\Models\Matter\Matter;
 use App\Models\Narration\Narration;
 use App\Models\Reference\ActivityType;
-use App\Models\User;
+use App\Models\User\User;
 use App\Queries\Matters\MatterLedger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;

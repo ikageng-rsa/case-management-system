@@ -6,7 +6,7 @@ namespace App\Queries\Matters;
 
 use App\Models\Matter\Matter;
 use App\Models\Narration\Narration;
-use App\Models\User;
+use App\Models\User\User;
 
 /*
  * The narrations on a matter's ledger tab, newest first, narrowed to the

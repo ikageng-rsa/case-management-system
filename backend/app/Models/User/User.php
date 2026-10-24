@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Models;
+namespace App\Models\User;
 
 use App\Casts\Client\EncryptedContact;
 use App\Concerns\RecordsActivity;
@@ -11,7 +11,7 @@ use App\Models\Matter\Matter;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Models\Matter\MatterAssignment;
 use App\Models\Narration\Narration;
-use Database\Factories\UserFactory;
+use Database\Factories\User\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;

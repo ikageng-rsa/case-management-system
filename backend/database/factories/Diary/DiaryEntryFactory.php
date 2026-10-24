@@ -6,7 +6,7 @@ namespace Database\Factories\Diary;
 
 use App\Models\Diary\DiaryEntry;
 use App\Models\Matter\Matter;
-use App\Models\User;
+use App\Models\User\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

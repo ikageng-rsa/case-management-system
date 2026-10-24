@@ -6,7 +6,7 @@ namespace App\Models\Matter;
 
 use App\Concerns\RecordsActivity;
 use App\Enums\Matter\Assignment;
-use App\Models\User;
+use App\Models\User\User;
 use Database\Factories\Matter\MatterAssignmentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;

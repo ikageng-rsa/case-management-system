@@ -7,7 +7,7 @@ namespace Tests\Unit\Queries\Matters;
 use App\Models\Client\ClientContact;
 use App\Models\Matter\Matter;
 use App\Models\Matter\MatterParty;
-use App\Models\User;
+use App\Models\User\User;
 use App\Queries\Matters\MatterParties;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;

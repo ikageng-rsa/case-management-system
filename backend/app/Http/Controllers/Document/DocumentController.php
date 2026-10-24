@@ -9,7 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Document\UploadDocumentRequest;
 use App\Models\Document\Media;
 use App\Models\Matter\Matter;
-use App\Models\User;
+use App\Models\User\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;

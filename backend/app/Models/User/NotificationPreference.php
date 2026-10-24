@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Models;
+namespace App\Models\User;
 
 use App\Concerns\RecordsActivity;
 use App\Enums\Notification\NotificationType;
-use Database\Factories\NotificationPreferenceFactory;
+use Database\Factories\User\NotificationPreferenceFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

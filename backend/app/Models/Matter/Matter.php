@@ -12,7 +12,7 @@ use App\Models\Diary\DiaryEntry;
 use App\Models\Narration\Narration;
 use App\Models\Reference\Court;
 use App\Models\Reference\MatterType;
-use App\Models\User;
+use App\Models\User\User;
 use Database\Factories\Matter\MatterFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\RouteKey;

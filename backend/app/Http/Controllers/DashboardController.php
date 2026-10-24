@@ -8,7 +8,7 @@ use App\Enums\Narration\ActivityMeasure;
 use App\Models\Diary\DiaryEntry;
 use App\Models\Matter\Matter;
 use App\Models\Narration\Narration;
-use App\Models\User;
+use App\Models\User\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;

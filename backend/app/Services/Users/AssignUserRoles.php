@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Users;
 
-use App\Models\Role;
-use App\Models\User;
+use App\Models\User\Role;
+use App\Models\User\User;
 use App\Services\Roles\EnsureAdministrationRemains;
 use Illuminate\Support\Facades\DB;
 

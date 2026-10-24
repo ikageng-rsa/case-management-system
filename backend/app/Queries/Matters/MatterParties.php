@@ -6,7 +6,7 @@ namespace App\Queries\Matters;
 
 use App\Enums\Matter\PartyRole;
 use App\Models\Matter\Matter;
-use App\Models\User;
+use App\Models\User\User;
 
 /*
  * Everyone in a matter besides the firm, in the order they were added, and the

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Database\Factories;
+namespace Database\Factories\User;
 
 use App\Enums\Notification\NotificationType;
-use App\Models\NotificationPreference;
-use App\Models\User;
+use App\Models\User\NotificationPreference;
+use App\Models\User\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

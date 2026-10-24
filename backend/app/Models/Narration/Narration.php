@@ -7,7 +7,7 @@ namespace App\Models\Narration;
 use App\Concerns\RecordsActivity;
 use App\Models\Matter\Matter;
 use App\Models\Reference\ActivityType;
-use App\Models\User;
+use App\Models\User\User;
 use Database\Factories\Narration\NarrationFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;

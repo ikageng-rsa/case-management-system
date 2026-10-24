@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Notifications;
 
 use App\Enums\Notification\NotificationType;
-use App\Models\User;
+use App\Models\User\User;
 
 /*
  * Where a person gets a kind of notification: as they chose it, or failing that,

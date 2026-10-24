@@ -7,7 +7,7 @@ namespace App\Models\Diary;
 use App\Concerns\RecordsActivity;
 use App\Models\Matter\Matter;
 use App\Models\Narration\Narration;
-use App\Models\User;
+use App\Models\User\User;
 use App\Observers\DiaryEntryObserver;
 use Carbon\CarbonInterface;
 use Database\Factories\Diary\DiaryEntryFactory;

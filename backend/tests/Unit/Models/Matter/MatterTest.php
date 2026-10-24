@@ -9,7 +9,7 @@ use App\Models\Client\Client;
 use App\Models\Matter\Matter;
 use App\Models\Matter\MatterAssignment;
 use App\Models\Reference\MatterType;
-use App\Models\User;
+use App\Models\User\User;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;

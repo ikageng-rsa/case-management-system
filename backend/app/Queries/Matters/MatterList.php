@@ -6,7 +6,7 @@ namespace App\Queries\Matters;
 
 use App\Enums\Matter\Assignment;
 use App\Models\Matter\Matter;
-use App\Models\User;
+use App\Models\User\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 

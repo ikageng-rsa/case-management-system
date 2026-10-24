@@ -8,7 +8,7 @@ use App\Enums\Notification\NotificationType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Account\UpdateNotificationPreferencesRequest;
 use App\Http\Requests\Account\UpdateSignInCodeRequest;
-use App\Models\User;
+use App\Models\User\User;
 use App\Services\Diary\ResolveReminderLead;
 use App\Services\Notifications\ResolveNotificationChannels;
 use App\Services\Notifications\SaveNotificationPreferences;

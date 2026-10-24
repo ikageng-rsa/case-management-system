@@ -8,7 +8,7 @@ use App\Enums\Auth\Role as RoleEnum;
 use App\Enums\Client\PopiaConsentMethod;
 use App\Models\Client\Client;
 use App\Models\Client\PopiaConsent;
-use App\Models\User;
+use App\Models\User\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;

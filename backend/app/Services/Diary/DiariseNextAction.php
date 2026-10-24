@@ -6,7 +6,7 @@ namespace App\Services\Diary;
 
 use App\Models\Diary\DiaryEntry;
 use App\Models\Matter\Matter;
-use App\Models\User;
+use App\Models\User\User;
 use Carbon\CarbonInterface;
 
 class DiariseNextAction

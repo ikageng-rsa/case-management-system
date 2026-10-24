@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Queries\Matters;
 
 use App\Models\Matter\Matter;
-use App\Models\User;
+use App\Models\User\User;
 use Illuminate\Database\Eloquent\Builder;
 
 /*

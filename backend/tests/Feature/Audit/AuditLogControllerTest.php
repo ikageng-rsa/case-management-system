@@ -7,7 +7,7 @@ namespace Tests\Feature\Audit;
 use App\Enums\Auth\Role as RoleEnum;
 use App\Models\Matter\Matter;
 use App\Models\Narration\Narration;
-use App\Models\User;
+use App\Models\User\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Activitylog\Models\Activity;

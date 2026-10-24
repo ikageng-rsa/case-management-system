@@ -10,7 +10,7 @@ use App\Models\Diary\DiaryEntry;
 use App\Models\Matter\Matter;
 use App\Models\Matter\MatterAssignment;
 use App\Models\Reference\MatterType;
-use App\Models\User;
+use App\Models\User\User;
 use App\Queries\Matters\MatterList;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;

@@ -6,7 +6,7 @@ namespace Tests\Unit\Services\Matters;
 
 use App\Enums\Matter\Assignment;
 use App\Models\Matter\Matter;
-use App\Models\User;
+use App\Models\User\User;
 use App\Services\Matters\AssignUserToMatter;
 use App\Services\Matters\UnassignUserFromMatter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
