@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Http\Controllers\AcceptInvitationController;
 use App\Http\Controllers\Account\AccountController;
 use App\Http\Controllers\Account\NotificationController;
 use App\Http\Controllers\Account\SignInCodeController;
@@ -16,7 +15,8 @@ use App\Http\Controllers\Client\PopiaConsentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiaryEntryController;
 use App\Http\Controllers\DocumentController;
-use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\Invitation\AcceptInvitationController;
+use App\Http\Controllers\Invitation\InvitationController;
 use App\Http\Controllers\Matter\MatterController;
 use App\Http\Controllers\Matter\MatterDocumentController;
 use App\Http\Controllers\Matter\MatterPartyController;

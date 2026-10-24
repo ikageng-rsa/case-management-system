@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Invitation;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Invitation\AcceptInvitationRequest;
 use App\Models\UserInvitation;
 use App\Services\Invitations\AcceptInvitation;

@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Invitation;
 
 use App\Enums\Auth\Permission;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Invitation\InviteUserRequest;
 use App\Models\UserInvitation;
 use App\Services\Invitations\EmailAlreadyInvited;
