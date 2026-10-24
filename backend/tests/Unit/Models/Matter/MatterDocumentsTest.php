@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Models;
+namespace Tests\Unit\Models\Matter;
 
 use App\Enums\Document\DocumentKind;
 use App\Models\Matter\Matter;
