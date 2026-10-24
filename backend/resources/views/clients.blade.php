@@ -26,12 +26,12 @@
         };
     @endphp
 
-    <div class="row g-0">
-        <div class="col-12 col-lg-4 border-end pe-lg-4">
-            {{-- The card holds still and fills the height of the screen however many clients are listed,
-                 while the client beside it scrolls; the heading, search and intake button stay put while
-                 the clients scroll beneath them. --}}
-            <div class="card sticky-lg-top" style="top: 1rem; z-index: 1; height: calc(100vh - 2rem);" x-data="fillHeight">
+    {{-- On a wide screen the page holds still at the height of the window: the list and the client
+         each scroll on their own. Stacked on a narrow one, the page scrolls as usual. --}}
+    <div class="row g-0" x-data="fillHeight">
+        <div class="col-12 col-lg-4 border-end pe-lg-4 h-100">
+            {{-- The heading, search and intake button stay put while the clients scroll beneath them. --}}
+            <div class="card h-100" style="max-height: calc(100vh - 2rem);">
                 <div class="card-body d-flex flex-column overflow-hidden">
                     <div class="d-flex align-items-center justify-content-between mb-3 flex-shrink-0">
                         <h1 class="mb-0">Clients</h1>
@@ -83,7 +83,7 @@
             </div>
         </div>
 
-        <div class="col-12 col-lg-8 ps-lg-4">
+        <div class="col-12 col-lg-8 ps-lg-4 h-100 overflow-y-auto overflow-x-hidden">
             @if ($client)
                 <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-3">
                     <div class="d-flex align-items-center gap-3">

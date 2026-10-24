@@ -146,13 +146,12 @@ document.addEventListener('click', (event) => {
 
 
 /*
- * An element as tall as the window from its top edge down, less a gap, so it
- * ends at the bottom of the screen whether the page header is showing above it
- * or has scrolled away. On a wide screen it is fitted again as the page scrolls
- * and resizes; on a narrow one, where it sits in the flow of a stacked page, it
- * is fitted once so the page does not shift while being scrolled.
+ * On a wide screen, an element as tall as what is left of the window below its
+ * top edge, less whatever the page puts beneath it, so the page itself has
+ * nothing to scroll and what is inside the element scrolls instead. On a narrow
+ * screen it is left its natural height and the page scrolls as usual.
  */
-Alpine.data('fillHeight', ({ gap = 16 } = {}) => ({
+Alpine.data('fillHeight', () => ({
     frame: null,
     wide: window.matchMedia('(min-width: 992px)'),
 
@@ -164,22 +163,29 @@ Alpine.data('fillHeight', ({ gap = 16 } = {}) => ({
 
         this.fit();
         window.addEventListener('resize', this.refit, { passive: true });
-        window.addEventListener('scroll', this.refit, { passive: true });
     },
 
     destroy() {
         window.removeEventListener('resize', this.refit);
-        window.removeEventListener('scroll', this.refit);
     },
 
     fit() {
-        if (! this.wide.matches && this.$el.style.height.endsWith('px')) {
+        if (! this.wide.matches) {
+            this.$el.style.height = '';
+
             return;
         }
 
-        const top = Math.max(this.$el.getBoundingClientRect().top, 0);
+        // Taller than the window while measuring, so the page runs past the bottom and what
+        // lies under the element is measured, not the empty space left by a short page.
+        this.$el.style.height = `${window.innerHeight * 2}px`;
 
-        this.$el.style.height = `${window.innerHeight - top - gap}px`;
+        const rect = this.$el.getBoundingClientRect();
+        const top = rect.top + window.scrollY;
+        // The padding and anything else the page lays out under the element.
+        const below = document.documentElement.scrollHeight - (rect.bottom + window.scrollY);
+
+        this.$el.style.height = `${Math.max(window.innerHeight - top - below, 0)}px`;
     },
 }));
 
