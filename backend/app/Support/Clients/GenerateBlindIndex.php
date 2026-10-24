@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Services\Clients;
+namespace App\Support\Clients;
 
 use RuntimeException;
 

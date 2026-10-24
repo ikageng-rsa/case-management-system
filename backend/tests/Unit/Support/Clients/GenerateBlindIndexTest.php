@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Services\Clients;
+namespace Tests\Unit\Support\Clients;
 
-use App\Services\Clients\GenerateBlindIndex;
+use App\Support\Clients\GenerateBlindIndex;
 use Tests\TestCase;
 
 class GenerateBlindIndexTest extends TestCase

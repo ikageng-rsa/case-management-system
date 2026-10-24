@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Observers;
 
 use App\Models\ClientContact;
-use App\Services\Clients\GenerateBlindIndex;
+use App\Support\Clients\GenerateBlindIndex;
 
 class ClientContactObserver
 {

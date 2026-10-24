@@ -6,7 +6,7 @@ namespace App\Services\Users;
 
 use App\Enums\Client\ContactKind;
 use App\Models\User;
-use App\Services\Clients\NormaliseIdentifier;
+use App\Support\Clients\NormaliseIdentifier;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 

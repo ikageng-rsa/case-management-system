@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Casts\Client;
 
 use App\Enums\Client\IdentityType;
-use App\Services\Clients\NormaliseIdentifier;
+use App\Support\Clients\NormaliseIdentifier;
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;

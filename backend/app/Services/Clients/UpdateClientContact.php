@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Clients;
 
 use App\Models\ClientContact;
+use App\Support\Clients\NormaliseIdentifier;
 use Illuminate\Support\Facades\Auth;
 
 class UpdateClientContact

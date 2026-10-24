@@ -6,8 +6,8 @@ namespace App\Observers;
 
 use App\Enums\Client\IdentityType;
 use App\Models\Client;
-use App\Services\Clients\GenerateBlindIndex;
-use App\Services\Clients\NormaliseIdentifier;
+use App\Support\Clients\GenerateBlindIndex;
+use App\Support\Clients\NormaliseIdentifier;
 
 class ClientObserver
 {

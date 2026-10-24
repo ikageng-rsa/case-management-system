@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Services\Clients;
+namespace App\Support\Clients;
 
 use App\Enums\Client\ContactKind;
 use App\Enums\Client\IdentityType;

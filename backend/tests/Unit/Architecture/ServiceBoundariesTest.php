@@ -31,7 +31,6 @@ class ServiceBoundariesTest extends TestCase
             'Notifications' => 'Assigning or unassigning someone on a matter tells them.',
         ],
         'Users' => [
-            'Clients' => 'A user\'s mobile numbers are normalised the same way a client\'s contacts are.',
             'Matters' => 'Deactivating a user hands their matters to someone else.',
             'Notifications' => 'Deactivating a user tells each successor about the diary entries handed to them.',
             'Roles' => 'Changing roles or deactivating a user must leave someone able to administer.',

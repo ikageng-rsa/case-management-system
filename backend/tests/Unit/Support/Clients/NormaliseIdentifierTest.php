@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Services\Clients;
+namespace Tests\Unit\Support\Clients;
 
 use App\Enums\Client\ContactKind;
-use App\Services\Clients\GenerateBlindIndex;
-use App\Services\Clients\NormaliseIdentifier;
+use App\Support\Clients\GenerateBlindIndex;
+use App\Support\Clients\NormaliseIdentifier;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
