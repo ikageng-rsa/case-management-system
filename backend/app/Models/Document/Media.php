@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Models;
+namespace App\Models\Document;
 
 use App\Concerns\RecordsActivity;
 use Spatie\MediaLibrary\MediaCollections\Models\Media as BaseMedia;
