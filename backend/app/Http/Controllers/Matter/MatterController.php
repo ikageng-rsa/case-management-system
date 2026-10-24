@@ -116,7 +116,7 @@ class MatterController extends Controller
         ]);
     }
 
-    public function show(ShowMatterRequest $request, Matter $matter): View
+    public function show(ShowMatterRequest $request, Matter $matter, ResolveReminderLead $resolveLead, MatterLedger $ledger): View
     {
         Gate::authorize('view', $matter);
 
@@ -147,7 +147,7 @@ class MatterController extends Controller
             'tabs' => $tabs,
             'nextDate' => $matter->diaryEntries()->pending()->orderBy('due_at')->first()?->due_at,
             'canWork' => $user->can('work', $matter),
-            'defaultReminder' => app(ResolveReminderLead::class)->for($user),
+            'defaultReminder' => $resolveLead->for($user),
             'activityTypes' => ActivityType::query()->orderBy('name')->get(),
             'courts' => Court::query()->orderBy('name')->orderBy('seat')->get(),
             'assignable' => $user->can('assign', $matter) ? User::query()->orderBy('name')->get() : collect(),
@@ -163,7 +163,7 @@ class MatterController extends Controller
                 ->limit(3)
                 ->get(),
         ] + match ($tab) {
-            'ledger' => app(MatterLedger::class)->for($matter, $user, $request->ledgerFilter()),
+            'ledger' => $ledger->for($matter, $user, $request->ledgerFilter()),
             'documents' => $this->documents($request, $matter),
             'parties' => $this->parties($matter, $user),
             'diary' => $this->diary($request, $matter, $user),
