@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Diary;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Diary\StoreDiaryEntryRequest;
 use App\Http\Requests\Diary\UpdateDiaryReminderRequest;
 use App\Models\DiaryEntry;
