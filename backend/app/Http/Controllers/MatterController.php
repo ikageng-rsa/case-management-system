@@ -178,16 +178,20 @@ class MatterController extends Controller
                 client: Client::findOrFail($request->validated('client_id')),
                 matterType: MatterType::findOrFail($request->validated('matter_type_id')),
                 title: $request->validated('title'),
-                court: $request->filled('court_id') ? Court::findOrFail($request->validated('court_id')) : null,
+                court: $request->court(),
                 instructedAt: $request->date('instructed_at'),
             );
 
-            if ($request->filled('responsible_attorney_id')) {
-                $assignUser->assign($matter, User::findOrFail($request->validated('responsible_attorney_id')), Assignment::Responsible);
+            $attorney = $request->responsibleAttorney();
+
+            if ($attorney) {
+                $assignUser->assign($matter, $attorney, Assignment::Responsible);
             }
 
-            if ($request->filled('narration')) {
-                $this->openingNarration($matter, $request->user(), $request->validated('narration'));
+            $narration = $request->openingNarration();
+
+            if ($narration) {
+                $this->openingNarration($matter, $request->user(), $narration);
             }
 
             foreach ($request->validated('parties') ?? [] as $party) {
