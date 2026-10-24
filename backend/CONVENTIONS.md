@@ -314,10 +314,27 @@ app/
   Services/
     Cases/            (GenerateCaseReference, ...)
     Diary/            (SendOverdueDiaryAlert, CompleteDiaryEntry, ...)
+  Queries/
+    Cases/            (CaseLedger, CaseDiary, ...)
   Policies/
 routes/
   web.php
   api.php
+```
+
+Services change state; queries only read it. A query class is named for what it returns,
+exposes a single `for()` method, and takes typed values rather than the `Request`. The
+controller parses and whitelists the input, then passes it in.
+
+```php
+class CaseDiary
+{
+    /** @return array<string, mixed> */
+    public function for(LegalCase $legalCase, User $user, string $show): array
+    {
+        // ...
+    }
+}
 ```
 
 ## 16. Git & Commits
