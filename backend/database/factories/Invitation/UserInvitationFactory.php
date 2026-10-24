@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Database\Factories;
+namespace Database\Factories\Invitation;
 
-use App\Models\UserInvitation;
+use App\Models\Invitation\UserInvitation;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

@@ -6,7 +6,7 @@ namespace App\Http\Controllers\Invitation;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Invitation\AcceptInvitationRequest;
-use App\Models\UserInvitation;
+use App\Models\Invitation\UserInvitation;
 use App\Services\Invitations\AcceptInvitation;
 use App\Services\Invitations\InvitationNoLongerValid;
 use Illuminate\Contracts\View\View;

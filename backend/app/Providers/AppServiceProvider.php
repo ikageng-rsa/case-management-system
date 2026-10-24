@@ -10,6 +10,7 @@ use App\Models\Client\ClientContactPerson;
 use App\Models\Client\PopiaConsent;
 use App\Models\Diary\DiaryEntry;
 use App\Models\Document\Media;
+use App\Models\Invitation\UserInvitation;
 use App\Models\Matter\Matter;
 use App\Models\Matter\MatterAssignment;
 use App\Models\Matter\MatterParty;
@@ -20,7 +21,6 @@ use App\Models\Reference\MatterType;
 use App\Models\User\NotificationPreference;
 use App\Models\User\Role;
 use App\Models\User\User;
-use App\Models\UserInvitation;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
 

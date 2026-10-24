@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services\Invitations;
 
+use App\Models\Invitation\UserInvitation;
 use App\Models\User\Role;
 use App\Models\User\User;
-use App\Models\UserInvitation;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 

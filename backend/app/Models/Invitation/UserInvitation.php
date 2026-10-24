@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Models;
+namespace App\Models\Invitation;
 
 use App\Concerns\RecordsActivity;
 use App\Models\User\User;
-use Database\Factories\UserInvitationFactory;
+use Database\Factories\Invitation\UserInvitationFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
