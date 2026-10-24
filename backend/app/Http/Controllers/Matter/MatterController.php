@@ -10,6 +10,7 @@ use App\Enums\Matter\PartyRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Matter\AssignUserRequest;
 use App\Http\Requests\Matter\ReopenMatterRequest;
+use App\Http\Requests\Matter\ShowMatterRequest;
 use App\Http\Requests\Matter\StoreMatterRequest;
 use App\Http\Requests\Matter\UpdateMatterRequest;
 use App\Models\ActivityType;
@@ -115,7 +116,7 @@ class MatterController extends Controller
         ]);
     }
 
-    public function show(Request $request, Matter $matter): View
+    public function show(ShowMatterRequest $request, Matter $matter): View
     {
         Gate::authorize('view', $matter);
 
@@ -162,7 +163,7 @@ class MatterController extends Controller
                 ->limit(3)
                 ->get(),
         ] + match ($tab) {
-            'ledger' => app(MatterLedger::class)->for($matter, $user, $this->ledgerFilter($request)),
+            'ledger' => app(MatterLedger::class)->for($matter, $user, $request->ledgerFilter()),
             'documents' => $this->documents($request, $matter),
             'parties' => $this->parties($matter, $user),
             'diary' => $this->diary($request, $matter, $user),
@@ -333,14 +334,6 @@ class MatterController extends Controller
         );
 
         return redirect()->route('matter.show', [$matter, 'tab' => 'parties']);
-    }
-
-    /** The ledger filter is `mine` or an activity code; blank shows everything. */
-    protected function ledgerFilter(Request $request): ?string
-    {
-        $filter = $request->query('filter');
-
-        return is_string($filter) && $filter !== '' ? $filter : null;
     }
 
     /** @return array<string, mixed> */
