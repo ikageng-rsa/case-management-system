@@ -20,7 +20,7 @@ use App\Http\Controllers\Invitation\InvitationController;
 use App\Http\Controllers\Matter\MatterController;
 use App\Http\Controllers\Matter\MatterDocumentController;
 use App\Http\Controllers\Matter\MatterPartyController;
-use App\Http\Controllers\NarrationController;
+use App\Http\Controllers\Narration\NarrationController;
 use App\Http\Controllers\Reference\ActivityTypeController;
 use App\Http\Controllers\Reference\CourtController;
 use App\Http\Controllers\Reference\MatterTypeController;
