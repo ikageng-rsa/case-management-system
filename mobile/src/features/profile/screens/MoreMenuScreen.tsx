@@ -7,14 +7,15 @@ import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import { logout } from '@/features/auth/store/authSlice';
 import { canAdministerUsers } from '@/constants/roles';
 import { useSyncStatus } from '@/hooks/useSyncStatus';
+import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
 import { colors, spacing, typography } from '@/theme/index';
 
 const MENU_ITEMS: { label: string; href: Href; adminOnly?: boolean }[] = [
   { label: 'Client Profile', href: '/more/profile' },
   { label: 'User & Role Administration', href: '/more/users', adminOnly: true },
-  { label: 'Notifications', href: './more/notifications' },
-  { label: 'Sync & Offline', href: './more/sync' },
-  { label: 'Security (2FA)', href: './more/security' },
+  { label: 'Notifications', href: '/more/notifications' },
+  { label: 'Sync & Offline', href: '/more/sync' },
+  { label: 'Security (2FA)', href: '/more/security' },
   { label: 'Export Reports', href: '/more/reports' },
 ];
 
@@ -24,6 +25,7 @@ export default function MoreMenuScreen() {
   const user = useAppSelector(state => state.auth.user);
   const { pending, failed, blocked } = useSyncStatus();
   const unsynced = pending + failed + blocked;
+  const unread = useUnreadNotifications();
 
   const signOut = () => {
     if (unsynced === 0) {
@@ -56,6 +58,7 @@ export default function MoreMenuScreen() {
               <Text style={styles.menuLabel}>
                 {item.label}
                 {item.label === 'Sync & Offline' && unsynced > 0 ? `  ·  ${unsynced} waiting` : ''}
+                {item.label === 'Notifications' && unread > 0 ? `  ·  ${unread} new` : ''}
               </Text>
             </Card>
           </Pressable>
