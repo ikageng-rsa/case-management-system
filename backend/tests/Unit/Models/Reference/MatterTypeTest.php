@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Models;
+namespace Tests\Unit\Models\Reference;
 
 use App\Models\Matter\Matter;
-use App\Models\MatterType;
+use App\Models\Reference\MatterType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

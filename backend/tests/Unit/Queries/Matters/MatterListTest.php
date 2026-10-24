@@ -9,7 +9,7 @@ use App\Enums\Matter\Assignment;
 use App\Models\DiaryEntry;
 use App\Models\Matter\Matter;
 use App\Models\Matter\MatterAssignment;
-use App\Models\MatterType;
+use App\Models\Reference\MatterType;
 use App\Models\User;
 use App\Queries\Matters\MatterList;
 use Database\Seeders\RoleSeeder;

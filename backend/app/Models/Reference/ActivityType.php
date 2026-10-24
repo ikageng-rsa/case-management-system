@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\Models;
+namespace App\Models\Reference;
 
 use App\Concerns\RecordsActivity;
 use App\Enums\Narration\ActivityMeasure;
-use Database\Factories\ActivityTypeFactory;
+use App\Models\Narration;
+use Database\Factories\Reference\ActivityTypeFactory;
 use Illuminate\Database\Eloquent\Attributes\Appends;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\RouteKey;

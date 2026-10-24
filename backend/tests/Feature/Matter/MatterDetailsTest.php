@@ -6,9 +6,9 @@ namespace Tests\Feature\Matter;
 
 use App\Enums\Auth\Role as RoleEnum;
 use App\Enums\Matter\Assignment;
-use App\Models\Court;
 use App\Models\Matter\Matter;
 use App\Models\Matter\MatterAssignment;
+use App\Models\Reference\Court;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;

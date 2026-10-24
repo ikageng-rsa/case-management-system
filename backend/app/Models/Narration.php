@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Concerns\RecordsActivity;
 use App\Models\Matter\Matter;
+use App\Models\Reference\ActivityType;
 use Database\Factories\NarrationFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;

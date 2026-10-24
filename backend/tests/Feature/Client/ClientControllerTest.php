@@ -12,7 +12,7 @@ use App\Models\Client\Client;
 use App\Models\Client\ClientContactPerson;
 use App\Models\Matter\Matter;
 use App\Models\Matter\MatterAssignment;
-use App\Models\MatterType;
+use App\Models\Reference\MatterType;
 use App\Models\User;
 use App\Services\Clients\AddClientContact;
 use App\Services\Clients\MaskIdentifier;

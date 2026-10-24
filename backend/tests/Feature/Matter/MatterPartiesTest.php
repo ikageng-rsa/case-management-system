@@ -9,7 +9,7 @@ use App\Enums\Matter\PartyRole;
 use App\Models\Client\Client;
 use App\Models\Matter\Matter;
 use App\Models\Matter\MatterParty;
-use App\Models\MatterType;
+use App\Models\Reference\MatterType;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;

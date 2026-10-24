@@ -7,7 +7,7 @@ namespace App\Http\Controllers\Reference;
 use App\Enums\Auth\Permission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Reference\SaveMatterTypeRequest;
-use App\Models\MatterType;
+use App\Models\Reference\MatterType;
 use App\Services\MatterTypes\RetireMatterType;
 use App\Services\MatterTypes\SaveMatterType;
 use App\Services\Reference\ReferenceDataLocked;

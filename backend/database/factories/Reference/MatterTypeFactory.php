@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Database\Factories;
+namespace Database\Factories\Reference;
 
-use App\Models\MatterType;
+use App\Models\Reference\MatterType;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

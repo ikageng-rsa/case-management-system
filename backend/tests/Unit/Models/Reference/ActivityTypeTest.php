@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Models;
+namespace Tests\Unit\Models\Reference;
 
 use App\Enums\Narration\ActivityMeasure;
-use App\Models\ActivityType;
+use App\Models\Reference\ActivityType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

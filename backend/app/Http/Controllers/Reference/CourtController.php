@@ -7,7 +7,7 @@ namespace App\Http\Controllers\Reference;
 use App\Enums\Auth\Permission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Reference\SaveCourtRequest;
-use App\Models\Court;
+use App\Models\Reference\Court;
 use App\Services\Courts\RetireCourt;
 use App\Services\Courts\SaveCourt;
 use Illuminate\Http\RedirectResponse;

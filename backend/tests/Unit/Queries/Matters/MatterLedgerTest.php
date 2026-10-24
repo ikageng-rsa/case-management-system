@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Tests\Unit\Queries\Matters;
 
 use App\Enums\Narration\ActivityMeasure;
-use App\Models\ActivityType;
 use App\Models\Matter\Matter;
 use App\Models\Narration;
+use App\Models\Reference\ActivityType;
 use App\Models\User;
 use App\Queries\Matters\MatterLedger;
 use Illuminate\Foundation\Testing\RefreshDatabase;

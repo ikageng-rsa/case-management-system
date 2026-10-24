@@ -7,7 +7,7 @@ namespace App\Http\Controllers\Reference;
 use App\Enums\Auth\Permission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Reference\SaveActivityTypeRequest;
-use App\Models\ActivityType;
+use App\Models\Reference\ActivityType;
 use App\Services\ActivityTypes\RetireActivityType;
 use App\Services\ActivityTypes\SaveActivityType;
 use App\Services\Reference\CannotRemoveSystemRecord;

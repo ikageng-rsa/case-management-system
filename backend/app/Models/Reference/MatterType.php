@@ -2,26 +2,24 @@
 
 declare(strict_types=1);
 
-namespace App\Models;
+namespace App\Models\Reference;
 
 use App\Concerns\RecordsActivity;
-use App\Enums\Court\CourtTier;
 use App\Models\Matter\Matter;
-use Database\Factories\CourtFactory;
-use Illuminate\Database\Eloquent\Attributes\Appends;
+use Database\Factories\Reference\MatterTypeFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\RouteKey;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Appends(['label'])]
-#[Fillable(['tier', 'name', 'seat'])]
-class Court extends Model
+#[Fillable(['code', 'name', 'default_prescription_months', 'is_litigation'])]
+#[RouteKey('code')]
+class MatterType extends Model
 {
-    /** @use HasFactory<CourtFactory> */
+    /** @use HasFactory<MatterTypeFactory> */
     use HasFactory;
 
     use RecordsActivity;
@@ -35,7 +33,8 @@ class Court extends Model
     protected function casts(): array
     {
         return [
-            'tier' => CourtTier::class,
+            'default_prescription_months' => 'integer',
+            'is_litigation' => 'boolean',
         ];
     }
 
@@ -44,19 +43,19 @@ class Court extends Model
         return $this->hasMany(Matter::class);
     }
 
-    /** How the court is cited on a pleading, e.g. "High Court, Johannesburg". */
-    protected function label(): Attribute
+    /** Not every matter type prescribes. */
+    public function prescribes(): bool
     {
-        return Attribute::get(fn (): string => "{$this->name}, {$this->seat}");
+        return $this->default_prescription_months !== null;
     }
 
-    public function scopeOfTier(Builder $query, CourtTier $tier): void
+    public function scopeLitigation(Builder $query): void
     {
-        $query->where('tier', $tier);
+        $query->where('is_litigation', true);
     }
 
     public function auditLabel(): string
     {
-        return 'court '.$this->name;
+        return 'matter type '.$this->name;
     }
 }

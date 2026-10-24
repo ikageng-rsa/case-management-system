@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Models\ActivityType;
 use App\Models\Client\Client;
 use App\Models\Client\ClientContact;
 use App\Models\Client\ClientContactPerson;
 use App\Models\Client\PopiaConsent;
-use App\Models\Court;
 use App\Models\DiaryEntry;
 use App\Models\Matter\Matter;
 use App\Models\Matter\MatterAssignment;
 use App\Models\Matter\MatterParty;
-use App\Models\MatterType;
 use App\Models\Media;
 use App\Models\Narration;
 use App\Models\NotificationPreference;
+use App\Models\Reference\ActivityType;
+use App\Models\Reference\Court;
+use App\Models\Reference\MatterType;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\UserInvitation;

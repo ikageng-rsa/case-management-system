@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Models;
+namespace Tests\Unit\Models\Reference;
 
 use App\Enums\Court\CourtTier;
-use App\Models\Court;
 use App\Models\Matter\Matter;
+use App\Models\Reference\Court;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

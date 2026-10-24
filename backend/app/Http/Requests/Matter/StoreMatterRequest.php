@@ -6,8 +6,8 @@ namespace App\Http\Requests\Matter;
 
 use App\Enums\Auth\Permission;
 use App\Enums\Matter\PartyRole;
-use App\Models\Court;
-use App\Models\MatterType;
+use App\Models\Reference\Court;
+use App\Models\Reference\MatterType;
 use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;

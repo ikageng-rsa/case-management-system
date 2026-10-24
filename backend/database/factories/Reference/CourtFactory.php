@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Database\Factories;
+namespace Database\Factories\Reference;
 
 use App\Enums\Court\CourtTier;
-use App\Models\Court;
+use App\Models\Reference\Court;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

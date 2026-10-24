@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Models\ActivityType;
 use App\Models\Matter\Matter;
 use App\Models\Narration;
+use App\Models\Reference\ActivityType;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

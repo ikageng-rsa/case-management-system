@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Database\Factories;
+namespace Database\Factories\Reference;
 
 use App\Enums\Narration\ActivityMeasure;
-use App\Models\ActivityType;
+use App\Models\Reference\ActivityType;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

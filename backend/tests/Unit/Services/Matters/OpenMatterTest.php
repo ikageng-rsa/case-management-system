@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\Unit\Services\Matters;
 
 use App\Models\Client\Client;
-use App\Models\Court;
-use App\Models\MatterType;
+use App\Models\Reference\Court;
+use App\Models\Reference\MatterType;
 use App\Services\Matters\OpenMatter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;

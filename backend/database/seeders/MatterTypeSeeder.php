@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Models\MatterType;
+use App\Models\Reference\MatterType;
 use Illuminate\Database\Seeder;
 
 class MatterTypeSeeder extends Seeder
