@@ -25,7 +25,7 @@ use App\Http\Controllers\Reference\ActivityTypeController;
 use App\Http\Controllers\Reference\CourtController;
 use App\Http\Controllers\Reference\MatterTypeController;
 use App\Http\Controllers\Reference\ReferenceDataController;
-use App\Http\Controllers\UserController;
+use App\Http\Controllers\User\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {

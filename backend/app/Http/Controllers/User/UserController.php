@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\User;
 
 use App\Enums\Auth\Permission;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Role\SaveRoleRequest;
 use App\Http\Requests\User\DeactivateUserRequest;
 use App\Http\Requests\User\UpdateUserDetailsRequest;
