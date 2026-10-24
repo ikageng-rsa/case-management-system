@@ -147,10 +147,11 @@ document.addEventListener('click', (event) => {
 
 /*
  * The client intake form: which identity fields apply to the kind of client,
- * and whether the matter being opened alongside is before a court.
+ * which document an individual's number belongs to, and whether the matter being opened alongside is before a court.
  */
-Alpine.data('clientIntake', ({ type = 'individual', matterTypeId = '', matterTypes = {} } = {}) => ({
+Alpine.data('clientIntake', ({ type = 'individual', idType = 'sa_id', matterTypeId = '', matterTypes = {} } = {}) => ({
     type,
+    idType,
     matterTypeId,
     matterTypes,
 

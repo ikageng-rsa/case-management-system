@@ -139,7 +139,7 @@ class ClientController extends Controller
                     'name' => $client->full_name,
                     'detail' => $client->isEntity()
                         ? ($client->registration_number ? 'reg '.MaskIdentifier::registrationNumber($client->registration_number) : '')
-                        : ($client->id_number ? MaskIdentifier::idNumber($client->id_number) : ''),
+                        : ($client->id_number ? ltrim($client->id_type?->prefix().' '.MaskIdentifier::idNumber($client->id_number)) : ''),
                     'matters' => $client->matters_count,
                 ]),
         );

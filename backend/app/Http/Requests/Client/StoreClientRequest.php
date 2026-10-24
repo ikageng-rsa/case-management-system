@@ -7,18 +7,19 @@ namespace App\Http\Requests\Client;
 use App\Enums\Auth\Permission;
 use App\Enums\Client\ClientType;
 use App\Enums\Client\ContactKind;
+use App\Http\Requests\Client\Concerns\ValidatesIdentity;
 use App\Models\MatterType;
-use App\Rules\Client\UniqueClientIdNumber;
 use App\Rules\Client\UniqueClientRegistrationNumber;
 use App\Rules\Client\ValidContactValue;
 use App\Rules\Client\ValidRegistrationNumber;
-use App\Rules\Client\ValidSouthAfricanId;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class StoreClientRequest extends FormRequest
 {
+    use ValidatesIdentity;
+
     protected $errorBag = 'client';
 
     /**
@@ -53,8 +54,17 @@ class StoreClientRequest extends FormRequest
             'type' => ['required', Rule::enum(ClientType::class)],
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            'id_number' => ['required', 'string', new ValidSouthAfricanId, new UniqueClientIdNumber],
-        ];
+        ] + $this->identityRules();
+    }
+
+    /** @return array<int, callable> */
+    public function after(): array
+    {
+        return [function ($validator): void {
+            if ($this->clientType() === ClientType::Individual) {
+                $this->checkBirthDateAgainstId($validator);
+            }
+        }];
     }
 
     /**

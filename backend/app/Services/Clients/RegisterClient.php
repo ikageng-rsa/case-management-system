@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Services\Clients;
 
 use App\Enums\Client\ClientType;
+use App\Enums\Client\IdentityType;
 use App\Models\Client;
+use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use Illuminate\Database\UniqueConstraintViolationException;
 use RuntimeException;
 
@@ -24,18 +27,38 @@ class RegisterClient
 
     private function registerIndividual(array $data): Client
     {
-        $existing = Client::withTrashed()->matchingIdNumber($data['id_number'])->first();
+        $number = filled($data['id_number'] ?? null) ? $data['id_number'] : null;
+        $idType = $number === null ? null : (IdentityType::tryFrom((string) ($data['id_type'] ?? '')) ?? IdentityType::SouthAfricanId);
 
-        if ($existing) {
-            throw new DuplicateClientException($existing);
+        if ($number !== null) {
+            $existing = Client::withTrashed()->matchingIdNumber($number, $idType)->first();
+
+            if ($existing) {
+                throw new DuplicateClientException($existing);
+            }
         }
 
-        return Client::create([
-            'id_number' => $data['id_number'],
+        // The kind of document goes in before its number, which is normalised as what it is.
+        return $this->create([
+            'type' => ClientType::Individual,
+            'id_type' => $idType,
+            'id_number' => $number,
             'first_name' => trim($data['first_name']),
             'last_name' => trim($data['last_name']),
-            'type' => ClientType::Individual,
+            'date_of_birth' => $this->dateOfBirth($data, $idType, $number),
         ]);
+    }
+
+    /** The date given, or failing that the one a South African ID number carries. */
+    private function dateOfBirth(array $data, ?IdentityType $idType, ?string $number): ?CarbonInterface
+    {
+        if (filled($data['date_of_birth'] ?? null)) {
+            return CarbonImmutable::parse($data['date_of_birth']);
+        }
+
+        return $idType?->isSouthAfrican()
+            ? (new ResolveDateOfBirth)->fromSouthAfricanId(NormaliseIdentifier::idNumber($number))
+            : null;
     }
 
     private function registerEntity(array $data): Client

@@ -11,7 +11,8 @@
 
         $showMobile = fn (string $value) => \App\Services\Clients\MaskIdentifier::mobile($value);
         $showEmail = fn (string $value) => \App\Services\Clients\MaskIdentifier::email($value);
-        $showId = fn (string $value) => \App\Services\Clients\MaskIdentifier::idNumber($value);
+        // A passport or other document is named, so its number is not taken for a South African ID.
+        $showId = fn (\App\Models\Client $person) => ltrim($person->id_type?->prefix().' '.\App\Services\Clients\MaskIdentifier::idNumber($person->id_number));
         $showRegistration = fn (string $value) => \App\Services\Clients\MaskIdentifier::registrationNumber($value);
 
         $details = function (\App\Models\Client $person) use ($canSeeContacts, $mobile, $email, $showMobile, $showEmail, $showId, $showRegistration) {
@@ -20,7 +21,7 @@
                 $canSeeContacts && $email($person) ? $showEmail($email($person)) : null,
                 $person->isEntity()
                     ? ($person->registration_number ? 'reg '.$showRegistration($person->registration_number) : null)
-                    : ($person->id_number ? $showId($person->id_number) : null),
+                    : ($person->id_number ? $showId($person) : null),
             ])->filter()->implode(' · ');
         };
     @endphp
@@ -96,11 +97,15 @@
                                         ]),
                                     $client->isEntity()
                                         ? ($client->registration_number ? ['masked' => 'reg '.$showRegistration($client->registration_number), 'target' => 'identifier'] : null)
-                                        : ($client->id_number ? ['masked' => $showId($client->id_number), 'target' => 'identifier'] : null),
+                                        : ($client->id_number ? ['masked' => $showId($client), 'target' => 'identifier'] : null),
+                                    $client->date_of_birth ? ['label' => 'born', 'masked' => \App\Services\Clients\MaskIdentifier::dateOfBirth(), 'target' => 'date_of_birth'] : null,
                                 ])->filter()->values();
                             @endphp
                             <p class="text-meta mb-0 d-flex flex-wrap align-items-center gap-1">
                                 @foreach ($headerItems as $item)
+                                    @isset ($item['label'])
+                                        <span>{{ $item['label'] }}</span>
+                                    @endisset
                                     <x-client.reveal :masked="$item['masked']" :target="$item['target']" :client="$client" :can-reveal="$canReveal" />
                                     @unless ($loop->last)
                                         <span>·</span>
@@ -304,11 +309,23 @@
                     <x-ui.input label="Last name" name="last_name" id="edit_last_name"
                         :value="$field('last_name', $client->last_name)" :error="$errors->client_edit->first('last_name')" />
 
-                    <x-ui.input label="ID number" name="id_number" id="edit_id_number"
+                    <x-ui.select label="Identity document" name="id_type" id="edit_id_type" :error="$errors->client_edit->first('id_type')">
+                        @foreach (\App\Enums\Client\IdentityType::cases() as $identity)
+                            <option value="{{ $identity->value }}" @selected($field('id_type', ($client->id_type ?? \App\Enums\Client\IdentityType::SouthAfricanId)->value) === $identity->value)>{{ $identity->label() }}</option>
+                        @endforeach
+                    </x-ui.select>
+
+                    <x-ui.input label="ID or passport number" name="id_number" id="edit_id_number"
                         :value="$field('id_number', '')"
-                        :placeholder="\App\Services\Clients\MaskIdentifier::idNumber((string) $client->id_number)"
-                        hint="Leave empty to keep the current number. Use the eye on the client to read it."
+                        :placeholder="$client->id_number ? \App\Services\Clients\MaskIdentifier::idNumber($client->id_number) : 'Not on file'"
+                        :hint="$client->id_number ? 'Leave empty to keep the current number. Use the eye on the client to read it.' : 'Optional.'"
                         :error="$errors->client_edit->first('id_number')" />
+
+                    {{-- Like the number, the date on file is never printed into the form. --}}
+                    <x-ui.input label="Date of birth" name="date_of_birth" id="edit_date_of_birth" type="date"
+                        :value="$field('date_of_birth', '')" max="{{ now()->subDay()->toDateString() }}"
+                        :hint="$client->date_of_birth ? 'Leave empty to keep the date on file. Use the eye on the client to read it.' : 'Optional. Read from a South African ID number when left empty.'"
+                        :error="$errors->client_edit->first('date_of_birth')" />
                 @endif
 
                 <x-slot:footer>
@@ -359,6 +376,7 @@
 
             $intakeConfig = [
                 'type' => old('type', 'individual'),
+                'idType' => old('id_type', \App\Enums\Client\IdentityType::SouthAfricanId->value),
                 'matterTypeId' => (string) old('matter_type_id', ''),
                 'matterTypes' => $matterTypes->mapWithKeys(fn ($type) => [
                     $type->getKey() => ['litigation' => (bool) $type->is_litigation],
@@ -394,10 +412,6 @@
 
             <div class="row">
                 <div class="col-md-6">
-                    <div x-show="type === 'individual'">
-                        <x-ui.input label="ID number" name="id_number" :value="old('id_number')" :error="$intake->first('id_number')" />
-                    </div>
-
                     <div x-show="type === 'entity'" x-cloak>
                         <x-ui.input label="Registration number" name="registration_number" :value="old('registration_number')"
                             hint="e.g. 2011/123456/07" :error="$intake->first('registration_number')" />
@@ -410,6 +424,28 @@
                         <option value="entity">Entity</option>
                     </x-ui.select>
                 </div>
+            </div>
+
+            {{-- Clients come from several countries and do not always have their document with them,
+                 so none of this is required; it can be added on the client later. --}}
+            <div x-show="type === 'individual'">
+                <div class="row">
+                    <div class="col-md-6">
+                        <x-ui.select label="Identity document" name="id_type" id="intake_id_type" x-model="idType" :error="$intake->first('id_type')">
+                            @foreach (\App\Enums\Client\IdentityType::cases() as $identity)
+                                <option value="{{ $identity->value }}">{{ $identity->label() }}</option>
+                            @endforeach
+                        </x-ui.select>
+                    </div>
+                    <div class="col-md-6">
+                        <x-ui.input label="ID or passport number" name="id_number" id="intake_id_number" :value="old('id_number')"
+                            hint="Optional" :error="$intake->first('id_number')" />
+                    </div>
+                </div>
+
+                <x-ui.input label="Date of birth" name="date_of_birth" id="intake_date_of_birth" type="date" :value="old('date_of_birth')"
+                    max="{{ now()->subDay()->toDateString() }}" hint="Optional. Read from a South African ID number when left empty."
+                    :error="$intake->first('date_of_birth')" />
             </div>
 
             <hr>
