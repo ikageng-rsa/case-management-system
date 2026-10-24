@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Matter;
 
 use App\Enums\Matter\Assignment;
-use App\Enums\Matter\PartyRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Matter\AssignUserRequest;
 use App\Http\Requests\Matter\ReopenMatterRequest;
@@ -21,6 +20,7 @@ use App\Models\Narration;
 use App\Models\User;
 use App\Queries\Matters\MatterDocuments;
 use App\Queries\Matters\MatterLedger;
+use App\Queries\Matters\MatterParties;
 use App\Services\Diary\ResolveReminderLead;
 use App\Services\Matters\AssignUserToMatter;
 use App\Services\Matters\CannotAssignToClosedMatter;
@@ -116,8 +116,14 @@ class MatterController extends Controller
         ]);
     }
 
-    public function show(ShowMatterRequest $request, Matter $matter, ResolveReminderLead $resolveLead, MatterLedger $ledger, MatterDocuments $documents): View
-    {
+    public function show(
+        ShowMatterRequest $request,
+        Matter $matter,
+        ResolveReminderLead $resolveLead,
+        MatterLedger $ledger,
+        MatterDocuments $documents,
+        MatterParties $parties,
+    ): View {
         Gate::authorize('view', $matter);
 
         /** @var User $user */
@@ -165,7 +171,7 @@ class MatterController extends Controller
         ] + match ($tab) {
             'ledger' => $ledger->for($matter, $user, $request->ledgerFilter()),
             'documents' => $documents->for($matter, $request->documentKind()),
-            'parties' => $this->parties($matter, $user),
+            'parties' => $parties->for($matter, $user),
             'diary' => $this->diary($request, $matter, $user),
             'audit' => $this->audit($matter),
         });
@@ -334,19 +340,6 @@ class MatterController extends Controller
         );
 
         return redirect()->route('matter.show', [$matter, 'tab' => 'parties']);
-    }
-
-    /** @return array<string, mixed> */
-    protected function parties(Matter $matter, User $user): array
-    {
-        $client = $matter->client;
-
-        return [
-            'matterParties' => $matter->parties()->orderBy('created_at')->orderBy('id')->get(),
-            'partyRoles' => PartyRole::cases(),
-            'contacts' => $user->can('view_client_contacts') ? $client->contacts()->get() : collect(),
-            'canReveal' => $user->can('view_unmasked_client_data'),
-        ];
     }
 
     /** @return array<string, mixed> */
