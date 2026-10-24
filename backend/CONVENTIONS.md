@@ -328,7 +328,9 @@ app/
     Requests/
       Cases/          (StoreLegalCaseRequest, ...)
       Diary/          (StoreDiaryEntryRequest, ...)
-  Models/             (LegalCase, Narration, DiaryEntry, CaseDocument, User)
+  Models/
+    Cases/            (LegalCase, CaseDocument, ...)
+    Diary/            (DiaryEntry, ...)
   Services/
     Cases/            (GenerateCaseReference, ...)
     Diary/            (SendOverdueDiaryAlert, CompleteDiaryEntry, ...)
@@ -340,10 +342,15 @@ routes/
   api.php
 ```
 
-Controllers and form requests are grouped into the same area folders. A class keeps its full
-name inside its folder (`Cases/CaseDocumentsController`, not `Cases/DocumentsController`), so
-it stays unique when searched for or imported. Only the base `Controller` and pages that span
-every area, such as the dashboard, sit at the root.
+Controllers, form requests and models are grouped into the same area folders, and
+`database/factories` and `tests/Unit/Models` mirror the model folders, so Laravel still finds
+each model's factory by name. A class keeps its full name inside its folder
+(`Cases/CaseDocumentsController`, not `Cases/DocumentsController`), so it stays unique when
+searched for or imported. Only the base `Controller` and pages that span every area, such as
+the dashboard, sit at the root.
+
+Polymorphic columns store the aliases in `Relation::enforceMorphMap()`, not class names, so a
+model can move folders without touching the database.
 
 Services change state; queries only read it. A query class is named for what it returns,
 exposes a single `for()` method, and takes typed values rather than the `Request`. The
