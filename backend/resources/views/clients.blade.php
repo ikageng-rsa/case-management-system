@@ -395,6 +395,12 @@
 
             <h3 class="text-meta text-uppercase mb-2">Identity</h3>
 
+            {{-- The type comes first: it decides which of the fields below apply. --}}
+            <x-ui.select label="Client type" name="type" x-model="type" :error="$intake->first('type')">
+                <option value="individual">Individual</option>
+                <option value="entity">Entity</option>
+            </x-ui.select>
+
             <div x-show="type === 'individual'">
                 <div class="row">
                     <div class="col-md-6">
@@ -404,31 +410,9 @@
                         <x-ui.input label="Surname" name="last_name" :value="old('last_name')" :error="$intake->first('last_name')" />
                     </div>
                 </div>
-            </div>
 
-            <div x-show="type === 'entity'" x-cloak>
-                <x-ui.input label="Registered name" name="entity_name" :value="old('entity_name')" :error="$intake->first('entity_name')" />
-            </div>
-
-            <div class="row">
-                <div class="col-md-6">
-                    <div x-show="type === 'entity'" x-cloak>
-                        <x-ui.input label="Registration number" name="registration_number" :value="old('registration_number')"
-                            hint="e.g. 2011/123456/07" :error="$intake->first('registration_number')" />
-                    </div>
-                </div>
-
-                <div class="col-md-6">
-                    <x-ui.select label="Client type" name="type" x-model="type" :error="$intake->first('type')">
-                        <option value="individual">Individual</option>
-                        <option value="entity">Entity</option>
-                    </x-ui.select>
-                </div>
-            </div>
-
-            {{-- Clients come from several countries and do not always have their document with them,
-                 so none of this is required; it can be added on the client later. --}}
-            <div x-show="type === 'individual'">
+                {{-- Clients come from several countries and do not always have their document with them,
+                     so none of this is required; it can be added on the client later. --}}
                 <div class="row">
                     <div class="col-md-6">
                         <x-ui.select label="Identity document" name="id_type" id="intake_id_type" x-model="idType" :error="$intake->first('id_type')">
@@ -443,9 +427,25 @@
                     </div>
                 </div>
 
-                <x-ui.input label="Date of birth" name="date_of_birth" id="intake_date_of_birth" type="date" :value="old('date_of_birth')"
-                    max="{{ now()->subDay()->toDateString() }}" hint="Optional. Read from a South African ID number when left empty."
-                    :error="$intake->first('date_of_birth')" />
+                <div class="row">
+                    <div class="col-md-6">
+                        <x-ui.input label="Date of birth" name="date_of_birth" id="intake_date_of_birth" type="date" :value="old('date_of_birth')"
+                            max="{{ now()->subDay()->toDateString() }}" hint="Optional. Read from an SA ID number when left empty."
+                            :error="$intake->first('date_of_birth')" />
+                    </div>
+                </div>
+            </div>
+
+            <div x-show="type === 'entity'" x-cloak>
+                <div class="row">
+                    <div class="col-md-6">
+                        <x-ui.input label="Registered name" name="entity_name" :value="old('entity_name')" :error="$intake->first('entity_name')" />
+                    </div>
+                    <div class="col-md-6">
+                        <x-ui.input label="Registration number" name="registration_number" :value="old('registration_number')"
+                            hint="e.g. 2011/123456/07" :error="$intake->first('registration_number')" />
+                    </div>
+                </div>
             </div>
 
             <hr>
