@@ -143,24 +143,27 @@ class UserAccountTest extends TestCase
             ->assertSessionHasNoErrors();
     }
 
-    public function test_changing_someones_email_signs_them_out_everywhere_else_but_not_the_director_editing_themselves(): void
+    public function test_changing_someones_email_signs_them_out_everywhere_and_off_their_phones_but_not_the_director_editing_themselves(): void
     {
         $director = $this->userWithRole(RoleEnum::Director);
         $person = $this->userWithRole(RoleEnum::Secretary);
 
         foreach ([$person, $director] as $user) {
             DB::table('sessions')->insert(['id' => 'session-'.$user->getKey(), 'user_id' => $user->getKey(), 'payload' => '', 'last_activity' => now()->timestamp]);
+            $user->createToken('Pixel 9');
         }
 
         $this->actingAs($director)
             ->patch(route('user.details.update', $person), ['name' => $person->name, 'email' => 'new@example.com']);
 
         $this->assertDatabaseMissing('sessions', ['user_id' => $person->getKey()]);
+        $this->assertSame(0, $person->tokens()->count());
 
         $this->actingAs($director)
             ->patch(route('user.details.update', $director), ['name' => $director->name, 'email' => 'director.new@example.com']);
 
         $this->assertDatabaseHas('sessions', ['user_id' => $director->getKey()]);
+        $this->assertSame(1, $director->tokens()->count());
     }
 
     public function test_changes_are_audited_once_with_numbers_recorded_by_name_only(): void

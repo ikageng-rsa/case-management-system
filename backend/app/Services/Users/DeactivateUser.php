@@ -92,9 +92,10 @@ class DeactivateUser
             $user->forceFill(['remember_token' => null])->save();
             $user->delete();
 
-            // Locked out of everything at once, and any reset link already sent is useless.
+            // Locked out of everything at once, phones included, and any reset link already sent is useless.
             DB::table(config('session.table', 'sessions'))->where('user_id', $user->getKey())->delete();
             DB::table('password_reset_tokens')->where('email', $user->email)->delete();
+            $user->tokens()->delete();
 
             $this->ensureAdministration->check();
         });

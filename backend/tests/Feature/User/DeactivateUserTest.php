@@ -17,6 +17,7 @@ use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
+use Laravel\Sanctum\PersonalAccessToken;
 use Spatie\Activitylog\Models\Activity;
 use Tests\TestCase;
 
@@ -67,6 +68,24 @@ class DeactivateUserTest extends TestCase
         $event = Activity::forSubject($leaver)->where('event', 'deactivated')->sole();
         $this->assertSame('Left the firm.', $event->getProperty('reason'));
         $this->assertTrue($event->causer->is($director));
+    }
+
+    public function test_their_phones_are_signed_out_and_stay_out_after_reactivation(): void
+    {
+        $leaver = $this->attorney();
+        $token = $leaver->createToken('Pixel 9')->plainTextToken;
+        $keeper = $this->attorney()->createToken('iPad');
+
+        $this->actingAs($this->director())
+            ->post(route('user.deactivate', $leaver), ['reason' => 'Left the firm.'])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame([$keeper->accessToken->getKey()], PersonalAccessToken::query()->pluck('id')->all());
+
+        $leaver->restore();
+        $this->app['auth']->forgetGuards();
+
+        $this->withToken($token)->getJson('/api/v1/me')->assertUnauthorized();
     }
 
     public function test_a_reason_is_required(): void

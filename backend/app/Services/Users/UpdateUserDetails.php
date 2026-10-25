@@ -16,7 +16,8 @@ class UpdateUserDetails
      * Change the staff record of a user. The model's own logging records what it
      * can; phone numbers are kept out of that log, so a change to one is recorded
      * as an event naming the field. A new email address ends the person's other
-     * sessions, since whoever holds them was let in as someone else.
+     * sessions and signs out their phones, since whoever holds them was let in as
+     * someone else.
      *
      * @param  array<string, mixed>  $data  Already shape-validated (FormRequest)
      */
@@ -50,6 +51,7 @@ class UpdateUserDetails
             if ($emailChanged && ! $user->is(Auth::user())) {
                 DB::table('sessions')->where('user_id', $user->getKey())->delete();
                 $user->forceFill(['remember_token' => null])->save();
+                $user->tokens()->delete();
             }
         });
 
