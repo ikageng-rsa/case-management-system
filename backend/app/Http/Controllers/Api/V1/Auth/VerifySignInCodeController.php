@@ -30,7 +30,7 @@ class VerifySignInCodeController extends Controller
 
         $deviceName = $challenges->close($challenge);
 
-        return (new UserResource($user))
+        return (new UserResource($user))->asSelf()
             ->additional(['meta' => ['token' => $user->createToken($deviceName)->plainTextToken]])
             ->response()
             ->setStatusCode(201);

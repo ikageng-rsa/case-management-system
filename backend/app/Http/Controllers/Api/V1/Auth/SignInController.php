@@ -31,7 +31,7 @@ class SignInController extends Controller
         }
 
         if (! config('security.sign_in_code.required')) {
-            return (new UserResource($user))
+            return (new UserResource($user))->asSelf()
                 ->additional(['meta' => ['token' => $user->createToken($request->validated('device_name'))->plainTextToken]])
                 ->response()
                 ->setStatusCode(201);
