@@ -10,6 +10,7 @@ use App\Models\Matter\Matter;
 use App\Models\Matter\MatterAssignment;
 use App\Models\Matter\MatterParty;
 use App\Models\Narration\Narration;
+use App\Models\User\User;
 use App\Queries\Matters\MatterAuditTrail;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -71,6 +72,17 @@ class MatterAuditTrailTest extends TestCase
         $newer = $this->logOn($matter);
 
         $this->assertSame([$newer->id, $older->id], collect((new MatterAuditTrail)->for($matter)->items())->pluck('id')->all());
+    }
+
+    public function test_it_still_names_someone_who_has_since_been_deactivated(): void
+    {
+        $matter = Matter::factory()->create();
+        $former = User::factory()->create(['name' => 'Lerato Former']);
+        Activity::query()->delete();
+        activity()->performedOn($matter)->causedBy($former)->event('read')->log('read');
+        $former->delete();
+
+        $this->assertSame('Lerato Former', collect((new MatterAuditTrail)->for($matter)->items())->first()->causer?->name);
     }
 
     protected function logOn(Model $subject): Activity

@@ -149,6 +149,19 @@ class AuditLogControllerTest extends TestCase
             ->assertViewHas('activities', fn ($page) => $page->first()->causer === null);
     }
 
+    public function test_an_entry_by_someone_since_deactivated_still_names_them(): void
+    {
+        Activity::query()->delete();
+        $former = $this->userWithRole(RoleEnum::Attorney, ['name' => 'Lerato Former']);
+        $entry = $this->entry('updated', $former);
+        $former->delete();
+
+        $this->actingAs($this->userWithRole(RoleEnum::Director))
+            ->get(route('audit-log', ['action' => 'updated']))
+            ->assertOk()
+            ->assertViewHas('details', fn ($details) => $details[$entry->getKey()]['actor'] === 'Lerato Former');
+    }
+
     public function test_the_export_follows_its_own_permission(): void
     {
         $this->actingAs($this->userWithRole(RoleEnum::Attorney))->get(route('audit-log.export'))->assertForbidden();

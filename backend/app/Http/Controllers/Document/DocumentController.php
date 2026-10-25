@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Document;
 use App\Enums\Document\DocumentKind;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Document\UploadDocumentRequest;
+use App\Models\Audit\Activity;
 use App\Models\Document\Media;
 use App\Models\Matter\Matter;
 use App\Models\User\User;
@@ -16,7 +17,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Number;
-use Spatie\Activitylog\Models\Activity;
 
 class DocumentController extends Controller
 {

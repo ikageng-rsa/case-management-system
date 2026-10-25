@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Audit;
 use App\Enums\Auth\Permission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Audit\FilterAuditLogRequest;
+use App\Models\Audit\Activity;
 use App\Models\Diary\DiaryEntry;
 use App\Models\Document\Media;
 use App\Models\Matter\Matter;
@@ -18,7 +19,6 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
-use Spatie\Activitylog\Models\Activity;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AuditLogController extends Controller
