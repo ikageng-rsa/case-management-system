@@ -21,7 +21,10 @@ use App\Models\Reference\MatterType;
 use App\Models\User\NotificationPreference;
 use App\Models\User\Role;
 use App\Models\User\User;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -61,5 +64,10 @@ class AppServiceProvider extends ServiceProvider
             'user_invitation' => UserInvitation::class,
             'notification_preference' => NotificationPreference::class,
         ]);
+
+        // The API, per signed-in user, or per address before sign-in.
+        RateLimiter::for('api', function (Request $request) {
+            return Limit::perMinute(60)->by($request->user()?->getKey() ?: $request->ip());
+        });
     }
 }
