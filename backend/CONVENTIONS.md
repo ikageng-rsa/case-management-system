@@ -372,9 +372,10 @@ class CaseDiary
 ## 16. Boundaries
 
 Layers depend inwards: controllers and form requests use services, queries and models;
-services and queries use models; models use neither. A helper that more than one layer
-needs, such as hashing or normalising a value, sits in `app/Support`, which uses nothing
-above it.
+services and queries use models; models use neither. A service may read through a query
+before it writes, as `DeactivateUser` does with `UserWorkload`, but a query never uses a
+service. A helper that more than one layer needs, such as hashing or normalising a value,
+sits in `app/Support`, which uses nothing above it.
 
 Three tests in `tests/Unit/Architecture/` hold these lines. They read the code without
 booting the app, and each failure names the file, what it did, and the fix.
