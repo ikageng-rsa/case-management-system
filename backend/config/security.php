@@ -23,4 +23,18 @@ return [
         'resend_after_seconds' => 60,
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | API tokens
+    |--------------------------------------------------------------------------
+    |
+    | Each signed-in phone holds a token. One left unused this many days stops
+    | working, so a phone put away in a drawer has to sign in again.
+    |
+    */
+
+    'api_tokens' => [
+        'idle_days' => (int) env('API_TOKEN_IDLE_DAYS', 15),
+    ],
+
 ];

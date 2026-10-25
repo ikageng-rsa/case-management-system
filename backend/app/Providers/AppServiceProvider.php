@@ -27,6 +27,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\PersonalAccessToken;
+use Laravel\Sanctum\Sanctum;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -68,7 +70,7 @@ class AppServiceProvider extends ServiceProvider
 
         // The API, per signed-in user, or per address before sign-in.
         RateLimiter::for('api', function (Request $request) {
-            return Limit::perMinute(60)->by($request->user()?->getKey() ?: $request->ip());
+            return Limit::perMinute(60)->by($request->user('sanctum')?->getKey() ?: $request->ip());
         });
 
         // Guessing at passwords or codes, held to a few tries per address or challenge.
@@ -76,6 +78,13 @@ class AppServiceProvider extends ServiceProvider
             $who = Str::lower((string) ($request->input('email') ?? $request->input('challenge_id')));
 
             return Limit::perMinute(5)->by("{$who}|{$request->ip()}");
+        });
+
+        // A token lapses once it has gone unused too long, not a fixed time after it was given.
+        Sanctum::authenticateAccessTokensUsing(function (PersonalAccessToken $token, bool $isValid): bool {
+            $lastUsed = $token->last_used_at ?? $token->created_at;
+
+            return $isValid && $lastUsed->gt(now()->subDays((int) config('security.api_tokens.idle_days')));
         });
     }
 }
