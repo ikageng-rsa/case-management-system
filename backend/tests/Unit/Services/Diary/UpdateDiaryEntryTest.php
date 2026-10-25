@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\Diary;
 
-use App\Models\DiaryEntry;
-use App\Models\Narration;
+use App\Models\Diary\DiaryEntry;
+use App\Models\Narration\Narration;
 use App\Services\Diary\UpdateDiaryEntry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;

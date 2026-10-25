@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace App\Services\Users;
 
 use App\Enums\Matter\Assignment;
-use App\Models\User;
+use App\Models\User\User;
 use App\Notifications\DiaryEntryAssigned;
+use App\Queries\Users\UserWorkload;
 use App\Services\Matters\AssignUserToMatter;
 use App\Services\Notifications\NotifyUser;
 use App\Services\Roles\EnsureAdministrationRemains;
@@ -91,9 +92,10 @@ class DeactivateUser
             $user->forceFill(['remember_token' => null])->save();
             $user->delete();
 
-            // Locked out of everything at once, and any reset link already sent is useless.
+            // Locked out of everything at once, phones included, and any reset link already sent is useless.
             DB::table(config('session.table', 'sessions'))->where('user_id', $user->getKey())->delete();
             DB::table('password_reset_tokens')->where('email', $user->email)->delete();
+            $user->tokens()->delete();
 
             $this->ensureAdministration->check();
         });

@@ -1,7 +1,7 @@
 @php
     $kinds = collect(\App\Enums\Client\ContactKind::cases())->reject(fn ($kind) => $kind === \App\Enums\Client\ContactKind::ContactPerson);
 
-    $maskedValue = fn (\App\Models\ClientContact $contact) => match ($contact->kind) {
+    $maskedValue = fn (\App\Models\Client\ClientContact $contact) => match ($contact->kind) {
         \App\Enums\Client\ContactKind::Mobile => \App\Services\Clients\MaskIdentifier::mobile($contact->value),
         \App\Enums\Client\ContactKind::Email => \App\Services\Clients\MaskIdentifier::email($contact->value),
         default => \App\Services\Clients\MaskIdentifier::address($contact->value),

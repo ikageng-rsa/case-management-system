@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services\Diary;
 
-use App\Models\DiaryEntry;
-use App\Models\Matter;
-use App\Models\User;
+use App\Models\Diary\DiaryEntry;
+use App\Models\Matter\Matter;
+use App\Models\User\User;
 use Carbon\CarbonInterface;
 
 class DiariseNextAction

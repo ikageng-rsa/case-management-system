@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services\ActivityTypes;
 
 use App\Enums\Narration\ActivityMeasure;
-use App\Models\ActivityType;
+use App\Models\Reference\ActivityType;
 use App\Services\Reference\ReferenceDataLocked;
 
 class SaveActivityType

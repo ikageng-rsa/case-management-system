@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Courts;
 
 use App\Enums\Court\CourtTier;
-use App\Models\Court;
+use App\Models\Reference\Court;
 
 class SaveCourt
 {

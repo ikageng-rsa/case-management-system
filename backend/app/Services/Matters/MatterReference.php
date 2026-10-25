@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services\Matters;
 
-use App\Models\Client;
-use App\Models\Matter;
-use App\Models\MatterType;
+use App\Models\Client\Client;
+use App\Models\Matter\Matter;
+use App\Models\Reference\MatterType;
 
 /*
  * The three parts of a file reference that need to be persisted together.

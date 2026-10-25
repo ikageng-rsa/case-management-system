@@ -6,17 +6,20 @@ namespace Tests\Feature\Client;
 
 use App\Enums\Auth\Role as RoleEnum;
 use App\Enums\Client\ContactKind;
+use App\Enums\Client\PopiaConsentMethod;
 use App\Enums\Matter\Assignment;
-use App\Models\Client;
-use App\Models\ClientContactPerson;
-use App\Models\Matter;
-use App\Models\MatterAssignment;
-use App\Models\MatterType;
-use App\Models\User;
+use App\Models\Client\Client;
+use App\Models\Client\ClientContactPerson;
+use App\Models\Matter\Matter;
+use App\Models\Matter\MatterAssignment;
+use App\Models\Reference\MatterType;
+use App\Models\User\User;
 use App\Services\Clients\AddClientContact;
 use App\Services\Clients\MaskIdentifier;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Activitylog\Models\Activity;
 use Tests\TestCase;
 
@@ -188,7 +191,7 @@ class ClientControllerTest extends TestCase
                 'email' => 'thabo@example.com',
                 'physical_address' => '1142 Boitekong Ext 4, Rustenburg, 0300',
                 'popia_consent' => '1',
-                'intent' => 'client',
+                'popia_method' => 'verbal_witnessed',
             ])
             ->assertSessionHasNoErrors();
 
@@ -206,7 +209,6 @@ class ClientControllerTest extends TestCase
                 'type' => 'entity',
                 'entity_name' => 'Rustenburg Plat (Pty) Ltd',
                 'registration_number' => '2011/123456/07',
-                'popia_consent' => '1',
             ])
             ->assertSessionHasNoErrors();
 
@@ -456,11 +458,11 @@ class ClientControllerTest extends TestCase
             'last_name' => 'Mokoena',
             'id_number' => self::ID_NUMBER,
             'popia_consent' => '1',
-            'intent' => 'client',
+            'popia_method' => 'verbal_witnessed',
         ];
     }
 
-    public function test_registering_records_the_clients_consent(): void
+    public function test_registering_records_the_clients_consent_and_how_it_was_given(): void
     {
         $this->actingAs($this->userWithRole(RoleEnum::Secretary))
             ->post(route('client.store'), $this->individual())
@@ -470,15 +472,52 @@ class ClientControllerTest extends TestCase
 
         $this->assertTrue($consent->isActive());
         $this->assertNotNull($consent->granted_at);
+        $this->assertSame(PopiaConsentMethod::Verbal, $consent->method);
+        $this->assertNull($consent->mandate());
     }
 
-    public function test_a_client_cannot_be_registered_without_the_consent_being_confirmed(): void
+    public function test_a_client_can_be_registered_without_consent_and_none_is_recorded(): void
     {
         $this->actingAs($this->userWithRole(RoleEnum::Secretary))
-            ->post(route('client.store'), $this->individual(['popia_consent' => null]))
-            ->assertSessionHasErrorsIn('client', 'popia_consent');
+            ->post(route('client.store'), $this->individual(['popia_consent' => null, 'popia_method' => null]))
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseCount('clients', 1);
+        $this->assertDatabaseCount('popia_consents', 0);
+    }
+
+    public function test_consent_given_at_intake_has_to_say_how(): void
+    {
+        $this->actingAs($this->userWithRole(RoleEnum::Secretary))
+            ->post(route('client.store'), $this->individual(['popia_method' => null]))
+            ->assertSessionHasErrorsIn('client', 'popia_method');
 
         $this->assertDatabaseCount('clients', 0);
+    }
+
+    public function test_a_signed_mandate_given_at_intake_has_to_be_attached_and_is_kept_with_the_consent(): void
+    {
+        Storage::fake(config('media-library.disk_name'));
+
+        $secretary = $this->userWithRole(RoleEnum::Secretary);
+
+        $this->actingAs($secretary)
+            ->post(route('client.store'), $this->individual(['popia_method' => 'signed_mandate']))
+            ->assertSessionHasErrorsIn('client', 'popia_mandate');
+
+        $this->assertDatabaseCount('clients', 0);
+
+        $this->actingAs($secretary)
+            ->post(route('client.store'), $this->individual([
+                'popia_method' => 'signed_mandate',
+                'popia_mandate' => UploadedFile::fake()->create('mandate.pdf', 100, 'application/pdf'),
+            ]))
+            ->assertSessionHasNoErrors();
+
+        $consent = Client::firstOrFail()->popiaConsent;
+
+        $this->assertSame(PopiaConsentMethod::Signed, $consent->method);
+        $this->assertSame('mandate.pdf', $consent->mandate()?->file_name);
     }
 
     public function test_saving_and_opening_a_matter_does_both_in_one_go(): void
@@ -486,7 +525,7 @@ class ClientControllerTest extends TestCase
         $type = MatterType::factory()->nonLitigation()->create();
 
         $response = $this->actingAs($this->userWithRole(RoleEnum::Secretary))
-            ->post(route('client.store'), $this->individual(['intent' => 'matter', 'matter_type_id' => $type->getKey()]))
+            ->post(route('client.store'), $this->individual(['matter_type_id' => $type->getKey()]))
             ->assertSessionHasNoErrors();
 
         $matter = Matter::firstOrFail();
@@ -501,18 +540,19 @@ class ClientControllerTest extends TestCase
         $type = MatterType::factory()->create(['is_litigation' => true]);
 
         $this->actingAs($this->userWithRole(RoleEnum::Secretary))
-            ->post(route('client.store'), $this->individual(['intent' => 'matter', 'matter_type_id' => $type->getKey()]))
+            ->post(route('client.store'), $this->individual(['matter_type_id' => $type->getKey()]))
             ->assertSessionHasErrorsIn('client', 'court_id');
 
         $this->assertDatabaseCount('clients', 0);
         $this->assertDatabaseCount('matters', 0);
     }
 
-    public function test_the_matter_is_not_validated_when_only_the_client_is_saved(): void
+    public function test_no_matter_is_opened_when_no_matter_type_is_chosen(): void
     {
         $this->actingAs($this->userWithRole(RoleEnum::Secretary))
-            ->post(route('client.store'), $this->individual(['matter_type_id' => 'nonsense']))
-            ->assertSessionHasNoErrors();
+            ->post(route('client.store'), $this->individual(['matter_type_id' => '', 'court_id' => '']))
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('client.show', Client::firstOrFail()));
 
         $this->assertDatabaseCount('clients', 1);
         $this->assertDatabaseCount('matters', 0);
@@ -526,7 +566,7 @@ class ClientControllerTest extends TestCase
         $user->givePermissionTo('view_clients', 'create_clients', 'record_popia_consent');
 
         $this->actingAs($user)
-            ->post(route('client.store'), $this->individual(['intent' => 'matter', 'matter_type_id' => $type->getKey()]))
+            ->post(route('client.store'), $this->individual(['matter_type_id' => $type->getKey()]))
             ->assertForbidden();
 
         $this->assertDatabaseCount('clients', 0);
@@ -542,13 +582,16 @@ class ClientControllerTest extends TestCase
         $this->actingAs($clerk)
             ->get(route('client.show', $client))
             ->assertSee('Save client')
-            ->assertDontSee('Save &amp; open matter', false)
+            ->assertDontSee('intake_matter_type_id')
             ->assertDontSee('intake_popia_consent');
 
         $this->actingAs($this->userWithRole(RoleEnum::Secretary))
             ->get(route('client.show', $client))
-            ->assertSee('Save client only')
-            ->assertSee('Save &amp; open matter', false)
-            ->assertSee('intake_popia_consent');
+            ->assertSee('Save client')
+            ->assertDontSee('Save client only')
+            ->assertSee('intake_matter_type_id')
+            ->assertSee('intake_popia_consent')
+            ->assertSee('intake_popia_method')
+            ->assertSee('intake_popia_mandate');
     }
 }

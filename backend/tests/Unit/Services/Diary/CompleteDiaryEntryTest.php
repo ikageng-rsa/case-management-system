@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\Diary;
 
-use App\Models\DiaryEntry;
-use App\Models\Narration;
-use App\Models\User;
+use App\Models\Diary\DiaryEntry;
+use App\Models\Narration\Narration;
+use App\Models\User\User;
 use App\Services\Diary\CompleteDiaryEntry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use InvalidArgumentException;

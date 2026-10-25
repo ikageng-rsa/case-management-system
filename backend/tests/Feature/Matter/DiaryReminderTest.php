@@ -6,11 +6,11 @@ namespace Tests\Feature\Matter;
 
 use App\Enums\Auth\Role as RoleEnum;
 use App\Enums\Matter\Assignment;
-use App\Models\DiaryEntry;
-use App\Models\Matter;
-use App\Models\MatterAssignment;
-use App\Models\NotificationPreference;
-use App\Models\User;
+use App\Models\Diary\DiaryEntry;
+use App\Models\Matter\Matter;
+use App\Models\Matter\MatterAssignment;
+use App\Models\User\NotificationPreference;
+use App\Models\User\User;
 use App\Notifications\DiaryEntryDueSoon;
 use App\Services\Diary\ReminderLead;
 use App\Services\Diary\ResolveReminderLead;

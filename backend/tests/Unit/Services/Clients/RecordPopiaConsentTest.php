@@ -6,7 +6,7 @@ namespace Tests\Feature\Services\Clients;
 
 use App\Enums\Client\ClientType;
 use App\Enums\Client\PopiaConsentMethod;
-use App\Models\Client;
+use App\Models\Client\Client;
 use App\Services\Clients\RecordPopiaConsent;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;

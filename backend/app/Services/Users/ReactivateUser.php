@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Users;
 
-use App\Models\User;
+use App\Models\User\User;
 
 /*
  * Brings a person back with the roles they had. What was handed over when they

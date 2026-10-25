@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Tests\Unit\Services\Matters;
 
 use App\Enums\Matter\Assignment;
-use App\Models\Matter;
-use App\Models\MatterAssignment;
-use App\Models\User;
+use App\Models\Matter\Matter;
+use App\Models\Matter\MatterAssignment;
+use App\Models\User\User;
 use App\Services\Matters\AssignUserToMatter;
 use App\Services\Matters\CannotAssignToClosedMatter;
 use Illuminate\Foundation\Testing\RefreshDatabase;

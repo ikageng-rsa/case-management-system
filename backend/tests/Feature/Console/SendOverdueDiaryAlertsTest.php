@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Console;
 
-use App\Models\DiaryEntry;
-use App\Models\Matter;
-use App\Models\NotificationPreference;
+use App\Models\Diary\DiaryEntry;
+use App\Models\Matter\Matter;
+use App\Models\User\NotificationPreference;
 use App\Notifications\DiaryEntryOverdue;
 use App\Services\Notifications\NotifyUser;
 use Illuminate\Console\Scheduling\Schedule;

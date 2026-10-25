@@ -6,10 +6,10 @@ namespace Tests\Feature\Matter;
 
 use App\Enums\Auth\Role as RoleEnum;
 use App\Enums\Matter\Assignment;
-use App\Models\DiaryEntry;
-use App\Models\Matter;
-use App\Models\MatterAssignment;
-use App\Models\User;
+use App\Models\Diary\DiaryEntry;
+use App\Models\Matter\Matter;
+use App\Models\Matter\MatterAssignment;
+use App\Models\User\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;

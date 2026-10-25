@@ -106,7 +106,7 @@ return [
     /*
      * The fully qualified class name of the media model.
      */
-    'media_model' => App\Models\Media::class,
+    'media_model' => App\Models\Document\Media::class,
 
     /*
      * The fully qualified class name of the media observer.

@@ -6,8 +6,8 @@ namespace App\Notifications;
 
 use App\Enums\Matter\Assignment;
 use App\Enums\Notification\NotificationType;
-use App\Models\Matter;
-use App\Models\User;
+use App\Models\Matter\Matter;
+use App\Models\User\User;
 use Illuminate\Notifications\Messages\MailMessage;
 
 class MatterAssigned extends PersonalNotification

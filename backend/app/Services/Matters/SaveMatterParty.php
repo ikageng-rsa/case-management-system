@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Services\Matters;
 
 use App\Enums\Matter\PartyRole;
-use App\Models\Matter;
-use App\Models\MatterParty;
+use App\Models\Matter\Matter;
+use App\Models\Matter\MatterParty;
 
 class SaveMatterParty
 {

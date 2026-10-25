@@ -6,8 +6,8 @@ namespace Tests\Feature\User;
 
 use App\Enums\Auth\Permission;
 use App\Enums\Auth\Role as RoleEnum;
-use App\Models\Role;
-use App\Models\User;
+use App\Models\User\Role;
+use App\Models\User\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;

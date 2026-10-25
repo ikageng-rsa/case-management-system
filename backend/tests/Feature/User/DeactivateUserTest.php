@@ -6,17 +6,18 @@ namespace Tests\Feature\User;
 
 use App\Enums\Auth\Role as RoleEnum;
 use App\Enums\Matter\Assignment;
-use App\Models\DiaryEntry;
-use App\Models\Matter;
-use App\Models\MatterAssignment;
-use App\Models\Narration;
-use App\Models\User;
+use App\Models\Diary\DiaryEntry;
+use App\Models\Matter\Matter;
+use App\Models\Matter\MatterAssignment;
+use App\Models\Narration\Narration;
+use App\Models\User\User;
 use App\Notifications\DiaryEntryAssigned;
 use App\Notifications\MatterAssigned;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
+use Laravel\Sanctum\PersonalAccessToken;
 use Spatie\Activitylog\Models\Activity;
 use Tests\TestCase;
 
@@ -67,6 +68,24 @@ class DeactivateUserTest extends TestCase
         $event = Activity::forSubject($leaver)->where('event', 'deactivated')->sole();
         $this->assertSame('Left the firm.', $event->getProperty('reason'));
         $this->assertTrue($event->causer->is($director));
+    }
+
+    public function test_their_phones_are_signed_out_and_stay_out_after_reactivation(): void
+    {
+        $leaver = $this->attorney();
+        $token = $leaver->createToken('Pixel 9')->plainTextToken;
+        $keeper = $this->attorney()->createToken('iPad');
+
+        $this->actingAs($this->director())
+            ->post(route('user.deactivate', $leaver), ['reason' => 'Left the firm.'])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame([$keeper->accessToken->getKey()], PersonalAccessToken::query()->pluck('id')->all());
+
+        $leaver->restore();
+        $this->app['auth']->forgetGuards();
+
+        $this->withToken($token)->getJson('/api/v1/me')->assertUnauthorized();
     }
 
     public function test_a_reason_is_required(): void
@@ -125,6 +144,25 @@ class DeactivateUserTest extends TestCase
             ->assertSessionHasErrorsIn('deactivate_user_'.$only->getKey(), 'deactivate');
 
         $this->assertNotSoftDeleted($only);
+    }
+
+    public function test_a_hand_over_that_is_rolled_back_tells_no_one(): void
+    {
+        Notification::fake();
+        $only = $this->director();
+        $successor = $this->attorney();
+        $matter = Matter::factory()->create();
+        $this->seat($matter, $only, Assignment::Responsible);
+        DiaryEntry::factory()->for($matter)->create(['assigned_to' => $only->getKey(), 'due_at' => now()->addDays(9)]);
+        $deactivator = User::factory()->create();
+        $deactivator->givePermissionTo('deactivate_users');
+
+        $this->actingAs($deactivator)
+            ->post(route('user.deactivate', $only), ['reason' => 'x', 'successors' => [$matter->getKey() => $successor->getKey()]])
+            ->assertSessionHasErrorsIn('deactivate_user_'.$only->getKey(), 'deactivate');
+
+        $this->assertTrue($matter->fresh()->responsibleAttorney()->is($only));
+        Notification::assertNothingSentTo($successor);
     }
 
     public function test_a_responsible_attorney_cannot_go_until_someone_takes_the_matter(): void
@@ -356,6 +394,6 @@ class DeactivateUserTest extends TestCase
         $this->assertStringContainsString($matter->reference, $html);
         $this->assertStringContainsString('Already on this matter', $html);
         $this->assertStringContainsString('name="successors['.$matter->getKey().']"', $html);
-        $this->assertStringContainsString($outsider->name, $html);
+        $this->assertStringContainsString(e($outsider->name), $html);
     }
 }

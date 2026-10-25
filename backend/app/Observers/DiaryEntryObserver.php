@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Observers;
 
-use App\Models\DiaryEntry;
+use App\Models\Diary\DiaryEntry;
 
 class DiaryEntryObserver
 {

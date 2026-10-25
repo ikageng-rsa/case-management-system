@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Tests\Feature\Client;
 
 use App\Enums\Auth\Role as RoleEnum;
-use App\Models\Client;
-use App\Models\ClientContactPerson;
-use App\Models\User;
+use App\Models\Client\Client;
+use App\Models\Client\ClientContactPerson;
+use App\Models\User\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;

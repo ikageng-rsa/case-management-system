@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\Narrations;
 
-use App\Models\ActivityType;
-use App\Models\Matter;
-use App\Models\User;
+use App\Models\Matter\Matter;
+use App\Models\Reference\ActivityType;
+use App\Models\User\User;
 use App\Services\Narrations\RecordNarration;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use InvalidArgumentException;
