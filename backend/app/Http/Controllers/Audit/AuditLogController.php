@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Audit;
 
 use App\Enums\Auth\Permission;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Audit\FilterAuditLogRequest;
 use App\Models\Diary\DiaryEntry;
 use App\Models\Document\Media;
 use App\Models\Matter\Matter;
@@ -16,18 +17,17 @@ use App\Models\User\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Spatie\Activitylog\Models\Activity;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AuditLogController extends Controller
 {
-    public function index(Request $request): View
+    public function index(FilterAuditLogRequest $request): View
     {
         Gate::authorize(Permission::ViewAuditLog->value);
 
-        $activities = $this->filtered($request)
+        $activities = $this->filtered($request->actor(), $request->action())
             ->with(['causer', 'subject'])
             ->latest('id')
             ->paginate(8)
@@ -45,8 +45,8 @@ class AuditLogController extends Controller
 
         return view('audit-log', [
             'activities' => $activities,
-            'actor' => $request->query('actor'),
-            'action' => $request->query('action'),
+            'actor' => $request->actor(),
+            'action' => $request->action(),
             'actors' => User::query()
                 ->whereIn('id', Activity::query()->whereNotNull('causer_id')->select('causer_id'))
                 ->orderBy('name')
@@ -58,17 +58,17 @@ class AuditLogController extends Controller
         ]);
     }
 
-    public function export(Request $request): StreamedResponse
+    public function export(FilterAuditLogRequest $request): StreamedResponse
     {
         Gate::authorize(Permission::ExportAuditLog->value);
 
         // Taking the log out of the system is itself something the log records.
         activity('audit_log')
             ->event('exported')
-            ->withProperties(['ip' => $request->ip(), 'actor' => $request->query('actor'), 'action' => $request->query('action')])
+            ->withProperties(['ip' => $request->ip(), 'actor' => $request->actor(), 'action' => $request->action()])
             ->log(sprintf('%s exported the audit log', $request->user()->name));
 
-        $query = $this->filtered($request)->with(['causer', 'subject'])->latest('id');
+        $query = $this->filtered($request->actor(), $request->action())->with(['causer', 'subject'])->latest('id');
 
         return response()->streamDownload(function () use ($query): void {
             $out = fopen('php://output', 'w');
@@ -91,11 +91,11 @@ class AuditLogController extends Controller
     }
 
     /** @return Builder<Activity> */
-    protected function filtered(Request $request): Builder
+    protected function filtered(?string $actor, ?string $action): Builder
     {
         return Activity::query()
-            ->when($request->query('actor'), fn (Builder $query, string $actor) => $query->where('causer_id', $actor))
-            ->when($request->query('action'), fn (Builder $query, string $action) => $query->where('event', $action));
+            ->when($actor, fn (Builder $query, string $actor) => $query->where('causer_id', $actor))
+            ->when($action, fn (Builder $query, string $action) => $query->where('event', $action));
     }
 
     /**
