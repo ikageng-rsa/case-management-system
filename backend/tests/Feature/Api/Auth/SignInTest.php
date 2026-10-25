@@ -7,16 +7,12 @@ namespace Tests\Feature\Api\Auth;
 use App\Enums\Auth\Role;
 use App\Models\User\User;
 use App\Notifications\SignInCodeNotification;
-use Database\Seeders\RoleSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Laravel\Sanctum\PersonalAccessToken;
-use Tests\TestCase;
+use Tests\Feature\Api\ApiTestCase;
 
-class SignInTest extends TestCase
+class SignInTest extends ApiTestCase
 {
-    use RefreshDatabase;
-
     protected function setUp(): void
     {
         parent::setUp();
@@ -78,8 +74,7 @@ class SignInTest extends TestCase
         $user = User::factory()->create();
 
         $this->postJson('/api/v1/auth/sign-in', ['email' => $user->email, 'password' => 'wrong', 'device_name' => 'Pixel 9'])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('email');
+            ->assertJsonApiError(422, '/email');
 
         Notification::assertNothingSent();
     }
@@ -87,8 +82,7 @@ class SignInTest extends TestCase
     public function test_an_unknown_address_gets_the_same_answer_as_a_wrong_password(): void
     {
         $this->postJson('/api/v1/auth/sign-in', ['email' => 'nobody@example.com', 'password' => 'password', 'device_name' => 'Pixel 9'])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['email' => __('auth.failed')]);
+            ->assertJsonApiError(422, '/email', __('auth.failed'));
     }
 
     public function test_a_deactivated_user_cannot_sign_in(): void
@@ -114,7 +108,6 @@ class SignInTest extends TestCase
 
     public function test_the_right_code_gives_a_token_named_for_the_device(): void
     {
-        $this->seed(RoleSeeder::class);
         $user = User::factory()->create();
         $user->assignRole(Role::CandidateAttorney->value);
         $challenge = $this->passPassword($user);
@@ -141,8 +134,7 @@ class SignInTest extends TestCase
         $wrong = $this->emailedCode($user) === '000000' ? '111111' : '000000';
 
         $this->postJson('/api/v1/auth/sign-in/verify', ['challenge_id' => $challenge, 'code' => $wrong])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('code');
+            ->assertJsonApiError(422, '/code');
 
         $this->assertSame(0, PersonalAccessToken::query()->count());
     }
@@ -156,8 +148,7 @@ class SignInTest extends TestCase
         $this->postJson('/api/v1/auth/sign-in/verify', ['challenge_id' => $challenge, 'code' => $code])->assertCreated();
 
         $this->postJson('/api/v1/auth/sign-in/verify', ['challenge_id' => $challenge, 'code' => $code])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('challenge_id');
+            ->assertJsonApiError(422, '/challenge_id');
 
         $this->assertSame(1, PersonalAccessToken::query()->count());
     }
@@ -165,8 +156,7 @@ class SignInTest extends TestCase
     public function test_a_made_up_challenge_is_refused(): void
     {
         $this->postJson('/api/v1/auth/sign-in/verify', ['challenge_id' => 'made-up', 'code' => '123456'])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('challenge_id');
+            ->assertJsonApiError(422, '/challenge_id');
     }
 
     public function test_a_new_code_can_be_asked_for_once_a_minute_has_passed(): void
@@ -175,8 +165,7 @@ class SignInTest extends TestCase
         $challenge = $this->passPassword($user);
 
         $this->postJson('/api/v1/auth/sign-in/resend', ['challenge_id' => $challenge])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('code');
+            ->assertJsonApiError(422, '/code');
 
         $this->travel(61)->seconds();
 

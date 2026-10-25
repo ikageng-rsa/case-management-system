@@ -5,17 +5,14 @@ declare(strict_types=1);
 namespace Tests\Feature\Api\User;
 
 use App\Models\User\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
-use Tests\TestCase;
+use Tests\Feature\Api\ApiTestCase;
 
-class ListUsersTest extends TestCase
+class ListUsersTest extends ApiTestCase
 {
-    use RefreshDatabase;
-
     public function test_it_needs_a_token(): void
     {
-        $this->getJson('/api/v1/users')->assertUnauthorized();
+        $this->getJson('/api/v1/users')->assertJsonApiError(401);
     }
 
     public function test_others_are_shown_by_name_and_title_only(): void

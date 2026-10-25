@@ -8,18 +8,15 @@ use App\Enums\Document\DocumentKind;
 use App\Enums\Matter\Assignment;
 use App\Models\Reference\ActivityType;
 use App\Models\User\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
-use Tests\TestCase;
+use Tests\Feature\Api\ApiTestCase;
 
-class LookupTest extends TestCase
+class LookupTest extends ApiTestCase
 {
-    use RefreshDatabase;
-
     public function test_the_lists_need_a_token(): void
     {
         foreach (['activity-types', 'assignment-capacities', 'document-kinds'] as $list) {
-            $this->getJson("/api/v1/{$list}")->assertUnauthorized();
+            $this->getJson("/api/v1/{$list}")->assertJsonApiError(401);
         }
     }
 

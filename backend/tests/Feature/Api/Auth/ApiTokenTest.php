@@ -5,14 +5,11 @@ declare(strict_types=1);
 namespace Tests\Feature\Api\Auth;
 
 use App\Models\User\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\PersonalAccessToken;
-use Tests\TestCase;
+use Tests\Feature\Api\ApiTestCase;
 
-class ApiTokenTest extends TestCase
+class ApiTokenTest extends ApiTestCase
 {
-    use RefreshDatabase;
-
     public function test_a_token_shows_who_is_signed_in(): void
     {
         $user = User::factory()->create(['job_title' => 'Attorney']);
@@ -30,14 +27,14 @@ class ApiTokenTest extends TestCase
 
     public function test_without_a_token_nothing_is_shown(): void
     {
-        $this->getJson('/api/v1/me')->assertUnauthorized();
+        $this->getJson('/api/v1/me')->assertJsonApiError(401);
     }
 
     public function test_a_web_session_does_not_reach_the_api(): void
     {
         $this->actingAs(User::factory()->create());
 
-        $this->getJson('/api/v1/me')->assertUnauthorized();
+        $this->getJson('/api/v1/me')->assertJsonApiError(401);
     }
 
     public function test_signing_out_ends_only_this_device(): void
@@ -52,7 +49,7 @@ class ApiTokenTest extends TestCase
 
         $this->app['auth']->forgetGuards();
 
-        $this->withToken($phone)->getJson('/api/v1/me')->assertUnauthorized();
+        $this->withToken($phone)->getJson('/api/v1/me')->assertJsonApiError(401);
     }
 
     public function test_a_token_left_unused_too_long_stops_working(): void
@@ -62,7 +59,7 @@ class ApiTokenTest extends TestCase
 
         $this->travel(31)->days();
 
-        $this->withToken($token)->getJson('/api/v1/me')->assertUnauthorized();
+        $this->withToken($token)->getJson('/api/v1/me')->assertJsonApiError(401);
     }
 
     public function test_a_token_in_use_keeps_working_past_the_idle_limit(): void
@@ -85,6 +82,6 @@ class ApiTokenTest extends TestCase
 
         $user->delete();
 
-        $this->withToken($token)->getJson('/api/v1/me')->assertUnauthorized();
+        $this->withToken($token)->getJson('/api/v1/me')->assertJsonApiError(401);
     }
 }

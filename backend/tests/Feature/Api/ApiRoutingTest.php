@@ -5,18 +5,13 @@ declare(strict_types=1);
 namespace Tests\Feature\Api;
 
 use App\Models\User\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 
-class ApiRoutingTest extends TestCase
+class ApiRoutingTest extends ApiTestCase
 {
-    use RefreshDatabase;
-
-    public function test_an_unknown_api_route_answers_in_json(): void
+    public function test_an_unknown_api_route_answers_with_a_json_api_error(): void
     {
         $this->get('/api/v1/nothing-here')
-            ->assertNotFound()
-            ->assertJsonStructure(['message']);
+            ->assertJsonApiError(404);
     }
 
     public function test_a_user_can_hold_api_tokens(): void

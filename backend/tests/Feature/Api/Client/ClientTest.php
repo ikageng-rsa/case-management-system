@@ -17,14 +17,14 @@ class ClientTest extends ApiTestCase
 {
     public function test_clients_need_a_token(): void
     {
-        $this->getJson('/api/v1/clients')->assertUnauthorized();
+        $this->getJson('/api/v1/clients')->assertJsonApiError(401);
     }
 
     public function test_listing_clients_needs_view_clients(): void
     {
         $this->signInAs(Role::Messenger);
 
-        $this->getJson('/api/v1/clients')->assertForbidden();
+        $this->getJson('/api/v1/clients')->assertJsonApiError(403);
     }
 
     public function test_clients_are_listed_with_identifiers_masked(): void
@@ -135,7 +135,7 @@ class ClientTest extends ApiTestCase
         $this->signInAs(Role::Messenger);
         $client = Client::factory()->create();
 
-        $this->getJson("/api/v1/clients/{$client->id}")->assertNotFound();
+        $this->getJson("/api/v1/clients/{$client->id}")->assertJsonApiError(404);
     }
 
     public function test_reading_a_client_is_recorded_as_from_the_app(): void
