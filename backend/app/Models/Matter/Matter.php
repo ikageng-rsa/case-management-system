@@ -9,6 +9,7 @@ use App\Enums\Document\DocumentKind;
 use App\Enums\Matter\Assignment;
 use App\Models\Client\Client;
 use App\Models\Diary\DiaryEntry;
+use App\Models\Document\Media;
 use App\Models\Narration\Narration;
 use App\Models\Reference\Court;
 use App\Models\Reference\MatterType;
@@ -29,7 +30,6 @@ use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Collections\MediaCollection;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 #[Fillable(['reference', 'sequence_number', 'opened_year', 'title', 'instructed_at', 'prescribes_at'])]
 #[RouteKey('reference')]

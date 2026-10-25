@@ -8,10 +8,10 @@ use App\Enums\Client\FicaDocument;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Client\StoreFicaDocumentRequest;
 use App\Models\Client\Client;
+use App\Models\Document\Media;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Symfony\Component\HttpFoundation\Response;
 
 class ClientFicaDocumentController extends Controller
