@@ -16,6 +16,7 @@ use App\Models\Matter\Matter;
 use App\Models\Reference\Court;
 use App\Models\Reference\MatterType;
 use App\Models\User\User;
+use App\Queries\Clients\MatchingClients;
 use App\Services\Clients\AddClientContact;
 use App\Services\Clients\DuplicateClientException;
 use App\Services\Clients\MaskIdentifier;
@@ -23,7 +24,6 @@ use App\Services\Clients\RecordPopiaConsent;
 use App\Services\Clients\RegisterClient;
 use App\Services\Clients\UpdateClient;
 use App\Services\Matters\OpenMatter;
-use App\Support\Clients\NormaliseIdentifier;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -34,6 +34,8 @@ use Illuminate\Support\Facades\Gate;
 
 class ClientController extends Controller
 {
+    public function __construct(private readonly MatchingClients $matchingClients) {}
+
     public function index(Request $request): View|RedirectResponse
     {
         Gate::authorize('viewAny', Client::class);
@@ -222,23 +224,6 @@ class ClientController extends Controller
      */
     protected function search(Request $request): Builder
     {
-        $term = trim((string) $request->query('q'));
-
-        return Client::query()
-            ->when($term !== '', fn (Builder $query) => $query->where(function (Builder $query) use ($term): void {
-                $like = '%'.addcslashes($term, '%_\\').'%';
-
-                $query->where('first_name', 'like', $like)
-                    ->orWhere('last_name', 'like', $like)
-                    ->orWhere('entity_name', 'like', $like)
-                    // Text with no digits normalises to nothing, and nothing hashes to NULL, which every entity has.
-                    ->when(NormaliseIdentifier::idNumber($term) !== '', fn (Builder $query) => $query
-                        ->orWhere(fn (Builder $query) => $query->matchingIdNumber($term)))
-                    ->orWhere(fn (Builder $query) => $query->matchingRegistrationNumber($term))
-                    ->orWhereHas('contacts', fn (Builder $query) => $query->matchingValue($term, ContactKind::Mobile))
-                    ->orWhereHas('contacts', fn (Builder $query) => $query->matchingValue($term, ContactKind::Email));
-            }))
-            ->orderByRaw('coalesce(entity_name, last_name)')
-            ->orderBy('first_name');
+        return $this->matchingClients->for((string) $request->query('q'));
     }
 }
