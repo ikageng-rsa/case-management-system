@@ -1,10 +1,13 @@
 /**
- * In-app / on-device popup notifications via expo-notifications — a free,
- * Expo-maintained module that needs no paid service or external account for
- * local (non-push) notifications, which is all overdue alerts need.
+ * Device-side display of notifications via expo-notifications. Alerts that come from the backend arrive as push
+ * messages the OS shows itself; this module only configures how they look while the app is open, asks for
+ * permission, and schedules the offline-safe local diary reminders (see features/darzations/services).
  */
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
+
+/** The backend must set this as the Android channel id on diary pushes (FCM `android.notification.channel_id`). */
+export const DIARY_CHANNEL_ID = 'diary-alerts';
 
 let handlerConfigured = false;
 
@@ -19,7 +22,7 @@ export function configureNotificationHandler(): void {
             shouldShowAlert: true,
             shouldShowBanner: true,
             shouldShowList: true,
-            shouldPlaySound: true,
+            shouldPlaySound: false,
             shouldSetBadge: false,
         }),
     });
@@ -41,46 +44,40 @@ export async function setupAndroidChannel(): Promise<void> {
     if (Platform.OS !== 'android') {
         return;
     }
-    await Notifications.setNotificationChannelAsync('overdue-alerts', {
-        name: 'Overdue diary alerts',
+    await Notifications.setNotificationChannelAsync(DIARY_CHANNEL_ID, {
+        name: 'Diary alerts',
         importance: Notifications.AndroidImportance.HIGH,
         vibrationPattern: [0, 250, 250, 250],
+        // Alerts name clients and matters: keep them off the lock screen until the phone is unlocked.
+        lockscreenVisibility: Notifications.AndroidNotificationVisibility.PRIVATE,
     });
 }
 
-export interface PopupNotificationInput {
+export interface ScheduledReminder {
+    identifier: string;
     title: string;
     body: string;
-    data?: Record<string, unknown>;
+    date: Date;
+    data: Record<string, unknown>;
 }
 
-/** Fires an immediate local popup/banner notification. */
-export async function showPopupNotification({ title, body, data }: PopupNotificationInput): Promise<void> {
-    const granted = await ensureNotificationPermission();
-    if (!granted) {
-        return;
-    }
+export async function scheduleReminder(reminder: ScheduledReminder): Promise<void> {
     await Notifications.scheduleNotificationAsync({
-        content: { title, body, data, sound: true },
-        trigger: null, // null trigger = fire immediately
+        identifier: reminder.identifier,
+        content: {
+            title: reminder.title,
+            body: reminder.body,
+            data: reminder.data,
+            ...(Platform.OS === 'android' ? { channelId: DIARY_CHANNEL_ID } : {}),
+        },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: reminder.date },
     });
 }
 
-/** Schedules a popup for a future date (e.g. the moment a diary item becomes due). */
-export async function scheduleFutureNotification(
-    { title, body, data }: PopupNotificationInput,
-    date: Date,
-): Promise<string | null> {
-    const granted = await ensureNotificationPermission();
-    if (!granted || date.getTime() <= Date.now()) {
-        return null;
-    }
-    return Notifications.scheduleNotificationAsync({
-        content: { title, body, data, sound: true },
-        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date },
-    });
-}
-
-export async function cancelScheduledNotification(id: string): Promise<void> {
-    await Notifications.cancelScheduledNotificationAsync(id).catch(() => { });
+/** Cancels every scheduled reminder whose identifier starts with `prefix`. */
+export async function cancelScheduledWithPrefix(prefix: string): Promise<void> {
+    const all = await Notifications.getAllScheduledNotificationsAsync();
+    await Promise.all(
+        all.filter(n => n.identifier.startsWith(prefix)).map(n => Notifications.cancelScheduledNotificationAsync(n.identifier)),
+    );
 }

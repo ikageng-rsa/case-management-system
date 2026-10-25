@@ -1,21 +1,23 @@
 import { apiClient } from '@/api/client';
 import { Case } from '@/models/index';
-import { getActiveUserId } from '@/offline';
-import {CacheNames} from '@/offline/cache';
-import {cachedList,cachedRecord,submitCreate,submitUpdate} from '@/offline/repository';
+import { CacheNames } from '@/offline/cache';
+import { getActiveUserId } from '@/offline/context';
+import { cachedList, cachedRecord, submitCreate, submitUpdate } from '@/offline/repository';
 
-type CaseFilter = {status?: string, search?: string}
+type CaseFilter = { status?: string; search?: string };
 
-function filterCases(rows: Case[], params?: CaseFilter): Case[]{
+/** The same filter the server applies, for answering a filtered list from the on-device copy. */
+function filterCases(rows: Case[], params?: CaseFilter): Case[] {
   const term = params?.search?.trim().toLowerCase() ?? '';
   return rows.filter(
-    c => 
-        (!params?.status || c.status === params.status) &&
-        (!term || [c.fileReference, c.clientName, c.matterType, c.opposingParty, /*c.courtCaseNumber*/].some(v => (v ?? '').toLowerCase().includes(term))),
+    c =>
+      (!params?.status || c.status === params.status) &&
+      (!term ||
+        [c.fileReference, c.clientName, c.matterType, c.opposingParty, c.courtCaseNumber].some(v =>
+          (v ?? '').toLowerCase().includes(term),
+        )),
   );
 }
-
-
 
 export async function fetchCases(params?: CaseFilter): Promise<Case[]> {
   const unfiltered = !params?.status && !params?.search;
@@ -23,8 +25,8 @@ export async function fetchCases(params?: CaseFilter): Promise<Case[]> {
     name: CacheNames.cases,
     entity: 'case',
     cacheable: unfiltered,
-    request: async () => (await apiClient.get<Case[]>('/cases', {params})).data,
-    filter: unfiltered ? undefined : rows => filterCases(rows,params),
+    request: async () => (await apiClient.get<Case[]>('/cases', { params })).data,
+    filter: unfiltered ? undefined : rows => filterCases(rows, params),
   });
 }
 
@@ -33,7 +35,7 @@ export async function fetchCaseById(id: string): Promise<Case> {
     id,
     listName: CacheNames.cases,
     entity: 'case',
-    request: async () => (await apiClient.get<Case>(`/cases/${id}`)).data
+    request: async () => (await apiClient.get<Case>(`/cases/${id}`)).data,
   });
 }
 
@@ -41,38 +43,39 @@ export async function createCase(payload: Partial<Case>): Promise<Case> {
   const me = getActiveUserId() ?? '';
   return submitCreate<Case>({
     entity: 'case',
-    label: `New Case - ${payload.clientName ?? 'untitled'}${payload.matterType? ` (${payload.matterType})` : ''}`,
-    url: '/case',
-    body: payload as Record<string,unknown>,
-    optimistic: (id: string, createdAt:string) =>({
-      status: 'Open',
-      priority: 'Medium',
-      clientName: '',
-      matterType: '',
-      openedDate: createdAt.slice(0,10),
-      ...payload,
-      id,
-      fileReference: 'Awaiting sync',
-      clientId: '',
-      leadAttorneyId: me,
-      //The creator is always on the case
-      assignedUserIds: [...new Set([me,...(payload.assignedUserIds ?? [])])],
-    }) as Case,
+    label: `New case — ${payload.clientName ?? 'untitled'}${payload.matterType ? ` (${payload.matterType})` : ''}`,
+    url: '/cases',
+    body: payload as Record<string, unknown>,
+    optimistic: (id, createdAt) =>
+      ({
+        status: 'Open',
+        priority: 'Medium',
+        clientName: '',
+        matterType: '',
+        openedDate: createdAt.slice(0, 10),
+        ...payload,
+        id,
+        fileReference: 'Awaiting sync',
+        clientId: '',
+        leadAttorneyId: me,
+        // The creator is always on the case (the server does the same), so it stays visible to them.
+        assignedUserIds: [...new Set([me, ...(payload.assignedUserIds ?? [])])],
+      }) as Case,
     listName: () => CacheNames.cases,
-  })
+  });
 }
 
-export async function updateCase(id: string, payload: Partial<Case>): Promise<Case>{
+export async function updateCase(id: string, payload: Partial<Case>): Promise<Case> {
   return submitUpdate<Case>({
     entity: 'case',
     entityId: id,
     action: 'Editing a case',
-    label: 'Edit Case',
-    url: `/case/${id}`,
+    label: 'Edit case',
+    url: `/cases/${id}`,
     body: payload as Record<string, unknown>,
-    patch: {kind: 'merge', fields: payload as Record<string, unknown>},
-    listName: CacheNames.cases
-  })
+    patch: { kind: 'merge', fields: payload as Record<string, unknown> },
+    listName: CacheNames.cases,
+  });
 }
 
 export async function updateCaseStatus(id: string, status: Case['status']): Promise<Case> {
@@ -80,10 +83,10 @@ export async function updateCaseStatus(id: string, status: Case['status']): Prom
     entity: 'case',
     entityId: id,
     action: 'Changing a case status',
-    label:  `Set case status to ${status}`,
-    url: `/case/${id}/status`,
-    body: {status},
-    patch: {kind: 'merge', fields: {status}},
-    listName: CacheNames.cases
-  })
+    label: `Set case status to ${status}`,
+    url: `/cases/${id}/status`,
+    body: { status },
+    patch: { kind: 'merge', fields: { status } },
+    listName: CacheNames.cases,
+  });
 }

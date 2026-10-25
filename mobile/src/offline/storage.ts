@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { encGetJson, encSetJson } from '@/utils/encryptedStorage';
 
 const ROOT = 'legalcms_offline_v1';
 
@@ -7,18 +8,10 @@ export const cacheKey = (userId: string, name: string): string => `${userPrefix(
 export const outboxKey = (userId: string): string => `${userPrefix(userId)}outbox`;
 export const metaKey = (userId: string): string => `${userPrefix(userId)}meta`;
 
-export async function readJson<T>(key: string): Promise<T | null> {
-    try {
-        const raw = await AsyncStorage.getItem(key);
-        return raw ? (JSON.parse(raw) as T) : null;
-    } catch {
-        return null;
-    }
-}
+/** Everything under this prefix is encrypted at rest (see utils/encryption.ts). */
+export const readJson = <T>(key: string): Promise<T | null> => encGetJson<T>(key);
 
-export async function writeJson(key: string, value: unknown): Promise<void> {
-    await AsyncStorage.setItem(key, JSON.stringify(value));
-}
+export const writeJson = (key: string, value: unknown): Promise<void> => encSetJson(key, value);
 
 export async function listUserKeys(userId: string): Promise<string[]> {
     const all = await AsyncStorage.getAllKeys();

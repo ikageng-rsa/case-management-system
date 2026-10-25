@@ -6,12 +6,11 @@ import { useAppDispatch } from '@/hooks/useAppDispatch';
 import { setUser } from '@/features/auth/store/authSlice';
 import { DEMO_TOKEN, DEMO_USER, isDemoLoginEnabled } from '@/constants/demoUser';
 import { getSessionUser, saveSessionUser, clearSessionUser } from '@/features/auth/services/offlineAuth';
-import { isTwoFactorPending, setTwoFactorPending } from '@/features/auth/services/twoFactorPending';
 import { isDeviceOffline } from '@/offline/connectivity';
 import { isAxiosError } from 'axios';
 
 // Keep the native splash up until the persisted session has been checked.
-SplashScreen.preventAutoHideAsync().catch(() => {});
+SplashScreen.preventAutoHideAsync().catch(() => { });
 
 /**
  * On cold start: if a token was persisted from a previous session, verify it
@@ -36,13 +35,6 @@ export default function AuthProvider({ children }: PropsWithChildren) {
           dispatch(setUser(DEMO_USER));
           return;
         }
-        // The app was closed between "password accepted" and "2FA code accepted": no session.
-        if (await isTwoFactorPending()) {
-          await clearAuthToken();
-          await setTwoFactorPending(false);
-          dispatch(setUser(null));
-          return;
-        }
         // Offline: keep the user signed in with the profile saved at their last online sign-in.
         const restoreOffline = async () => {
           const saved = await getSessionUser();
@@ -57,7 +49,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
         }
         try {
           const user = await fetchCurrentUser();
-          await saveSessionUser(user).catch(() => {});
+          await saveSessionUser(user).catch(() => { });
           dispatch(setUser(user));
         } catch (error) {
           if (isAxiosError(error) && error.response?.status === 401) {
@@ -72,7 +64,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
         }
       } finally {
         setReady(true);
-        SplashScreen.hideAsync().catch(() => {});
+        SplashScreen.hideAsync().catch(() => { });
       }
     })();
   }, [dispatch]);

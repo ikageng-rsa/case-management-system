@@ -1,33 +1,78 @@
-import React, { PropsWithChildren, useEffect } from 'react';
+import React, { PropsWithChildren, useEffect, useRef } from 'react';
+import { AppState } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { useRouter } from 'expo-router';
+import { markNotificationRead } from '@/api/endpoint/notifications.api';
+import { useAppSelector } from '@/hooks/useAppDispatch';
+import { useDiaryReminders } from '@/hooks/useDiaryReminders';
+import { refreshUnreadCount, setUnreadCount } from '@/hooks/useUnreadNotifications';
 import { configureNotificationHandler, setupAndroidChannel } from '@/services/notifications/localNotifications';
-import { useOverdueNotifications } from '@/hooks/useOverdueNotifications';
+import { registerPushDevice } from '@/services/notifications/pushRegistration';
+import { routeForNotification, safeId } from '@/utils/deepLinks';
 
 /**
- * Wires up the notification channel/handler once at app start and runs the
- * overdue-diary poll (popup + SMS) in the background for as long as the app
- * is mounted. Pure side-effect provider — renders nothing of its own.
+ * Notifications are produced and delivered by the backend. This provider only:
+ *  - registers the phone's push token with the backend after sign-in (and when the OS rotates it),
+ *  - keeps the unread badge current,
+ *  - opens the right screen when a notification is tapped (validated, see utils/deepLinks),
+ *  - runs the offline fallback reminders for phones that are not registered for push.
  */
 export default function NotificationProvider({ children }: PropsWithChildren) {
+    const router = useRouter();
+    const userId = useAppSelector(state => state.auth.user?.id ?? null);
+    const handled = useRef<string | null>(null);
+
     useEffect(() => {
         configureNotificationHandler();
         setupAndroidChannel().catch(() => { });
     }, []);
 
-    useOverdueNotifications();
-
-    // Tapping a popup deep-links straight to the overdue diary item it is about.
-    const router = useRouter();
     useEffect(() => {
-        const sub = Notifications.addNotificationResponseReceivedListener(response => {
-            const darzationId = response.notification.request.content.data?.darzationId;
-            if (typeof darzationId === 'string') {
-                router.push({ pathname: './diary/[darzationId]', params: { darzationId } });
+        if (!userId) {
+            setUnreadCount(0);
+            return;
+        }
+        registerPushDevice();
+        refreshUnreadCount();
+
+        const tokenSub = Notifications.addPushTokenListener(() => {
+            registerPushDevice();
+        });
+        const receivedSub = Notifications.addNotificationReceivedListener(() => {
+            refreshUnreadCount();
+        });
+        const appSub = AppState.addEventListener('change', state => {
+            if (state === 'active') {
+                refreshUnreadCount();
             }
         });
-        return () => sub.remove();
-    }, [router]);
+        return () => {
+            tokenSub.remove();
+            receivedSub.remove();
+            appSub.remove();
+        };
+    }, [userId]);
+
+    // Tapping a notification (also the one that cold-started the app) opens what it is about.
+    const lastResponse = Notifications.useLastNotificationResponse();
+    useEffect(() => {
+        if (!userId || !lastResponse) {
+            return;
+        }
+        const id = lastResponse.notification.request.identifier;
+        if (handled.current === id) {
+            return;
+        }
+        handled.current = id;
+        const data = lastResponse.notification.request.content.data;
+        const notificationId = safeId(data?.notificationId);
+        if (notificationId) {
+            markNotificationRead(notificationId).then(refreshUnreadCount).catch(() => { });
+        }
+        router.push(routeForNotification(data));
+    }, [lastResponse, userId, router]);
+
+    useDiaryReminders();
 
     return <>{children}</>;
 }

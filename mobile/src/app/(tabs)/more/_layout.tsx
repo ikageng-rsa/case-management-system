@@ -18,6 +18,7 @@ export default function MoreLayout() {
       </Stack.Protected>
       <Stack.Screen name="security" options={{ title: 'Two-Factor Authrntication' }} />
       <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
+      <Stack.Screen name="notification-settings" options={{ title: 'Notification Settings' }} />
       <Stack.Screen name="sync" options={{ title: 'Sync & Offline' }} />
     </Stack>
   );
