@@ -390,6 +390,11 @@ A service folder is one area. When one area needs another, add the link to
 `ServiceBoundariesTest::ALLOWED` in the same PR, with the reason, so the reviewer decides on
 it rather than finding it later. Remove the link when the dependency goes.
 
+A `PersonalNotification`, which tells someone about a change to their work, is sent through
+`NotifyUser`. Inside a transaction it holds the message until the commit, so a rolled-back
+change sends nothing. Sign-in codes, invitations and password notices are not about such a
+change and go at once.
+
 ```php
 private const ALLOWED = [
     'Cases' => [
