@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Queries\Matters;
 
 use App\Models\Matter\Matter;
+use App\Models\User\User;
 use App\Queries\Matters\MatterRecentReads;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Activitylog\Models\Activity;
@@ -33,6 +34,17 @@ class MatterRecentReadsTest extends TestCase
         $this->logOn(Matter::factory()->create(), 'read');
 
         $this->assertSame([$read->id], (new MatterRecentReads)->for($matter)->pluck('id')->all());
+    }
+
+    public function test_it_still_names_someone_who_has_since_been_deactivated(): void
+    {
+        $matter = Matter::factory()->create();
+        $former = User::factory()->create(['name' => 'Lerato Former']);
+        Activity::query()->delete();
+        activity()->performedOn($matter)->causedBy($former)->event('read')->log('read');
+        $former->delete();
+
+        $this->assertSame('Lerato Former', (new MatterRecentReads)->for($matter)->first()->causer?->name);
     }
 
     protected function logOn(Matter $matter, string $event): Activity

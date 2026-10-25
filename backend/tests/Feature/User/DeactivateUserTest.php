@@ -127,6 +127,25 @@ class DeactivateUserTest extends TestCase
         $this->assertNotSoftDeleted($only);
     }
 
+    public function test_a_hand_over_that_is_rolled_back_tells_no_one(): void
+    {
+        Notification::fake();
+        $only = $this->director();
+        $successor = $this->attorney();
+        $matter = Matter::factory()->create();
+        $this->seat($matter, $only, Assignment::Responsible);
+        DiaryEntry::factory()->for($matter)->create(['assigned_to' => $only->getKey(), 'due_at' => now()->addDays(9)]);
+        $deactivator = User::factory()->create();
+        $deactivator->givePermissionTo('deactivate_users');
+
+        $this->actingAs($deactivator)
+            ->post(route('user.deactivate', $only), ['reason' => 'x', 'successors' => [$matter->getKey() => $successor->getKey()]])
+            ->assertSessionHasErrorsIn('deactivate_user_'.$only->getKey(), 'deactivate');
+
+        $this->assertTrue($matter->fresh()->responsibleAttorney()->is($only));
+        Notification::assertNothingSentTo($successor);
+    }
+
     public function test_a_responsible_attorney_cannot_go_until_someone_takes_the_matter(): void
     {
         $leaver = $this->attorney();
@@ -356,6 +375,6 @@ class DeactivateUserTest extends TestCase
         $this->assertStringContainsString($matter->reference, $html);
         $this->assertStringContainsString('Already on this matter', $html);
         $this->assertStringContainsString('name="successors['.$matter->getKey().']"', $html);
-        $this->assertStringContainsString($outsider->name, $html);
+        $this->assertStringContainsString(e($outsider->name), $html);
     }
 }

@@ -12,6 +12,7 @@ use App\Enums\Client\ClientType;
 use App\Enums\Client\ContactKind;
 use App\Enums\Client\FicaDocument;
 use App\Enums\Client\IdentityType;
+use App\Models\Document\Media;
 use App\Models\Matter\Matter;
 use App\Observers\ClientObserver;
 use App\Support\Clients\GenerateBlindIndex;
@@ -33,7 +34,6 @@ use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Collections\MediaCollection;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 #[ObservedBy([ClientObserver::class])]
 #[Fillable(['type', 'first_name', 'last_name', 'entity_name', 'id_type', 'id_number', 'registration_number', 'date_of_birth'])]

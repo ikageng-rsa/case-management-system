@@ -7,6 +7,7 @@ namespace App\Services\Users;
 use App\Enums\Matter\Assignment;
 use App\Models\User\User;
 use App\Notifications\DiaryEntryAssigned;
+use App\Queries\Users\UserWorkload;
 use App\Services\Matters\AssignUserToMatter;
 use App\Services\Notifications\NotifyUser;
 use App\Services\Roles\EnsureAdministrationRemains;

@@ -6,6 +6,7 @@ namespace App\Models\Client;
 
 use App\Concerns\RecordsActivity;
 use App\Enums\Client\PopiaConsentMethod;
+use App\Models\Document\Media;
 use Database\Factories\Client\PopiaConsentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -16,7 +17,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Http\UploadedFile;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 #[Fillable(['granted', 'granted_at', 'withdrawn_at', 'method'])]
 class PopiaConsent extends Model implements HasMedia

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Services\Users;
+namespace App\Queries\Users;
 
 use App\Enums\Matter\Assignment;
 use App\Models\Diary\DiaryEntry;

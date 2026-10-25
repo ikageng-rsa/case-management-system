@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Queries\Matters;
 
+use App\Models\Audit\Activity;
 use App\Models\Matter\Matter;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
-use Spatie\Activitylog\Models\Activity;
 
 /*
  * Everything the audit log holds about a matter, newest first: what was done

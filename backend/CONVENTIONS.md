@@ -372,9 +372,10 @@ class CaseDiary
 ## 16. Boundaries
 
 Layers depend inwards: controllers and form requests use services, queries and models;
-services and queries use models; models use neither. A helper that more than one layer
-needs, such as hashing or normalising a value, sits in `app/Support`, which uses nothing
-above it.
+services and queries use models; models use neither. A service may read through a query
+before it writes, as `DeactivateUser` does with `UserWorkload`, but a query never uses a
+service. A helper that more than one layer needs, such as hashing or normalising a value,
+sits in `app/Support`, which uses nothing above it.
 
 Three tests in `tests/Unit/Architecture/` hold these lines. They read the code without
 booting the app, and each failure names the file, what it did, and the fix.
@@ -388,6 +389,11 @@ booting the app, and each failure names the file, what it did, and the fix.
 A service folder is one area. When one area needs another, add the link to
 `ServiceBoundariesTest::ALLOWED` in the same PR, with the reason, so the reviewer decides on
 it rather than finding it later. Remove the link when the dependency goes.
+
+A `PersonalNotification`, which tells someone about a change to their work, is sent through
+`NotifyUser`. Inside a transaction it holds the message until the commit, so a rolled-back
+change sends nothing. Sign-in codes, invitations and password notices are not about such a
+change and go at once.
 
 ```php
 private const ALLOWED = [

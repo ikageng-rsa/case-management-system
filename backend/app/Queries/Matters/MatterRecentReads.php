@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Queries\Matters;
 
+use App\Models\Audit\Activity;
 use App\Models\Matter\Matter;
 use Illuminate\Database\Eloquent\Collection;
-use Spatie\Activitylog\Models\Activity;
 
 /*
  * The last few times someone opened a matter, newest first, so whoever is on
