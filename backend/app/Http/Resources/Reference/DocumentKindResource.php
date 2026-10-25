@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Http\Resources\Reference;
 
 use App\Enums\Document\DocumentKind;
+use App\Http\Resources\ApiResource;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 use Illuminate\Support\Str;
 
 /** @property DocumentKind $resource */
-class DocumentKindResource extends JsonApiResource
+class DocumentKindResource extends ApiResource
 {
     public function toId(Request $request): string
     {

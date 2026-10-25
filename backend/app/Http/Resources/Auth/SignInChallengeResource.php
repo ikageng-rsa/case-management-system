@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Auth;
 
+use App\Http\Resources\ApiResource;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 
 /**
  * A sign-in waiting for its emailed code. Its id is what the app sends back with the code.
  *
  * @property array{id: string, expires_in: int} $resource
  */
-class SignInChallengeResource extends JsonApiResource
+class SignInChallengeResource extends ApiResource
 {
     public function toId(Request $request): string
     {

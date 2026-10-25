@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Reference;
 
+use App\Http\Resources\ApiResource;
 use App\Models\Reference\ActivityType;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 
 /** @mixin ActivityType */
-class ActivityTypeResource extends JsonApiResource
+class ActivityTypeResource extends ApiResource
 {
     public function toType(Request $request): string
     {

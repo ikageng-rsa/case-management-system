@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\User;
 
+use App\Http\Resources\ApiResource;
 use App\Models\User\User;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\JsonApi\JsonApiResource;
 
 /**
  * A person of the firm. Others are shown by name and title only; the address,
@@ -14,7 +14,7 @@ use Illuminate\Http\Resources\JsonApi\JsonApiResource;
  *
  * @mixin User
  */
-class UserResource extends JsonApiResource
+class UserResource extends ApiResource
 {
     private bool $asSelf = false;
 
