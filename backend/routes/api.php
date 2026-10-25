@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\Auth\ResendSignInCodeController;
 use App\Http\Controllers\Api\V1\Auth\SignInController;
 use App\Http\Controllers\Api\V1\Auth\SignOutController;
 use App\Http\Controllers\Api\V1\Auth\VerifySignInCodeController;
+use App\Http\Controllers\Api\V1\Client\ClientController;
 use App\Http\Controllers\Api\V1\Reference\ActivityTypeController;
 use App\Http\Controllers\Api\V1\Reference\AssignmentCapacityController;
 use App\Http\Controllers\Api\V1\Reference\DocumentKindController;
@@ -29,5 +30,9 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
         Route::get('/assignment-capacities', [AssignmentCapacityController::class, 'index'])->name('api.assignment-capacities');
         Route::get('/document-kinds', [DocumentKindController::class, 'index'])->name('api.document-kinds');
         Route::get('/users', [UserController::class, 'index'])->name('api.users');
+
+        // Clients are read here, never changed: they are taken on and kept on the web.
+        Route::get('/clients', [ClientController::class, 'index'])->name('api.clients');
+        Route::get('/clients/{client}', [ClientController::class, 'show'])->name('api.clients.show');
     });
 });
