@@ -7,13 +7,13 @@
  * is registered for push they are removed, so nobody is alerted twice.
  */
 import { Darzation } from '@/models/index';
-import {cancelScheduleWithPrefix, ensureNotificationPermission,scheduleReminder} from '@/services/notifications/localNotifications';
+import {cancelScheduledWithPrefix, ensureNotificationPermission,scheduleReminder} from '@/services/notifications/localNotifications';
 import {isPushRegistered} from '@/services/notifications/pushRegistration';
 import {planReminders, REMINDER_PREFIX} from './reminderPlanner';
 
 
 export async function cancelDiaryReminders(): Promise<void>{
-  return cancelScheduleWithPrefix(REMINDER_PREFIX);
+  return cancelScheduledWithPrefix(REMINDER_PREFIX);
 }
 
 //Repleaces all scheduled diary reminders with thr right set for 'items'. Safe to call as often as the diary changes

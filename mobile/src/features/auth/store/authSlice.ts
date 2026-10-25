@@ -39,7 +39,7 @@ const initialState: AuthState = {
 };
 
 /** Internal marker: skip the network and use the credential saved on this device. */
-class OfflineSignIn extends Error { }
+class OfflineSignIn extends Error {}
 
 // Kept in memory only while a two-factor challenge is open, so the offline sign-in credential can be saved
 // once the code is accepted. Never stored in Redux (which devtools/logging can serialise) or on disk.
@@ -56,7 +56,7 @@ export const login = createAsyncThunk<LoginResult, { email: string; password: st
     // Demo account: authenticate locally, no network call (dev builds / opt-in only).
     if (isDemoLogin(email, password)) {
       await setAuthToken(DEMO_TOKEN);
-      await saveSessionUser(DEMO_USER).catch(() => { });
+      await saveSessionUser(DEMO_USER).catch(() => {});
       return { kind: 'authenticated', user: DEMO_USER };
     }
 
@@ -102,16 +102,16 @@ export const login = createAsyncThunk<LoginResult, { email: string; password: st
     } else {
       await clearAuthToken();
     }
-    await saveSessionUser(saved.user).catch(() => { });
+    await saveSessionUser(saved.user).catch(() => {});
     return { kind: 'authenticated', user: saved.user };
   },
 );
 
 async function completeSignIn(success: LoginSuccess, email: string, password: string): Promise<void> {
   await setAuthToken(success.token);
-  await saveSessionUser(success.user).catch(() => { });
+  await saveSessionUser(success.user).catch(() => {});
   // Remember this sign-in (hashed password + profile) so the next one can happen offline.
-  await saveOfflineCredential({ email, password, user: success.user, token: success.token }).catch(() => { });
+  await saveOfflineCredential({ email, password, user: success.user, token: success.token }).catch(() => {});
 }
 
 /** Second step: the backend checks the code and only then issues the session token. */
@@ -130,7 +130,7 @@ export const completeTwoFactor = createAsyncThunk<User, { code: string }, { stat
         await completeSignIn(success, creds.email, creds.password);
       } else {
         await setAuthToken(success.token);
-        await saveSessionUser(success.user).catch(() => { });
+        await saveSessionUser(success.user).catch(() => {});
       }
       return success.user;
     } catch (error) {

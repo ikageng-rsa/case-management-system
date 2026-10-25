@@ -4,7 +4,7 @@ import { fetchCases } from '@/api/endpoint/cases.api';
 import { fetchDiary } from '@/api/endpoint/darzations.api';
 import { useAppSelector } from '@/hooks/useAppDispatch';
 import { useOnSynced } from '@/hooks/useSyncStatus';
-import { cancelDiaryReminders, syncDiaryReminders } from '@/features/darzations/services/notificationScheduler';
+import { cancelDiaryReminders, syncDiaryReminders } from '@/features/darzation/services/notificationScheduler';
 import { visibleDarzationsFor } from '@/utils/caseAccess';
 
 /** Keeps the local fallback reminders in step with the (cached) diary of the signed-in user. */

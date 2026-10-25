@@ -5,13 +5,13 @@
  * and api/ endpoint imports from here via `@models/index` — add a new
  * entity by creating its file and re-exporting it below.
  */
-export * from './User';
-export * from './Case';
+export * from './User';         
+export * from './Case';         
 export * from './ClientProfile';
 export * from './ClientContact';
-export * from './PopiaConsent';
-export * from './Narration';
-export * from './Darzation';
-export * from './CaseDocument';
-export * from './TwoFactor';
-export * from './Notification';
+export * from './PopiaConsent'; 
+export * from './Narration';    
+export * from './Darzation';    
+export * from './CaseDocument'; 
+export * from './Notification'; 
+export * from './TwoFactor';    

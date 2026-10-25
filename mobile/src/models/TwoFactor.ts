@@ -5,7 +5,7 @@ export type TwoFactorMethod = 'none' | 'totp' | 'sms';
  * backend as-is, since this mobile app has no server-side 2FA endpoint of its
  * own to verify against. See @features/auth/services/twoFactorService.ts.
  */
-export interface TwoFactorSettings {
+export interface TwoFactorChallenge {
   token: string;
   method: Exclude<TwoFactorMethod, 'none'>;
   maskedPhone?: string

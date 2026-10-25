@@ -1,21 +1,24 @@
-
-export type NotificationType = 'diary_overdue' | 'diary_due_soon' | 'diary_assigned' | 'case_Assigned';
+export type NotificationType = 'diary_overdue' | 'diary_due_soon' | 'diary_assigned' | 'case_assigned';
 export type NotificationChannelKey = 'push' | 'sms' | 'email';
-/** A logged record of a notification the app sent (or attempted to send) to the current device/user. */
+
+/**
+ * An item in the user's inbox. Notifications are created and delivered by the BACKEND (push / SMS / e-mail,
+ * according to the user's preferences); the app only displays the inbox and marks items as read.
+ */
 export interface AppNotification {
     id: string;
-    title: NotificationType;
+    type: NotificationType;
+    title: string;
     body: string;
-    data: {caseId?:string; daraztionId? : string};
+    data: { caseId?: string; darzationId?: string };
     createdAt: string;
-    readAt: string | null
-
+    readAt: string | null;
 }
 
 export type NotificationChannelPrefs = Record<NotificationChannelKey, boolean>;
 
-export interface NotificationPreferences{
-    types: Record<NotificationType,NotificationChannelKey>;
-    //The backend sends no SMS/push between thsese times(SAST); the inbox item is still created
-    quietHours: {enabled: boolean, start: string; end: string;}
+export interface NotificationPreferences {
+    types: Record<NotificationType, NotificationChannelPrefs>;
+    /** The backend sends no SMS/push between these times (SAST); the inbox item is still created. */
+    quietHours: { enabled: boolean; start: string; end: string };
 }

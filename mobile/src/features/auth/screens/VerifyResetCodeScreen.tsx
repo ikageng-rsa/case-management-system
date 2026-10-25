@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import Button from '@components/Button';
-import Input from '@components/Input';
-import { verifyPasswordResetCode } from '@api/endpoints/auth.api';
-import { setResetToken } from '@features/auth/services/resetSession';
-import { colors, spacing, typography } from '@theme/index';
+import Button from '@/components/Button';
+import Input from '@/components/Input';
+import { verifyPasswordResetCode } from '@/api/endpoint/auth.api';
+import { setResetToken } from '@/features/auth/services/resetSession';
+import { colors, spacing, typography } from '@/theme/index';
 
 /** Step 2 of 3: verify the code before any password field is shown. */
 export default function VerifyResetCodeScreen() {
