@@ -356,6 +356,6 @@ class DeactivateUserTest extends TestCase
         $this->assertStringContainsString($matter->reference, $html);
         $this->assertStringContainsString('Already on this matter', $html);
         $this->assertStringContainsString('name="successors['.$matter->getKey().']"', $html);
-        $this->assertStringContainsString($outsider->name, $html);
+        $this->assertStringContainsString(e($outsider->name), $html);
     }
 }
