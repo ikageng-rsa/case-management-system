@@ -65,7 +65,7 @@ export default function DiaryScreen() {
       </View>
       <View style={styles.filters}>
         <ChipSelect label="Show" options={FILTERS.map(f => ({ value: f, label: f }))} selected={filter} onChange={setFilter} />
-        {me && canEditRecords(me.role) ? <Button label="+ New diary item" onPress={() => router.push('./darzation/new')} /> : null}
+        {me && canEditRecords(me.role) ? <Button label="+ New diary item" onPress={() => router.push('/diary/new')} /> : null}
       </View>
       <FlatList
         data={shown}
@@ -74,7 +74,7 @@ export default function DiaryScreen() {
         refreshing={loading}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => (
-          <Pressable onPress={() => router.push({ pathname: './diary/[darzationId]', params: { darzationId: item.id } })}>
+          <Pressable onPress={() => router.push({ pathname: '/diary/[darzationId]', params: { darzationId: item.id } })}>
             <Card style={item.overdue ? styles.overdueCard : undefined}>
               <Text style={styles.nextAction}>{item.title || item.nextAction}</Text>
               <Text style={styles.date}>

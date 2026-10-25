@@ -79,7 +79,7 @@ export default function NewDarzationScreen() {
                 assignedUserIds: assigned,
                 visibleToRoles: ['Admin', 'Director', 'CA', 'Secretary'],
             });
-            router.replace({ pathname: './diary/[darzationId]', params: { darzationId: created.id } });
+            router.replace({ pathname: '/diary/[darzationId]', params: { darzationId: created.id } });
         } catch (e) {
             Alert.alert('Could not save', getApiErrorMessage(e, 'Please try again.'));
         } finally {
@@ -102,7 +102,7 @@ export default function NewDarzationScreen() {
             <ChipSelect
                 label="Assigned users"
                 multiple
-                options={users.map((u:any) => ({ value: u.id, label: u.fullName }))}
+                options={users.map((u: any) => ({ value: u.id, label: u.fullName }))}
                 selected={assigned}
                 onChange={setAssigned}
             />

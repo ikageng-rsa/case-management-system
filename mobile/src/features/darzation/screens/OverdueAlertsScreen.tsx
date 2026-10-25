@@ -40,7 +40,7 @@ export default function OverdueAlertsScreen() {
         keyExtractor={item => item.id}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => (
-          <Pressable onPress={() => router.push({ pathname: './diary/[darzationId]', params: { darzationId: item.id } })}>
+          <Pressable onPress={() => router.push({ pathname: '/diary/[darzationId]', params: { darzationId: item.id } })}>
             <Card style={styles.card}>
               <Text style={styles.nextAction}>{item.title || item.nextAction}</Text>
               <Text style={styles.date}>Was due {item.dueDate || item.nextActionDate}</Text>

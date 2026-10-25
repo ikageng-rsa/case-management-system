@@ -135,7 +135,7 @@ export default function DarzationDetailScreen() {
                 <Pressable
                     key={n.id}
                     onPress={() =>
-                        router.push({ pathname: './cases/[caseId]/narrations/[narrationId]', params: { caseId: n.caseId, narrationId: n.id } })
+                        router.push({ pathname: '/cases/[caseId]/narrations/[narrationId]', params: { caseId: n.caseId, narrationId: n.id } })
                     }
                 >
                     <Card>
