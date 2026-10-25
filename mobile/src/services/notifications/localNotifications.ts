@@ -4,7 +4,7 @@
  * permission, and schedules the offline-safe local diary reminders (see features/darzations/services).
  */
 import { Platform } from 'react-native';
-import * as Notifications from 'expo-notifications';
+import { getNotifications } from './notificationsModule';
 
 /** The backend must set this as the Android channel id on diary pushes (FCM `android.notification.channel_id`). */
 export const DIARY_CHANNEL_ID = 'diary-alerts';
@@ -14,6 +14,10 @@ let handlerConfigured = false;
 /** Call once near app start (see @providers/NotificationProvider.tsx). */
 export function configureNotificationHandler(): void {
     if (handlerConfigured) {
+        return;
+    }
+    const Notifications = getNotifications();
+    if (!Notifications) {
         return;
     }
     handlerConfigured = true;
@@ -29,6 +33,10 @@ export function configureNotificationHandler(): void {
 }
 
 export async function ensureNotificationPermission(): Promise<boolean> {
+    const Notifications = getNotifications();
+    if (!Notifications) {
+        return false;
+    }
     const current = await Notifications.getPermissionsAsync();
     if (current.granted) {
         return true;
@@ -41,7 +49,8 @@ export async function ensureNotificationPermission(): Promise<boolean> {
 }
 
 export async function setupAndroidChannel(): Promise<void> {
-    if (Platform.OS !== 'android') {
+    const Notifications = getNotifications();
+    if (Platform.OS !== 'android' || !Notifications) {
         return;
     }
     await Notifications.setNotificationChannelAsync(DIARY_CHANNEL_ID, {
@@ -62,6 +71,10 @@ export interface ScheduledReminder {
 }
 
 export async function scheduleReminder(reminder: ScheduledReminder): Promise<void> {
+    const Notifications = getNotifications();
+    if (!Notifications) {
+        return;
+    }
     await Notifications.scheduleNotificationAsync({
         identifier: reminder.identifier,
         content: {
@@ -76,6 +89,10 @@ export async function scheduleReminder(reminder: ScheduledReminder): Promise<voi
 
 /** Cancels every scheduled reminder whose identifier starts with `prefix`. */
 export async function cancelScheduledWithPrefix(prefix: string): Promise<void> {
+    const Notifications = getNotifications();
+    if (!Notifications) {
+        return;
+    }
     const all = await Notifications.getAllScheduledNotificationsAsync();
     await Promise.all(
         all.filter(n => n.identifier.startsWith(prefix)).map(n => Notifications.cancelScheduledNotificationAsync(n.identifier)),

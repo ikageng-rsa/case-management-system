@@ -1,13 +1,14 @@
 import React, { PropsWithChildren, useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
-import * as Notifications from 'expo-notifications';
 import { useRouter } from 'expo-router';
 import { markNotificationRead } from '@/api/endpoint/notifications.api';
 import { useAppSelector } from '@/hooks/useAppDispatch';
 import { useDiaryReminders } from '@/hooks/useDiaryReminders';
 import { refreshUnreadCount, setUnreadCount } from '@/hooks/useUnreadNotifications';
 import { configureNotificationHandler, setupAndroidChannel } from '@/services/notifications/localNotifications';
+import { getNotifications } from '@/services/notifications/notificationsModule';
 import { registerPushDevice } from '@/services/notifications/pushRegistration';
+import { useNotificationTap } from '@/hooks/useNotificationTap';
 import { routeForNotification, safeId } from '@/utils/deepLinks';
 
 /**
@@ -35,10 +36,11 @@ export default function NotificationProvider({ children }: PropsWithChildren) {
         registerPushDevice();
         refreshUnreadCount();
 
-        const tokenSub = Notifications.addPushTokenListener(() => {
+        const Notifications = getNotifications();
+        const tokenSub = Notifications?.addPushTokenListener(() => {
             registerPushDevice();
         });
-        const receivedSub = Notifications.addNotificationReceivedListener(() => {
+        const receivedSub = Notifications?.addNotificationReceivedListener(() => {
             refreshUnreadCount();
         });
         const appSub = AppState.addEventListener('change', state => {
@@ -47,14 +49,14 @@ export default function NotificationProvider({ children }: PropsWithChildren) {
             }
         });
         return () => {
-            tokenSub.remove();
-            receivedSub.remove();
+            tokenSub?.remove();
+            receivedSub?.remove();
             appSub.remove();
         };
     }, [userId]);
 
     // Tapping a notification (also the one that cold-started the app) opens what it is about.
-    const lastResponse = Notifications.useLastNotificationResponse();
+    const lastResponse = useNotificationTap();
     useEffect(() => {
         if (!userId || !lastResponse) {
             return;

@@ -4,14 +4,18 @@
  */
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
-import * as Notifications from 'expo-notifications';
 import { registerDevice, unregisterDevice } from '@/api/endpoint/devices.api';
 import { secureDelete, secureGet, secureSet } from '@/utils/secureStorage';
 import { ensureNotificationPermission } from './localNotifications';
+import { getNotifications } from './notificationsModule';
 
 const DEVICE_ID_KEY = 'legalcms_push_device_id';
 
 async function currentToken(): Promise<{ token: string; tokenType: 'fcm' | 'apns' | 'expo' } | null> {
+    const Notifications = getNotifications();
+    if (!Notifications) {
+        return null;
+    }
     // 'native' (default): the raw FCM/APNs token, so the backend talks to Google/Apple directly.
     // 'expo': an Expo push token, if the backend is set up to relay through Expo's service.
     if (process.env.EXPO_PUBLIC_PUSH_TOKEN_TYPE === 'expo') {
