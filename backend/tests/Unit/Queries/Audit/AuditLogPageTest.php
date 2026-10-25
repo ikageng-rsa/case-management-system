@@ -55,7 +55,8 @@ class AuditLogPageTest extends TestCase
         $this->assertSame('field changed', $detail['event']);
         $this->assertSame($matter->reference, $detail['matter']);
         $this->assertSame('10.0.0.1', $detail['ip']);
-        $this->assertSame([
+        // MySQL keeps a JSON object's keys in its own order, so the order is not part of the detail.
+        $this->assertEqualsCanonicalizing([
             ['key' => 'field', 'value' => 'prescribes at'],
             ['key' => 'notified', 'value' => 'yes'],
             ['key' => 'tags', 'value' => '—'],
