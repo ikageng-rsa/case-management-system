@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Sharing from 'expo-sharing';
 import { fetchNarrationById } from '@/api/endpoint/narrations.api';
@@ -19,7 +19,7 @@ import {
   retryPendingSync,
 } from '@/features/documents/services/narrationDocuments';
 import { useAppSelector } from '@/hooks/useAppDispatch';
-import { canEditRecords } from '@/constants/roles';
+import { canEditRecords, hasGlobalVisibility } from '@/constants/roles';
 import { formatDuration } from '@/utils/formatDuration';
 import { colors, spacing, typography } from '@/theme/index';
 import { CaseDocument, Narration } from '@/models/index';
@@ -51,11 +51,12 @@ export default function NarrationDetailScreen() {
     }
   }, [caseId, narrationId]);
 
-  // Fetch-on-mount: setState runs after awaited network I/O, not synchronously.
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    load();
-  }, [load]);
+  // Reload whenever the screen is shown again (e.g. back from the edit form).
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load]),
+  );
   useOnSynced(load);
 
   if (loading) {
@@ -70,6 +71,8 @@ export default function NarrationDetailScreen() {
   }
 
   const canEdit = me ? canEditRecords(me.role) : false;
+  // Same rule as the server: an entry is changed by whoever wrote it, or by a Director/Admin.
+  const canEditEntry = canEdit && me ? item.authorId === me.id || hasGlobalVisibility(me.role) || item.syncState === 'pending' : false;
 
   const addDocuments = async () => {
     const result = await DocumentPicker.getDocumentAsync({ multiple: true, copyToCacheDirectory: true });
@@ -138,6 +141,14 @@ export default function NarrationDetailScreen() {
           </Pressable>
         ) : null}
       </Card>
+
+      {canEditEntry ? (
+        <Button
+          label="Edit entry"
+          variant="secondary"
+          onPress={() => router.push({ pathname: './cases/[caseId]/edit-activity', params: { caseId, narrationId } })}
+        />
+      ) : null}
 
       <Card style={styles.card}>
         <Text style={styles.cardTitle}>Summary</Text>

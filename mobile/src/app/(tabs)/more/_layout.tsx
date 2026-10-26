@@ -11,6 +11,7 @@ export default function MoreLayout() {
     <Stack screenOptions={stackScreenOptions}>
       <Stack.Screen name="index" options={{ title: 'More' }} />
       <Stack.Screen name="profile" options={{ title: 'Client Profile' }} />
+      <Stack.Screen name="client/[clientId]" options={{ title: 'Client Profile' }} />
       {/* Admin-only: enforced here at the navigator level, not just by hiding the menu item. */}
       <Stack.Protected guard={role ? canAdministerUsers(role) : false}>
         <Stack.Screen name="users" options={{ title: 'Users & Roles' }} />

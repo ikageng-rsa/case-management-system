@@ -48,7 +48,7 @@ export async function createDarzation(payload: Omit<Darzation, 'id' | 'overdue'>
   return submitCreate<Darzation>({
     entity: 'darzation',
     label: `New diary item - ${payload.title}`,
-    url: '/darzations',
+    url: '/diary',
     body: payload as Record<string, unknown>,
     optimistic: id =>({
       ...payload,
@@ -68,7 +68,7 @@ export async function updateDarzation(id: string, payload: Partial<Darzation>): 
     entityId: id,
     action: 'Editing a diary item',
     label: 'Edit diary item',
-    url: `/darzations/${id}`,
+    url: `/diary/${id}`,
     body: payload as Record<string, unknown>,
     patch: { kind: 'merge', fields: payload as Record<string, unknown> },
     listName: CacheNames.diary,
@@ -81,7 +81,7 @@ export async function toggleDarzationStep(darzationId: string, stepId: string, d
     entityId: darzationId,
     action: 'Ticking a diary step',
     label: `${done ? 'Complete' : 'Reopen'} a diary step`,
-    url: `/darzations/${darzationId}/steps/${stepId}`,
+    url: `/diary/${darzationId}/steps/${stepId}`,
     body: { done },
     patch: { kind: 'step', stepId, done },
     listName: CacheNames.diary,

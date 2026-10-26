@@ -8,6 +8,8 @@ export default function CasesLayout() {
       <Stack.Screen name="index" options={{ title: 'Cases' }} />
       <Stack.Screen name="new" options={{ title: 'New Case' }} />
       <Stack.Screen name="[caseId]/index" options={{ title: 'Case' }} />
+      <Stack.Screen name="[caseId]/edit" options={{ title: 'Edit Case' }} />             
+      <Stack.Screen name="[caseId]/edit-activity" options={{ title: 'Edit Activity' }} />
       <Stack.Screen name="[caseId]/activity" options={{ title: 'Activity Log' }} />
       <Stack.Screen name="[caseId]/add-activity" options={{ title: 'Log Activity' }} />
       <Stack.Screen name="[caseId]/narrations/[narrationId]" options={{ title: 'Activity Entry' }} />
