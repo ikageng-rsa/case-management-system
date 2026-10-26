@@ -10,15 +10,10 @@ use App\Models\User\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 
-/*
- * The matters list: the matters a user may see, narrowed by filter and type
- * and put in order, with how many fall under each filter. Those who may not
- * see every matter see only the ones they are assigned to.
- */
 class MatterList
 {
     /** @return array{matters: LengthAwarePaginator<int, Matter>, counts: array<string, int>} */
-    public function for(User $user, string $filter, string $sort, ?int $matterTypeId): array
+    public function for(User $user, string $filter, string $sort, ?int $matterTypeId, ?string $search = null): array
     {
         $visible = fn (): Builder => Matter::query()
             ->when(! $user->can('viewAny', Matter::class), fn (Builder $query) => $query->assignedTo($user));
@@ -30,6 +25,8 @@ class MatterList
 
         $matters = $visible()
             ->when($matterTypeId, fn (Builder $query) => $query->where('matter_type_id', $matterTypeId))
+            // A search orders its matches by how close they are, ahead of the chosen sort.
+            ->when($search, fn (Builder $query) => $query->search($search))
             ->tap(fn (Builder $query) => match ($filter) {
                 'mine' => $query->open()->assignedTo($user),
                 'unassigned' => $unassigned($query->open()),

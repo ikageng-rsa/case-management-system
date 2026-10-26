@@ -79,6 +79,11 @@ class Matter extends Model implements HasMedia
 
     public function resolveRouteBinding($value, $field = null): ?Model
     {
+        // The API names a matter by its id, which never changes, as {matter:id}.
+        if ($field !== null) {
+            return parent::resolveRouteBinding($value, $field);
+        }
+
         return $this->where('reference', Str::replace('-', '/', $value))->first()
             // A hyphen inside a client's initials or a type code would not survive the swap.
             ?? $this->whereRaw("replace(reference, '/', '-') = ?", [$value])->first();
