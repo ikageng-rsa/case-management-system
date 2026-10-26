@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setAuthToken, getAuthToken, clearAuthToken } from '@/api/client';
 import { secureGet } from '@/utils/secureStorage';
-import { describe, expect, it } from '@jest/globals';
+import { beforeEach, describe, expect, it } from '@jest/globals';
 
 describe('auth token storage', () => {
   beforeEach(async () => {

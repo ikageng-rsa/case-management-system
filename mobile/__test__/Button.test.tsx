@@ -7,7 +7,7 @@ import Button from '../src/components/Button';
 describe('Button', () => {
   it('calls onPress when tapped', () => {
     const onPress = jest.fn();
-    const { getBgryRole } = render(<Button label="Save" onPress={onPress} />);
+    const { getByRole } = render(<Button label="Save" onPress={onPress} />);
     fireEvent.press(getByRole('button'));
     expect(onPress).toHaveBeenCalledTimes(1);
   });
