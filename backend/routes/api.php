@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\Client\RevealClientFieldController;
 use App\Http\Controllers\Api\V1\Matter\MatterAssignmentController;
 use App\Http\Controllers\Api\V1\Matter\MatterController;
 use App\Http\Controllers\Api\V1\Matter\MatterPartyController;
+use App\Http\Controllers\Api\V1\Narration\NarrationController;
 use App\Http\Controllers\Api\V1\Reference\ActivityTypeController;
 use App\Http\Controllers\Api\V1\Reference\AssignmentCapacityController;
 use App\Http\Controllers\Api\V1\Reference\DocumentKindController;
@@ -49,5 +50,8 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
             Route::post('/matters/{matter:id}/assignments', [MatterAssignmentController::class, 'store'])->name('api.matters.assignments.store');
             Route::delete('/matters/{matter:id}/assignments/{assignment}', [MatterAssignmentController::class, 'destroy'])->name('api.matters.assignments.destroy');
         });
+
+        Route::get('/matters/{matter:id}/narrations', [NarrationController::class, 'index'])->name('api.matters.narrations');
+        Route::post('/matters/{matter:id}/narrations', [NarrationController::class, 'store'])->name('api.matters.narrations.store');
     });
 });
