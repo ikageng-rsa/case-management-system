@@ -1,14 +1,14 @@
 import { popiaLogger } from '@/utils/popiaLogger';
-import { beforeEach, afterEach,describe, expect, it } from '@jest/globals';
-import { jest } from '@jest/globals';                            
+import { beforeEach, afterEach, describe, expect, it } from '@jest/globals';
+import { jest } from '@jest/globals';
 
 describe('popiaLogger', () => {
-  let errorSpy: jest.SpyInstance;
-  let warnSpy: jest.SpyInstance;
+  let errorSpy: ReturnType<typeof jest.spyOn>;
+  let warnSpy: ReturnType<typeof jest.spyOn>;
 
   beforeEach(() => {
-    errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    errorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+    warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
   });
 
   afterEach(() => {

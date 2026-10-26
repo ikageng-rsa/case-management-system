@@ -10,7 +10,7 @@ import { discardEntry, flushOutbox, retryEntry } from '@/offline/syncEngine';
 import { isTempId } from '@/offline/ids';
 import { getSyncSnapshot, resetSyncStatus } from '@/offline/syncStatus';
 import { beforeEach, describe, expect, it } from '@jest/globals';
-import { jest } from '@jest/globals';                            
+import { jest } from '@jest/globals';
 
 jest.mock('@api/client', () => ({
   apiClient: { get: jest.fn(), post: jest.fn(), patch: jest.fn(), request: jest.fn() },
@@ -19,8 +19,8 @@ jest.mock('@api/client', () => ({
 const mockedFetch = NetInfo.fetch as jest.Mock;
 const api = apiClient as unknown as Record<'get' | 'post' | 'patch' | 'request', jest.Mock>;
 
-const goOffline = () => mockedFetch.mockResolvedValue({ isConnected: false, isInternetReachable: false });
-const goOnline = () => mockedFetch.mockResolvedValue({ isConnected: true, isInternetReachable: true });
+const goOffline = () => mockedFetch.mockResolvedValue({ isConnected: false, isInternetReachable: false } as never);
+const goOnline = () => mockedFetch.mockResolvedValue({ isConnected: true, isInternetReachable: true } as never);
 const networkError = () => Object.assign(new Error('Network Error'), { isAxiosError: true, response: undefined });
 const httpError = (status: number, data: unknown) =>
   Object.assign(new Error(`HTTP ${status}`), { isAxiosError: true, response: { status, data } });
@@ -51,7 +51,7 @@ describe('working offline', () => {
   });
 
   it('serves the last downloaded data when the connection is gone', async () => {
-    api.get.mockResolvedValueOnce({ data: [{ id: 'c1', clientName: 'Existing', matterType: 'Will', status: 'Open' }] });
+    api.get.mockResolvedValueOnce({ data: [{ id: 'c1', clientName: 'Existing', matterType: 'Will', status: 'Open' }] } as never);
     await fetchCases();
 
     goOffline();
@@ -62,20 +62,20 @@ describe('working offline', () => {
   });
 
   it('falls back to the cache (and queues a create) when the request never gets an answer', async () => {
-    api.get.mockResolvedValueOnce({ data: [{ id: 'c1', clientName: 'Existing', matterType: 'Will', status: 'Open' }] });
+    api.get.mockResolvedValueOnce({ data: [{ id: 'c1', clientName: 'Existing', matterType: 'Will', status: 'Open' }] } as never);
     await fetchCases();
 
-    api.get.mockRejectedValueOnce(networkError());
+    api.get.mockRejectedValueOnce(networkError() as never);
     expect((await fetchCases()).map(c => c.id)).toEqual(['c1']);
 
-    api.post.mockRejectedValueOnce(networkError());
+    api.post.mockRejectedValueOnce(networkError() as never);
     const created = await createCase(caseBody);
     expect(created.syncState).toBe('pending');
     expect(await listOutbox()).toHaveLength(1);
   });
 
   it('does not queue when the server answers with a validation error', async () => {
-    api.post.mockRejectedValueOnce(httpError(422, { message: 'The client name field is required.' }));
+    api.post.mockRejectedValueOnce(httpError(422, { message: 'The client name field is required.' }) as never);
     await expect(createCase(caseBody)).rejects.toBeTruthy();
     expect(await listOutbox()).toHaveLength(0);
   });
@@ -139,12 +139,35 @@ describe('syncing when the connection returns', () => {
     });
     await flushOutbox();
 
-    const sent = api.request.mock.calls.map(([r]) => r);
-    expect(sent.map(r => r.url)).toEqual(['/cases', '/darzations', '/cases/real-case/narrations']);
+    type SentRequest = {
+      url: string;
+      data: {
+        caseId?: string;
+        darzationId?: string;
+        clientCreatedAt?: string;
+      };
+      headers: Record<string, string>;
+    };
+
+    const sent = api.request.mock.calls.map(
+      ([r]) => r as SentRequest
+    );
+
+    expect(sent.map(r => r.url)).toEqual([
+      '/cases',
+      '/darzations',
+      '/cases/real-case/narrations',
+    ]);
+
     expect(sent[1].data.caseId).toBe('real-case');
     expect(sent[2].data.darzationId).toBe('real-diary');
-    expect(sent.map(r => r.headers['Idempotency-Key'])).toEqual(entries.map(e => e.id));
+
+    expect(sent.map(r => r.headers['Idempotency-Key'])).toEqual(
+      entries.map(e => e.id)
+    );
+
     expect(sent[2].data.clientCreatedAt).toBe(entries[2].createdAt);
+
     expect(await listOutbox()).toHaveLength(0);
 
     // The cache now holds the server's records, not the temporary ones.
@@ -160,7 +183,7 @@ describe('syncing when the connection returns', () => {
     await createCase(caseBody);
     await createCase({ ...caseBody, clientName: 'Second' });
     goOnline();
-    api.request.mockRejectedValue(networkError());
+    api.request.mockRejectedValue(networkError() as never);
     await flushOutbox();
     expect(api.request).toHaveBeenCalledTimes(1);
     const left = await listOutbox();
@@ -186,7 +209,7 @@ describe('syncing when the connection returns', () => {
     expect(entries[0].error).toBe('Nope.');
 
     // A narration waiting on the failed case is never sent against a made-up id.
-    expect(api.request.mock.calls.every(([r]) => !r.url.includes('tmp_'))).toBe(true);
+    expect(api.request.mock.calls.every(([r]: any) => !r.url.includes('tmp_'))).toBe(true);
 
     await discardEntry(entries[0].id);
     const remaining = await listOutbox();
@@ -197,12 +220,12 @@ describe('syncing when the connection returns', () => {
     goOffline();
     await createCase(caseBody);
     goOnline();
-    api.request.mockRejectedValueOnce(httpError(422, { message: 'Rejected' }));
+    api.request.mockRejectedValueOnce(httpError(422, { message: 'Rejected' }) as never);
     await flushOutbox();
     const [failed] = await listOutbox();
     expect(failed.status).toBe('failed');
 
-    api.request.mockResolvedValueOnce({ data: { ...caseBody, id: 'ok-1' } });
+    api.request.mockResolvedValueOnce({ data: { ...caseBody, id: 'ok-1' } } as never);
     await retryEntry(failed.id);
     expect(await listOutbox()).toHaveLength(0);
   });
@@ -211,7 +234,7 @@ describe('syncing when the connection returns', () => {
     goOffline();
     await createCase(caseBody);
     goOnline();
-    api.request.mockRejectedValueOnce(httpError(401, { message: 'Unauthenticated.' }));
+    api.request.mockRejectedValueOnce(httpError(401, { message: 'Unauthenticated.' }) as never);
     await flushOutbox();
     const [entry] = await listOutbox();
     expect(entry.status).toBe('pending');

@@ -5,16 +5,16 @@ import { jest } from '@jest/globals';
 import Button from '../src/components/Button';
 
 describe('Button', () => {
-  it('calls onPress when tapped', () => {
+  it('calls onPress when tapped', async () => {
     const onPress = jest.fn();
-    const { getByRole } = render(<Button label="Save" onPress={onPress} />);
+    const { getByRole } =await render(<Button label="Save" onPress={onPress} />);
     fireEvent.press(getByRole('button'));
     expect(onPress).toHaveBeenCalledTimes(1);
   });
 
-  it('does not call onPress when disabled', () => {
+  it('does not call onPress when disabled',async () => {
     const onPress = jest.fn();
-    const { getByRole } = render(<Button label="Save" onPress={onPress} disabled />);
+    const { getByRole } =await render(<Button label="Save" onPress={onPress} disabled />);
     fireEvent.press(getByRole('button'));
     expect(onPress).not.toHaveBeenCalled();
   });

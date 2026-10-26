@@ -16,14 +16,14 @@ import { listOutbox } from '@/offline/outbox';
 import { prefetchAll } from '@/offline/prefetch';
 import { flushOutbox } from '@/offline/syncEngine';
 import { resetSyncStatus } from '@/offline/syncStatus';
-import { describe, expect, it } from '@jest/globals';
-import { jest } from '@jest/globals';                
+import { beforeAll, describe, expect, it } from '@jest/globals';
+import { jest } from '@jest/globals';
 
 const URL = process.env.MOCK_API_URL;
 const run = URL ? describe : describe.skip;
 const mockedFetch = NetInfo.fetch as jest.Mock;
-const goOffline = () => mockedFetch.mockResolvedValue({ isConnected: false, isInternetReachable: false });
-const goOnline = () => mockedFetch.mockResolvedValue({ isConnected: true, isInternetReachable: true });
+const goOffline = () => mockedFetch.mockResolvedValue({ isConnected: false, isInternetReachable: false } as never);
+const goOnline = () => mockedFetch.mockResolvedValue({ isConnected: true, isInternetReachable: true } as never);
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
 run('offline queue against the mock API', () => {
@@ -34,8 +34,11 @@ run('offline queue against the mock API', () => {
     apiClient.defaults.baseURL = URL;
     // jest resolves axios' browser build; borrow the Node (http) adapter so it can reach localhost.
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    apiClient.defaults.adapter = jest.requireActual('axios/dist/node/axios.cjs').getAdapter('http');
-    await AsyncStorage.clear();
+    const actualAxios = jest.requireActual('axios/dist/node/axios.cjs') as {
+      getAdapter: (adapter: string) => typeof apiClient.defaults.adapter;
+    };
+
+    apiClient.defaults.adapter = actualAxios.getAdapter('http'); await AsyncStorage.clear();
     const { data } = await apiClient.post('/auth/login', { email: 'ca@legalcms.test', password: 'password' });
     await setAuthToken(data.token);
     userId = data.user.id;

@@ -4,20 +4,20 @@ import { describe, expect, it } from '@jest/globals';
 import EmptyState from '../src/components/EmptyState';
 
 describe('EmptyState', () => {
-  it('renders the title', () => {
-    const { getByText } = render(<EmptyState title="No cases yet" />);
+  it('renders the title', async() => {
+    const { getByText } =await render(<EmptyState title="No cases yet" />);
     expect(getByText('No cases yet')).toBeTruthy();
   });
 
-  it('renders the optional message when provided', () => {
-    const { getByText } = render(
+  it('renders the optional message when provided', async() => {
+    const { getByText } =await render(
       <EmptyState title="No cases yet" message="Cases you're assigned to will show up here." />,
     );
     expect(getByText("Cases you're assigned to will show up here.")).toBeTruthy();
   });
 
-  it('does not render a message element when none is provided', () => {
-    const { queryByText } = render(<EmptyState title="No cases yet" />);
+  it('does not render a message element when none is provided',async () => {
+    const { queryByText } =await render(<EmptyState title="No cases yet" />);
     expect(queryByText(/assigned/)).toBeNull();
   });
 });

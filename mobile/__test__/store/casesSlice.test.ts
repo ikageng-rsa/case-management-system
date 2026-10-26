@@ -43,7 +43,7 @@ describe('loadCases thunk', () => {
   });
 
   it('populates items and sets status to loaded on success', async () => {
-    mockedFetchCases.mockResolvedValue([sampleCase]);
+    mockedFetchCases.mockResolvedValue([sampleCase] as never);
     const store = buildStore();
 
     await store.dispatch(loadCases() as any);
@@ -53,7 +53,7 @@ describe('loadCases thunk', () => {
   });
 
   it('passes filter params through to fetchCases', async () => {
-    mockedFetchCases.mockResolvedValue([]);
+    mockedFetchCases.mockResolvedValue([] as never);
     const store = buildStore();
 
     await store.dispatch(loadCases({ status: 'Open', search: 'Acme' }) as any);
@@ -62,7 +62,7 @@ describe('loadCases thunk', () => {
   });
 
   it('sets status to error and records the message on failure', async () => {
-    mockedFetchCases.mockRejectedValue(new Error('Network error'));
+    mockedFetchCases.mockRejectedValue(new Error('Network error') as never);
     const store = buildStore();
 
     await store.dispatch(loadCases() as any);

@@ -48,7 +48,7 @@ describe('authSlice reducer', () => {
 describe('login thunk', () => {
   beforeEach(() => {
     mockedLogin.mockReset();
-    mockedSetAuthToken.mockReset().mockResolvedValue(undefined);
+    mockedSetAuthToken.mockReset().mockResolvedValue(undefined as never);
   });
 
   it('sets status to loading while pending', () => {
@@ -59,7 +59,7 @@ describe('login thunk', () => {
   });
 
   it('populates user and sets status to authenticated on success', async () => {
-    mockedLogin.mockResolvedValue({ token: 'tok-123', user: sampleUser });
+    mockedLogin.mockResolvedValue({ token: 'tok-123', user: sampleUser }as  never);
     const store = buildStore();
 
     await store.dispatch(login({ email: 'thandiwe@firm.co.za', password: 'secret' }) as any);
@@ -70,7 +70,7 @@ describe('login thunk', () => {
   });
 
   it('sets status to error and records the message on failure', async () => {
-    mockedLogin.mockRejectedValue(new Error('Invalid credentials'));
+    mockedLogin.mockRejectedValue(new Error('Invalid credentials') as never);
     const store = buildStore();
 
     await store.dispatch(login({ email: 'wrong@firm.co.za', password: 'bad' }) as any);
@@ -83,7 +83,7 @@ describe('login thunk', () => {
 
 describe('logout thunk', () => {
   beforeEach(() => {
-    mockedClearAuthToken.mockReset().mockResolvedValue(undefined);
+    mockedClearAuthToken.mockReset().mockResolvedValue(undefined as never);
   });
 
   it('clears the user, resets status, and clears the stored token', async () => {

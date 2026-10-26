@@ -15,7 +15,7 @@ const mockedSetAuthToken = apiClient.setAuthToken as jest.Mock;
 const buildStore = () => configureStore({ reducer: { auth: authReducer } });
 
 describe('demo login', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {jest.clearAllMocks()});
 
   it('signs in the demo user locally without calling the API', async () => {
     const store = buildStore();
@@ -35,7 +35,7 @@ describe('demo login', () => {
   });
 
   it('sends a wrong demo password to the real API instead', async () => {
-    mockedLogin.mockRejectedValueOnce(new Error('Invalid credentials'));
+    mockedLogin.mockRejectedValueOnce(new Error('Invalid credentials') as never);
     const store = buildStore();
     await store.dispatch(login({ email: DEMO_CREDENTIALS.email, password: 'wrong' }));
 

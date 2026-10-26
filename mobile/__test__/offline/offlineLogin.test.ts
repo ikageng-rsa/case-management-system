@@ -8,12 +8,20 @@ import * as LocalAuthentication from 'expo-local-authentication';
 import { User } from '@/models/index';
 import { beforeEach, describe, expect, it } from '@jest/globals';
 import { jest } from '@jest/globals';
-jest.mock('@api/endpoint/auth.api', () => ({
-  ...jest.requireActual('@api/endpoint/auth.api'),
-  login: jest.fn(),
-  verifyTwoFactorLogin: jest.fn(),
-  logoutRequest: jest.fn(),
-}));
+
+jest.mock('@api/endpoint/auth.api', () => {
+  const actualModule =
+    jest.requireActual<typeof import('@/api/endpoint/auth.api')>(
+      '@/api/endpoint/auth.api'
+    );
+
+  return {
+    ...actualModule,
+    login: jest.fn(),
+    verifyTwoFactorLogin: jest.fn(),
+    logoutRequest: jest.fn(),
+  };
+});
 jest.mock('@api/client');
 jest.mock('expo-secure-store', () => ({ isAvailableAsync: async () => false }));
 jest.mock('expo-crypto', () => ({ getRandomBytes: (n: number) => Uint8Array.from({ length: n }, (_, i) => (i * 5 + 1) % 256) }));
@@ -25,8 +33,8 @@ const mockedFetch = NetInfo.fetch as jest.Mock;
 
 const user: User = { id: 'u1', fullName: 'Thandi', email: 'thandi@firm.co.za', role: 'CA' };
 const store = () => configureStore({ reducer: { auth: authReducer } });
-const online = () => mockedFetch.mockResolvedValue({ isConnected: true, isInternetReachable: true });
-const offline = () => mockedFetch.mockResolvedValue({ isConnected: false, isInternetReachable: false });
+const online = () => mockedFetch.mockResolvedValue({ isConnected: true, isInternetReachable: true } as never);
+const offline = () => mockedFetch.mockResolvedValue({ isConnected: false, isInternetReachable: false } as never);
 
 beforeEach(async () => {
   await AsyncStorage.clear();
@@ -36,7 +44,7 @@ beforeEach(async () => {
 
 describe('login sequence without a connection', () => {
   it('signs in offline after one earlier online sign-in, restoring the saved token', async () => {
-    mockedLogin.mockResolvedValueOnce({ token: 'server-token', user });
+    mockedLogin.mockResolvedValueOnce({ token: 'server-token', user }as never);
     await store().dispatch(login({ email: user.email, password: 'Secret#123' }));
 
     offline();
@@ -49,17 +57,17 @@ describe('login sequence without a connection', () => {
   });
 
   it('also falls back when the device looks online but the server cannot be reached', async () => {
-    mockedLogin.mockResolvedValueOnce({ token: 't1', user });
+    mockedLogin.mockResolvedValueOnce({ token: 't1', user }as never);
     await store().dispatch(login({ email: user.email, password: 'Secret#123' }));
 
-    mockedLogin.mockRejectedValueOnce(Object.assign(new Error('Network Error'), { isAxiosError: true, response: undefined }));
+    mockedLogin.mockRejectedValueOnce(Object.assign(new Error('Network Error') as never, { isAxiosError: true, response: undefined }));
     const s = store();
     await s.dispatch(login({ email: user.email, password: 'Secret#123' }));
     expect(s.getState().auth.user).toEqual(user);
   });
 
   it('rejects a wrong password offline and a never-seen account', async () => {
-    mockedLogin.mockResolvedValueOnce({ token: 't1', user });
+    mockedLogin.mockResolvedValueOnce({ token: 't1', user }as never);
     await store().dispatch(login({ email: user.email, password: 'Secret#123' }));
     offline();
 
@@ -74,11 +82,11 @@ describe('login sequence without a connection', () => {
   });
 
   it('does not use the saved sign-in when the server answered "wrong password"', async () => {
-    mockedLogin.mockResolvedValueOnce({ token: 't1', user });
+    mockedLogin.mockResolvedValueOnce({ token: 't1', user }as never);
     await store().dispatch(login({ email: user.email, password: 'Secret#123' }));
 
     mockedLogin.mockRejectedValueOnce(
-      Object.assign(new Error('422'), { isAxiosError: true, response: { status: 422, data: { message: 'These credentials do not match our records.' } } }),
+      Object.assign(new Error('422')as never, { isAxiosError: true, response: { status: 422, data: { message: 'These credentials do not match our records.' } } }),
     );
     const s = store();
     await s.dispatch(login({ email: user.email, password: 'Secret#123' }));
@@ -87,7 +95,7 @@ describe('login sequence without a connection', () => {
   });
 
   it('with two-factor on, online sign-in returns a challenge and NO token until the server accepts the code', async () => {
-    mockedLogin.mockResolvedValueOnce({ twoFactorRequired: true, challengeToken: 'chal-1', method: 'totp' });
+    mockedLogin.mockResolvedValueOnce({ twoFactorRequired: true, challengeToken: 'chal-1', method: 'totp' }as never);
     const s = store();
     await s.dispatch(login({ email: user.email, password: 'Secret#123' }));
 
@@ -96,7 +104,7 @@ describe('login sequence without a connection', () => {
     expect(s.getState().auth.user).toBeNull();
     expect(mockedSetToken).not.toHaveBeenCalled();
 
-    mockedVerify.mockResolvedValueOnce({ token: 'real-token', user: { ...user, twoFactorMethod: 'totp' } });
+    mockedVerify.mockResolvedValueOnce({ token: 'real-token', user: { ...user, twoFactorMethod: 'totp' } }as never);
     await s.dispatch(completeTwoFactor({ code: '123456' }));
     expect(mockedVerify).toHaveBeenCalledWith('chal-1', '123456');
     expect(mockedSetToken).toHaveBeenCalledWith('real-token');
@@ -104,11 +112,11 @@ describe('login sequence without a connection', () => {
   });
 
   it('a wrong code keeps the challenge open and signs nobody in', async () => {
-    mockedLogin.mockResolvedValueOnce({ twoFactorRequired: true, challengeToken: 'chal-2', method: 'sms', maskedPhone: '082••••567' });
+    mockedLogin.mockResolvedValueOnce({ twoFactorRequired: true, challengeToken: 'chal-2', method: 'sms', maskedPhone: '082••••567' }as never);
     const s = store();
     await s.dispatch(login({ email: user.email, password: 'Secret#123' }));
     mockedVerify.mockRejectedValueOnce(
-      Object.assign(new Error('422'), { isAxiosError: true, response: { status: 422, data: { message: 'The verification code is invalid or has expired.' } } }),
+      Object.assign(new Error('422'), { isAxiosError: true, response: { status: 422, data: { message: 'The verification code is invalid or has expired.' } } }as never),
     );
     await s.dispatch(completeTwoFactor({ code: '000000' }));
     expect(s.getState().auth.user).toBeNull();
@@ -117,10 +125,10 @@ describe('login sequence without a connection', () => {
 
   it('offline sign-in for a two-factor account needs the phone\'s own fingerprint / PIN', async () => {
     const withTfa = { ...user, twoFactorMethod: 'totp' as const };
-    mockedLogin.mockResolvedValueOnce({ twoFactorRequired: true, challengeToken: 'c', method: 'totp' });
+    mockedLogin.mockResolvedValueOnce({ twoFactorRequired: true, challengeToken: 'c', method: 'totp' }as never);
     const first = store();
     await first.dispatch(login({ email: user.email, password: 'Secret#123' }));
-    mockedVerify.mockResolvedValueOnce({ token: 't1', user: withTfa });
+    mockedVerify.mockResolvedValueOnce({ token: 't1', user: withTfa }as never);
     await first.dispatch(completeTwoFactor({ code: '123456' }));
 
     offline();
@@ -129,7 +137,7 @@ describe('login sequence without a connection', () => {
     expect(ok.getState().auth.user).toEqual(withTfa);
     expect(LocalAuthentication.authenticateAsync).toHaveBeenCalled();
 
-    (LocalAuthentication.authenticateAsync as jest.Mock).mockResolvedValueOnce({ success: false });
+    (LocalAuthentication.authenticateAsync as jest.Mock).mockResolvedValueOnce({ success: false }as never);
     const denied = store();
     await denied.dispatch(login({ email: user.email, password: 'Secret#123' }));
     expect(denied.getState().auth.user).toBeNull();
@@ -138,11 +146,11 @@ describe('login sequence without a connection', () => {
 
   it('refuses offline sign-in for a two-factor account on a phone with no screen lock', async () => {
     const withTfa = { ...user, twoFactorMethod: 'sms' as const };
-    mockedLogin.mockResolvedValueOnce({ token: 't1', user: withTfa });
+    mockedLogin.mockResolvedValueOnce({ token: 't1', user: withTfa }as never);
     await store().dispatch(login({ email: user.email, password: 'Secret#123' }));
 
     offline();
-    (LocalAuthentication.getEnrolledLevelAsync as jest.Mock).mockResolvedValueOnce(LocalAuthentication.SecurityLevel.NONE);
+    (LocalAuthentication.getEnrolledLevelAsync as jest.Mock).mockResolvedValueOnce(LocalAuthentication.SecurityLevel.NONE as never);
     const s = store();
     await s.dispatch(login({ email: user.email, password: 'Secret#123' }));
     expect(s.getState().auth.user).toBeNull();
