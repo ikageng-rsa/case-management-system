@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\Auth\SignOutController;
 use App\Http\Controllers\Api\V1\Auth\VerifySignInCodeController;
 use App\Http\Controllers\Api\V1\Client\ClientController;
 use App\Http\Controllers\Api\V1\Client\RevealClientFieldController;
+use App\Http\Controllers\Api\V1\Matter\MatterAssignmentController;
 use App\Http\Controllers\Api\V1\Matter\MatterController;
 use App\Http\Controllers\Api\V1\Matter\MatterPartyController;
 use App\Http\Controllers\Api\V1\Reference\ActivityTypeController;
@@ -42,5 +43,11 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
         Route::get('/matters', [MatterController::class, 'index'])->name('api.matters');
         Route::get('/matters/{matter:id}', [MatterController::class, 'show'])->name('api.matters.show');
         Route::get('/matters/{matter:id}/parties', [MatterPartyController::class, 'index'])->name('api.matters.parties');
+
+        Route::scopeBindings()->group(function () {
+            Route::get('/matters/{matter:id}/assignments', [MatterAssignmentController::class, 'index'])->name('api.matters.assignments');
+            Route::post('/matters/{matter:id}/assignments', [MatterAssignmentController::class, 'store'])->name('api.matters.assignments.store');
+            Route::delete('/matters/{matter:id}/assignments/{assignment}', [MatterAssignmentController::class, 'destroy'])->name('api.matters.assignments.destroy');
+        });
     });
 });
