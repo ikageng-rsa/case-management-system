@@ -179,7 +179,7 @@ export default function NewDarzationScreen() {
                 </Text>
             ))}
             {steps.map((s, i) => (
-                <Text key={i} style={styles.step}>
+                <Text key={s.substring(i.toString().length,-1)} style={styles.step}>
                     {existingSteps.length + i + 1}. {s}
                 </Text>
             ))}

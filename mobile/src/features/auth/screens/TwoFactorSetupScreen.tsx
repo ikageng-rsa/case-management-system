@@ -40,8 +40,8 @@ export default function TwoFactorSetupScreen() {
     const [lockPossible, setLockPossible] = useState(true);
 
     React.useEffect(() => {
-        getAppLockEnabled().then(setLockOn).catch((error) =>{console.error('Failed to load app lock setting', error)});
-        deviceAuthAvailable().then(setLockPossible).catch((error) => {console.error('Failed to check device authentication:', error)});
+        getAppLockEnabled().then(setLockOn).catch((error) => { console.error('Failed to load app lock setting', error) });
+        deviceAuthAvailable().then(setLockPossible).catch((error) => { console.error('Failed to check device authentication:', error) });
     }, []);
 
     if (!user) {
@@ -132,11 +132,17 @@ export default function TwoFactorSetupScreen() {
     }
 
     const method: TwoFactorMethod = user.twoFactorMethod ?? 'none';
+    const methodLabel =
+        method === 'totp'
+            ? 'Authenticator app'
+            : method === 'sms'
+                ? 'SMS code'
+                : 'Off';
     return (
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
             <Text style={styles.title}>Two-factor authentication</Text>
             <Text style={styles.subtitle}>
-                Current method: <Text style={styles.current}>{method === 'totp' ? 'Authenticator app' : method === 'sms' ? 'SMS code' : 'Off'}</Text>
+                Current method: <Text style={styles.current}>{methodLabel}</Text>
             </Text>
 
             <Card style={styles.card}>

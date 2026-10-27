@@ -8,9 +8,13 @@ export function useAssignableUsers(): User[]{
     const [users, setUsers] = useState<User[]>(me ? [me]: []);
 
     useEffect(() => {
+        const fallbackUsers = me ?[me]:[];
         fetchUsers()
-            .then(list => setUsers(list.length ? list : me ? [me]: []))
-            .catch(() => setUsers(me ? [me] : []));
+            .then(list => {
+                const users = list.length >0 ? list : fallbackUsers;
+                setUsers(users)
+            })
+            .catch(() => setUsers(fallbackUsers));
     }, [me]);
 
     return users;

@@ -148,7 +148,7 @@ export async function remapTempIdLocked(
         }
 
         if (nextKey !== key || nextRaw !== raw) {
-            encSetItem(nextKey, nextRaw);
+            void encSetItem(nextKey, nextRaw).catch(error =>{console.error('failed: ',error)});
         }
     }
 }

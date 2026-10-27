@@ -63,13 +63,17 @@ export default function SyncCenterScreen() {
                 { text: 'Discard', style: 'destructive', onPress: () => run(() => discardEntry(entry.id)) },
             ],
         );
+const changeLabel = entries.length === 1 ? '' : 's';
+
+const alertMessage =
+    entries.length > 0
+        ? `This deletes the offline copy AND ${entries.length} unsynced change${changeLabel} from this device. Sync first if you can.`
+        : 'This deletes the offline copy of your cases, diary and narrations from this device. It is downloaded again the next time you are online.';
 
     const confirmClear = () =>
         Alert.alert(
             'Remove offline data?',
-            entries.length > 0
-                ? `This deletes the offline copy AND ${entries.length} unsynced change${entries.length === 1 ? '' : 's'} from this device. Sync first if you can.`
-                : 'This deletes the offline copy of your cases, diary and narrations from this device. It is downloaded again the next time you are online.',
+            alertMessage,
             [
                 { text: 'Cancel', style: 'cancel' },
                 {

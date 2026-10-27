@@ -137,7 +137,7 @@ export default function NewCaseScreen() {
 
       <Text style={styles.section}>Custom fields</Text>
       {customFields.map((field, index) => (
-        <View key={index} style={styles.customRow}>
+        <View key={field.key} style={styles.customRow}>
           <View style={styles.customCol}>
             <Input label="Name" value={field.key} onChangeText={v => updateCustom(index, { key: v })} />
           </View>

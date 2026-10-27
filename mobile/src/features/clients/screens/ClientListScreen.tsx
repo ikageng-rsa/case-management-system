@@ -63,23 +63,66 @@ export default function ClientListScreen() {
                 contentContainerStyle={styles.list}
                 onRefresh={load}
                 refreshing={false}
-                renderItem={({ item }) => (
-                    <Pressable
-                        accessibilityRole="button"
-                        onPress={() => router.push({ pathname: './more/client/[clientId]', params: { clientId: item.id } })}
-                    >
-                        <Card>
-                            <Text style={styles.name}>{item.fullName}</Text>
-                            <Text style={styles.meta}>
-                                {item.openCases ?? 0} open case{item.openCases === 1 ? '' : 's'}
-                                {offline ? '' : ` · FICA ${item.ficaVerified ? 'verified' : 'pending'} · ${item.riskRating} risk`}
-                            </Text>
-                            {item.contactNumber || item.email ? (
-                                <Text style={styles.meta}>{[item.contactNumber, item.email].filter(Boolean).join(' · ')}</Text>
-                            ) : null}
-                        </Card>
-                    </Pressable>
-                )}
+                renderItem={({ item }) => {
+                    const openCases = item.openCases ?? 0;
+                    const caseLabel = openCases === 1 ? '' : 's';
+                    const ficaStatus = item.ficaVerified ? 'verified' : 'pending';
+                    const metaText = offline
+                        ? ''
+                        : ` · FICA ${ficaStatus} · ${item.riskRating} risk`;
+                    return (
+                        <Pressable
+                            accessibilityRole="button"
+                            onPress={() =>
+                                router.push({
+                                    pathname: './more/client/[clientId]',
+                                    params: { clientId: item.id },
+                                })
+                            }
+                        >
+                            <Card>
+                                <Text style={styles.name}>{item.fullName}</Text>
+
+                                <Text style={styles.meta}>
+                                    {openCases} open case{caseLabel}
+                                    {metaText}
+                                </Text>
+
+                                {item.contactNumber || item.email ? (
+                                    <Text style={styles.meta}>
+                                        {[item.contactNumber, item.email]
+                                            .filter(Boolean)
+                                            .join(' · ')}
+                                    </Text>
+                                ) : null}
+                            </Card>
+                        </Pressable>
+                    );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                }}
                 ListEmptyComponent={<EmptyState title="No clients" message="Clients appear here once they have a case you can see." />}
             />
         </View>
