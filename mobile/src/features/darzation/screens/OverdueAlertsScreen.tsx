@@ -21,6 +21,7 @@ export default function OverdueAlertsScreen() {
   const load = useCallback(() => {
     Promise.all([fetchOverdueDarzations(), fetchCases().catch(() => [])])
       .then(([overdue, cases]) => setItems(visibleDarzationsFor(overdue, cases, me)))
+      .catch((error) => {console.error('failed to get overdue alerts: ',error)})
       .finally(() => setLoading(false));
   }, [me]);
 

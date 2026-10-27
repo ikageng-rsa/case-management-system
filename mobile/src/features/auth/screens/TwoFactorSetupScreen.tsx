@@ -40,8 +40,8 @@ export default function TwoFactorSetupScreen() {
     const [lockPossible, setLockPossible] = useState(true);
 
     React.useEffect(() => {
-        getAppLockEnabled().then(setLockOn);
-        deviceAuthAvailable().then(setLockPossible);
+        getAppLockEnabled().then(setLockOn).catch((error) =>{console.error('Failed to load app lock setting', error)});
+        deviceAuthAvailable().then(setLockPossible).catch((error) => {console.error('Failed to check device authentication:', error)});
     }, []);
 
     if (!user) {

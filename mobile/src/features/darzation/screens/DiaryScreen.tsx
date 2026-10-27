@@ -30,6 +30,7 @@ export default function DiaryScreen() {
   const load = useCallback(() => {
     Promise.all([fetchDiary(), fetchCases().catch(() => [])])
       .then(([diary, cases]) => setItems(visibleDarzationsFor(diary, cases, me)))
+      .catch((error) => {console.error('Failed to load diary items:',error)})
       .finally(() => setLoading(false));
   }, [me]);
 

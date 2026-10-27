@@ -38,12 +38,12 @@ export default function SyncProvider({ children }: PropsWithChildren) {
             await prefetchAll(force);
         };
 
-        run(true);
+        void run(true).catch((error) => { console.error('Failed to sync and prefetch data: ', error) });
 
         // Anything that synced changes what the case list shows (record ids and file references change).
         const stopSynced = subscribeSynced(() => {
             dispatch(loadCases());
-            prefetchAll(true);
+            void prefetchAll(true).catch((error) => { console.error('Failed to sync and prefetch data: ', error) });
         });
 
         let wasOnline = true;
@@ -57,14 +57,14 @@ export default function SyncProvider({ children }: PropsWithChildren) {
 
         const stopApp = AppState.addEventListener('change', next => {
             if (next === 'active') {
-                run(false);
+                void run(false).catch((error) => { console.error('Failed to sync and prefetch data: ', error) });
             }
         });
 
         const timer = setInterval(() => {
             const s = getSyncSnapshot();
             if (s.pending > 0 && !s.syncing && !s.authRequired) {
-                flushOutbox();
+                void flushOutbox().catch((error) => { console.error('Failed to sync and prefetch data: ', error) });
             }
         }, RETRY_INTERVAL_MS);
 

@@ -240,7 +240,7 @@ export default function ClientProfileScreen() {
             value={client.ficaVerified}
             disabled={!canCompliance || saving}
             onValueChange={v => {
-              save({ ficaVerified: v });
+              void save({ ficaVerified: v }).catch((error) =>{console.error('Failed to save FICA verification status: ',error)});
             }}
           />
         </View>
@@ -250,7 +250,7 @@ export default function ClientProfileScreen() {
           selected={[client.riskRating]}
           onChange={([r]) => {
             if (r && canCompliance && r !== client.riskRating) {
-              save({ riskRating: r });
+              void save({ riskRating: r }).catch((error) =>{console.error('Failed to save risk Rating status: ',error)});
             }
           }}
         />

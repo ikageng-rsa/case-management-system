@@ -33,19 +33,19 @@ export default function NotificationProvider({ children }: PropsWithChildren) {
             setUnreadCount(0);
             return;
         }
-        registerPushDevice();
-        refreshUnreadCount();
+        registerPushDevice().catch((error) => {console.error('Failed to register Device:',error)});
+        refreshUnreadCount().catch((error) => {console.error('Failed to refresh the count:',error)});
 
         const Notifications = getNotifications();
         const tokenSub = Notifications?.addPushTokenListener(() => {
-            registerPushDevice();
+            registerPushDevice().catch((error) => {console.error('Failed to register Device:',error)});
         });
         const receivedSub = Notifications?.addNotificationReceivedListener(() => {
-            refreshUnreadCount();
+            refreshUnreadCount().catch((error) => {console.error('Failed to refresh the count:',error)});
         });
         const appSub = AppState.addEventListener('change', state => {
             if (state === 'active') {
-                refreshUnreadCount();
+                refreshUnreadCount().catch((error) => {console.error('Failed to refresh the count:',error)});
             }
         });
         return () => {

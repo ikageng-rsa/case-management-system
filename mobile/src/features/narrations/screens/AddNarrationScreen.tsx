@@ -67,7 +67,7 @@ export default function AddNarrationScreen() {
   };
 
   const submit = async () => {
-    const timeSpentMinutes = (parseInt(hours, 10) || 0) * 60 + (parseInt(minutes, 10) || 0);
+    const timeSpentMinutes = (Number.parseInt(hours, 10) || 0) * 60 + (Number.parseInt(minutes, 10) || 0);
     if (!description.trim()) {
       Alert.alert('Add a description', 'A short note on what was done is required.');
       return;

@@ -43,8 +43,8 @@ export default function NotificationsScreen() {
 
     const readAll = async () => {
         setItems(list => list.map(n => ({ ...n, readAt: n.readAt ?? new Date().toISOString() })));
-        await markAllNotificationsRead().catch(() => { });
-        refreshUnreadCount();
+        await markAllNotificationsRead().catch((error) => { console.error('Unable to mark Notification as Read: ', error)});
+        await refreshUnreadCount().catch((error) =>{console.error('failed to refresh unread count: ',error)});
     };
 
     const unread = items.filter(n => !n.readAt).length;
