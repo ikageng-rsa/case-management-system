@@ -50,7 +50,7 @@ export default function SyncProvider({ children }: PropsWithChildren) {
         const stopNet = NetInfo.addEventListener(state => {
             const online = state.isConnected !== false && state.isInternetReachable !== false;
             if (online && !wasOnline) {
-                run(false);
+                void run(false).catch((error) => { console.error('Failed to sync and prefetch data: ', error) });;
             }
             wasOnline = online;
         });

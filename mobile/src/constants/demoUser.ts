@@ -19,7 +19,7 @@ const usesBackend = Boolean(process.env.EXPO_PUBLIC_API_BASE_URL);
 
 export const DEMO_CREDENTIALS = {
   email: process.env.EXPO_PUBLIC_DEMO_EMAIL ?? 'demo@legalcms.co.za',
-  password: process.env.EXPO_PUBLIC_DEMO_PASSWORD ?? 'Demo@1234',
+  password: process.env.EXPO_PUBLIC_DEMO_PASSWORD ?? '',
 } as const;
 
 // Admin so every tab (Cases, Diary, Billing) and the Users & Roles screen are reachable.
