@@ -28,7 +28,7 @@ function consentStatus(latest: Latest): string {
     return `${latest.granted ? 'Granted' : 'Withdrawn'} on ${latest.recordedAt.slice(0, 10)}`;
 }
 
-export default function ClientConsentCard({ client, canEdit, saving, onRecord }: Props) {
+export default function ClientConsentCard({ client, canEdit, saving, onRecord }: Readonly<Props>) {
     const confirm = (type: PopiaConsentType, label: string, granted: boolean) =>
         Alert.alert(
             granted ? 'Record consent' : 'Record withdrawal',

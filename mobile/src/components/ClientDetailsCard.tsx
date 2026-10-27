@@ -26,7 +26,7 @@ function validateDetails(phone: string, email: string): { title: string; message
     return null;
 }
 
-function DetailsView({ client, canEdit, onEdit }: { client: ClientProfile; canEdit: boolean; onEdit: () => void }) {
+function DetailsView({ client, canEdit, onEdit }: Readonly<{ client: ClientProfile; canEdit: boolean; onEdit: () => void }>) {
     const hasContact = Boolean(client.contactNumber || client.email || client.address);
     return (
         <Card style={styles.card}>

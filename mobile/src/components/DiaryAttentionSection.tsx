@@ -9,7 +9,7 @@ import { styles } from '@/features/reporting/dashboardStyles';
 
 export const LIST_LIMIT = 5;
 
-export default function DiaryAttentionSection({ items }: { items: Darzation[] }) {
+export default function DiaryAttentionSection({ items }: Readonly<{ items: Darzation[] }>) {
     const router = useRouter();
     return (
         <>

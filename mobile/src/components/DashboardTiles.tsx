@@ -4,7 +4,7 @@ import Card from '@/components/Card';
 import { Tile } from '../utils/dashboardTiles';
 import { styles } from '@/features/reporting/dashboardStyles';
 
-export default function DashboardTiles({ tiles }: { tiles: Tile[] }) {
+export default function DashboardTiles({ tiles }:Readonly< { tiles: Tile[] }>) {
     return (
         <View style={styles.grid}>
             {tiles.map(tile => (

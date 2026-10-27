@@ -16,7 +16,7 @@ interface Props {
     onAdd: (type: ClientContactType, value: string) => Promise<boolean>;
 }
 
-function AddContactForm({ onAdd }: { onAdd: Props['onAdd'] }) {
+function AddContactForm({ onAdd }: Readonly<{ onAdd: Props['onAdd'] }>) {
     const [type, setType] = useState<ClientContactType[]>(['Phone']);
     const [value, setValue] = useState('');
     const [adding, setAdding] = useState(false);
@@ -43,7 +43,7 @@ function AddContactForm({ onAdd }: { onAdd: Props['onAdd'] }) {
     );
 }
 
-export default function ClientContactsSection({ client, canEdit, onAdd }: Props) {
+export default function ClientContactsSection({ client, canEdit, onAdd }: Readonly<Props>) {
     const contacts = client.contacts ?? [];
     return (
         <>

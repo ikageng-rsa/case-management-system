@@ -219,7 +219,7 @@ export function registerNarrationDocumentSync(): void {
       return;
     }
     for (const doc of await getDocumentsForNarration(entry.entityId)) {
-      removeNarrationDocument(entry.entityId, doc.id);
+      void removeNarrationDocument(entry.entityId, doc.id).catch(error => {console.error('error found try to get documents in narration:',error)});
     }
   });
 }

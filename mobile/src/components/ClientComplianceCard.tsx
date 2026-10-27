@@ -25,7 +25,7 @@ function ficaSummary(client: ClientProfile): string {
     return `Verified${when}`;
 }
 
-export default function ClientComplianceCard({ client, canCompliance, offline, saving, onSave }: Props) {
+export default function ClientComplianceCard({ client, canCompliance, offline, saving, onSave }: Readonly<Props>) {
     const changeRisk = ([risk]: RiskRating[]) => {
         const allowed = Boolean(risk) && canCompliance && risk !== client.riskRating;
         if (allowed) {

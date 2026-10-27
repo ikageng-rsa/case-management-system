@@ -144,11 +144,11 @@ export async function remapTempIdLocked(
         const nextKey = key.split(tempId).join(realId);
 
         if (nextKey !== key) {
-            await AsyncStorage.removeItem(key);
+            AsyncStorage.removeItem(key);
         }
 
         if (nextKey !== key || nextRaw !== raw) {
-            await encSetItem(nextKey, nextRaw);
+            encSetItem(nextKey, nextRaw);
         }
     }
 }

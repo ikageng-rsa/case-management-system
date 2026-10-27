@@ -90,24 +90,35 @@ export default function AddNarrationScreen() {
         billable,
       });
 
-      let failed = 0;
-      for (const file of files) {
-        try {
-          attachDocumentToNarration({
-            caseId,
-            narrationId: created.id,
-            file,
-            confidentiality: confidentiality[0] ?? 'Standard',
-            uploadedById: me?.id ?? '',
-          });
-        } catch {
-          failed += 1;
-        }
+      const uploadResults = await Promise.all(
+        files.map(async file => {
+          try {
+            await attachDocumentToNarration({
+              caseId,
+              narrationId: created.id,
+              file,
+              confidentiality: confidentiality[0] ?? 'Standard',
+              uploadedById: me?.id ?? '',
+            });
+
+            return true;
+          } catch (error) {
+            console.error('Failed upload:', error);
+            return false;
+          }
+        }),
+      );
+
+      const failed = uploadResults.filter(success => !success).length;
+
+      if (failed > 0) {
+        Alert.alert(
+          'Saved with warnings',
+          `${failed} attachment(s) could not be stored. Open the entry to retry.`,
+        );
       }
-      if (failed) {
-        Alert.alert('Saved with warnings', `${failed} attachment(s) could not be stored. Open the entry to retry.`);
-      }
-      router.replace({ pathname: './cases/[caseId]/narrations/[narrationId]', params: { caseId, narrationId: created.id } });
+
+      router.replace({ pathname: '/cases/[caseId]/narrations/[narrationId]', params: { caseId, narrationId: created.id } });
     } catch (e) {
       Alert.alert('Could not save', getApiErrorMessage(e, 'Please try again.'));
     } finally {

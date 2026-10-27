@@ -9,7 +9,7 @@ import { Narration } from '@/models/index';
 import { styles } from '@/features/reporting/dashboardStyles';
 import { LIST_LIMIT } from './DiaryAttentionSection';
 
-export default function RecentActivitySection({ items }: { items: Narration[] }) {
+export default function RecentActivitySection({ items }: Readonly<{ items: Narration[] }>) {
   const router = useRouter();
   const open = (n: Narration) =>
     router.push({ pathname: '/cases/[caseId]/narrations/[narrationId]', params: { caseId: n.caseId, narrationId: n.id } });

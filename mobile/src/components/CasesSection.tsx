@@ -9,7 +9,7 @@ import { Case } from '@/models/index';
 import { styles } from '@/features/reporting/dashboardStyles';
 import { LIST_LIMIT } from './DiaryAttentionSection';
 
-export default function CasesSection({ cases, scope }: { cases: Case[]; scope: string }) {
+export default function CasesSection({ cases, scope }: Readonly<{ cases: Case[]; scope: string }>) {
     const router = useRouter();
     return (
         <>

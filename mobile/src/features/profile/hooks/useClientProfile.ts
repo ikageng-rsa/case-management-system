@@ -16,7 +16,7 @@ import { visibleCasesFor } from '@/utils/caseAccess';
 import { Case, ClientContactType, ClientProfile, PopiaConsentType } from '@/models/index';
 
 // Same rule the backend enforces for FICA status and risk rating.
-const COMPLIANCE_ROLES = ['Admin', 'Director', 'CA'];
+const COMPLIANCE_ROLES = new Set(['Admin', 'Director', 'CA']);
 
 export function useClientProfile(clientId: string) {
     const me = useAppSelector(state => state.auth.user);
@@ -81,7 +81,7 @@ export function useClientProfile(clientId: string) {
         failed,
         saving,
         canEdit: Boolean(role) && canEditRecords(role!) && !offline,
-        canCompliance: Boolean(role) && COMPLIANCE_ROLES.includes(role!) && !offline,
+        canCompliance: Boolean(role) && COMPLIANCE_ROLES.has(role!) && !offline,
         canCreateCase: canEditRecords(role ?? 'Messenger'),
         save,
         recordConsent,

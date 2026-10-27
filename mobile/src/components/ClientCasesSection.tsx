@@ -13,7 +13,7 @@ interface Props {
     canCreate: boolean;
 }
 
-export default function ClientCasesSection({ cases, clientName, canCreate }: Props) {
+export default function ClientCasesSection({ cases, clientName, canCreate }: Readonly<Props>) {
     const router = useRouter();
     return (
         <>

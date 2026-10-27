@@ -25,7 +25,7 @@ export async function syncDiaryReminders(items: Darzation[], now: Date = new Dat
 
   const plans = planReminders(items, now);
   for (const plan of plans) {
-    scheduleReminder(plan);
+    void scheduleReminder(plan).catch(error => {console.error('failed to schedule a reminder: ',error)});
   }
 
   return plans.length;

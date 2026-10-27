@@ -74,26 +74,45 @@ export default function NarrationDetailScreen() {
   // Same rule as the server: an entry is changed by whoever wrote it, or by a Director/Admin.
   const canEditEntry = canEdit && me ? item.authorId === me.id || hasGlobalVisibility(me.role) || item.syncState === 'pending' : false;
 
+
   const addDocuments = async () => {
-    const result = await DocumentPicker.getDocumentAsync({ multiple: true, copyToCacheDirectory: true });
+    const result = await DocumentPicker.getDocumentAsync({
+      multiple: true,
+      copyToCacheDirectory: true,
+    });
+
     if (result.canceled) {
       return;
     }
-    for (const asset of result.assets) {
+
+    const uploads = result.assets.map(async asset => {
       try {
-        attachDocumentToNarration({
+        await attachDocumentToNarration({
           caseId,
           narrationId,
-          file: { uri: asset.uri, name: asset.name, mimeType: asset.mimeType, size: asset.size },
+          file: {
+            uri: asset.uri,
+            name: asset.name,
+            mimeType: asset.mimeType,
+            size: asset.size,
+          },
           confidentiality: 'Standard',
           uploadedById: me?.id ?? '',
         });
-      } catch {
+      } catch (error) {
+        console.error(
+          'Failed to attach file in narration:',
+          error,
+        );
         Alert.alert('Could not store file', asset.name);
       }
-    }
+    });
+
+    await Promise.all(uploads);
+
     setDocs(await getDocumentsForNarration(narrationId));
   };
+
 
   const openDoc = async (doc: CaseDocument) => {
     const uri = doc.localUri ?? doc.uri;

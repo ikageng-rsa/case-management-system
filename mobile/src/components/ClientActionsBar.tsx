@@ -11,7 +11,7 @@ async function open(url: string, what: string) {
     }
 }
 
-function ActionButton({ label, onPress, disabled }: { label: string; onPress: () => void; disabled?: boolean }) {
+function ActionButton({ label, onPress, disabled }:Readonly< { label: string; onPress: () => void; disabled?: boolean }>) {
     return (
         <Pressable
             accessibilityRole="button"
@@ -25,7 +25,7 @@ function ActionButton({ label, onPress, disabled }: { label: string; onPress: ()
     );
 }
 
-export default function ClientActionsBar({ phone, email }: { phone?: string; email?: string }) {
+export default function ClientActionsBar({ phone, email }:Readonly< { phone?: string; email?: string }>) {
     const noPhone = !phone;
     return (
         <View style={styles.actions}>

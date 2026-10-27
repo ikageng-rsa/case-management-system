@@ -4,7 +4,6 @@ import { isAxiosError } from 'axios';
 import { cacheUpsertLocked, CacheNames, updateCacheMeta } from './cache';
 import { getActiveUserId } from './context';
 import { isDeviceOffline, isNetworkError } from './connectivity';
-import { containsTempId } from './ids';
 import { completeEntry, listOutbox, removeEntries, subscribeOutbox, updateEntry } from './outbox';
 import { bumpSyncEpoch, emitSynced, setCountsFromOutbox, setSyncStatus } from './syncStatus';
 
@@ -107,7 +106,7 @@ async function hasDependencyProblem(
 ): Promise<boolean> {
     const dependencies = tempIdsIn(next);
 
-    const missing = dependencies.find(
+    const missing = dependencies.some(
         id => !all.some(entry => entry.entityId === id),
     );
 
@@ -236,7 +235,7 @@ export async function retryEntry(id: string): Promise<void> {
         return;
     }
     for (const e of [entry, ...collectDependents(entry, all)]) {
-        updateEntry(e.id, { status: 'pending', error: undefined });
+        void updateEntry(e.id, { status: 'pending', error: undefined }).catch((error) => {console.error('failed entry update: ',error)});
     }
     await flushOutbox();
 }

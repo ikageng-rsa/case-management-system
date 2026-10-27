@@ -41,7 +41,7 @@ export function prefetchAll(force = false): Promise<boolean> {
                         fetchNarrationsForCase(id).catch(() => []),
                         fetchDocumentsForCase(id).catch(() => []),
                     ]),
-                );
+                ).catch((error) => {console.error('Failed to fetch: ',error)});
             }
             const now = new Date().toISOString();
             await updateCacheMeta({ lastPrefetchAt: now });
