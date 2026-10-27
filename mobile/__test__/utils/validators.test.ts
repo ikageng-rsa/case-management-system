@@ -22,7 +22,7 @@ describe('isValidEmail', () => {
   });
 
   it('rejects a string with no domain', () => {
-    expect(isValidEmail('ronewa@')).toBe(false);
+    expect(isValidEmail('ronewas@')).toBe(false);
   });
 
   it('rejects a string with spaces', () => {
