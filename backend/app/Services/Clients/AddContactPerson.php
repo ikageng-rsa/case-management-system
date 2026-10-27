@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Clients;
 
-use App\Models\Client;
-use App\Models\ClientContactPerson;
+use App\Models\Client\Client;
+use App\Models\Client\ClientContactPerson;
 use Illuminate\Support\Facades\DB;
 
 class AddContactPerson

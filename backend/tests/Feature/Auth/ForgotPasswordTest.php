@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Auth;
 
-use App\Models\User;
+use App\Models\User\User;
 use App\Notifications\PasswordChanged;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -90,11 +90,12 @@ class ForgotPasswordTest extends TestCase
         $this->assertSame($old, $user->fresh()->password);
     }
 
-    public function test_resetting_signs_out_other_sessions_and_is_logged(): void
+    public function test_resetting_signs_out_other_sessions_and_phones_and_is_logged(): void
     {
         config(['session.driver' => 'database']);
         $user = User::factory()->create();
         DB::table('sessions')->insert(['id' => 'elsewhere', 'user_id' => $user->getKey(), 'payload' => '', 'last_activity' => time()]);
+        $user->createToken('Pixel 9');
         $remember = $user->remember_token;
 
         $this->post(route('password.update'), [
@@ -103,6 +104,7 @@ class ForgotPasswordTest extends TestCase
         ])->assertSessionHasNoErrors();
 
         $this->assertDatabaseMissing('sessions', ['id' => 'elsewhere']);
+        $this->assertSame(0, $user->tokens()->count());
         $this->assertNotSame($remember, $user->fresh()->remember_token);
         $this->assertTrue(Activity::forSubject($user)->where('event', 'password_reset')->exists());
     }
@@ -120,12 +122,13 @@ class ForgotPasswordTest extends TestCase
         Notification::assertSentTo($user, PasswordChanged::class, fn ($n, $channels) => $channels === ['mail']);
     }
 
-    public function test_changing_it_from_my_account_signs_out_the_others_keeps_this_one_and_tells_them(): void
+    public function test_changing_it_from_my_account_signs_out_the_others_and_phones_keeps_this_one_and_tells_them(): void
     {
         Notification::fake();
         config(['session.driver' => 'database']);
         $user = User::factory()->create(['password' => Hash::make('Old-Passw0rd-here!')]);
         DB::table('sessions')->insert(['id' => 'elsewhere', 'user_id' => $user->getKey(), 'payload' => '', 'last_activity' => time()]);
+        $user->createToken('Pixel 9');
 
         $this->actingAs($user)
             ->withSession(['_token' => 't'])
@@ -135,6 +138,7 @@ class ForgotPasswordTest extends TestCase
             ])->assertSessionHasNoErrors();
 
         $this->assertDatabaseMissing('sessions', ['id' => 'elsewhere']);
+        $this->assertSame(0, $user->tokens()->count());
         Notification::assertSentTo($user, PasswordChanged::class);
         $this->assertTrue(Activity::forSubject($user)->where('event', 'password_changed')->exists());
     }

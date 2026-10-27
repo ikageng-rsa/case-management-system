@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Casts\Client;
 
-use App\Services\Clients\NormaliseIdentifier;
+use App\Support\Clients\NormaliseIdentifier;
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 use Illuminate\Database\Eloquent\Model;
 

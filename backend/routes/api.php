@@ -1,0 +1,57 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Http\Controllers\Api\V1\Account\CurrentUserController;
+use App\Http\Controllers\Api\V1\Auth\ResendSignInCodeController;
+use App\Http\Controllers\Api\V1\Auth\SignInController;
+use App\Http\Controllers\Api\V1\Auth\SignOutController;
+use App\Http\Controllers\Api\V1\Auth\VerifySignInCodeController;
+use App\Http\Controllers\Api\V1\Client\ClientController;
+use App\Http\Controllers\Api\V1\Client\RevealClientFieldController;
+use App\Http\Controllers\Api\V1\Matter\MatterAssignmentController;
+use App\Http\Controllers\Api\V1\Matter\MatterController;
+use App\Http\Controllers\Api\V1\Matter\MatterPartyController;
+use App\Http\Controllers\Api\V1\Narration\NarrationController;
+use App\Http\Controllers\Api\V1\Reference\ActivityTypeController;
+use App\Http\Controllers\Api\V1\Reference\AssignmentCapacityController;
+use App\Http\Controllers\Api\V1\Reference\DocumentKindController;
+use App\Http\Controllers\Api\V1\User\UserController;
+use Illuminate\Support\Facades\Route;
+
+Route::prefix('v1')->middleware('throttle:api')->group(function () {
+    Route::middleware('throttle:api-sign-in')->group(function () {
+        Route::post('/auth/sign-in', [SignInController::class, 'store'])->name('api.sign-in');
+        Route::post('/auth/sign-in/verify', VerifySignInCodeController::class)->name('api.sign-in.verify');
+        Route::post('/auth/sign-in/resend', ResendSignInCodeController::class)->name('api.sign-in.resend');
+    });
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/auth/sign-out', SignOutController::class)->name('api.sign-out');
+        Route::get('/me', CurrentUserController::class)->name('api.me');
+
+        // The lists the app's forms are filled from. Read only: they are kept on the web.
+        Route::get('/activity-types', [ActivityTypeController::class, 'index'])->name('api.activity-types');
+        Route::get('/assignment-capacities', [AssignmentCapacityController::class, 'index'])->name('api.assignment-capacities');
+        Route::get('/document-kinds', [DocumentKindController::class, 'index'])->name('api.document-kinds');
+        Route::get('/users', [UserController::class, 'index'])->name('api.users');
+
+        // Clients are read here, never changed: they are taken on and kept on the web.
+        Route::get('/clients', [ClientController::class, 'index'])->name('api.clients');
+        Route::get('/clients/{client}', [ClientController::class, 'show'])->name('api.clients.show');
+        Route::post('/clients/{client}/reveal', RevealClientFieldController::class)->name('api.clients.reveal');
+
+        Route::get('/matters', [MatterController::class, 'index'])->name('api.matters');
+        Route::get('/matters/{matter:id}', [MatterController::class, 'show'])->name('api.matters.show');
+        Route::get('/matters/{matter:id}/parties', [MatterPartyController::class, 'index'])->name('api.matters.parties');
+
+        Route::scopeBindings()->group(function () {
+            Route::get('/matters/{matter:id}/assignments', [MatterAssignmentController::class, 'index'])->name('api.matters.assignments');
+            Route::post('/matters/{matter:id}/assignments', [MatterAssignmentController::class, 'store'])->name('api.matters.assignments.store');
+            Route::delete('/matters/{matter:id}/assignments/{assignment}', [MatterAssignmentController::class, 'destroy'])->name('api.matters.assignments.destroy');
+        });
+
+        Route::get('/matters/{matter:id}/narrations', [NarrationController::class, 'index'])->name('api.matters.narrations');
+        Route::post('/matters/{matter:id}/narrations', [NarrationController::class, 'store'])->name('api.matters.narrations.store');
+    });
+});

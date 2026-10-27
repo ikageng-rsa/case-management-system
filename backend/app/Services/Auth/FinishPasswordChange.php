@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Auth;
 
-use App\Models\User;
+use App\Models\User\User;
 use App\Notifications\PasswordChanged;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -12,7 +12,7 @@ use Throwable;
 
 /*
  * What follows any change of password, however it was made: everyone else who
- * was signed in with the old one is signed out, the event is logged, and the
+ * was signed in with the old one is signed out, phones included, the event is logged, and the
  * person is told by email. Telling them must never undo the change.
  */
 class FinishPasswordChange
@@ -30,6 +30,9 @@ class FinishPasswordChange
                 ->when($keepSessionId, fn ($query) => $query->where('id', '!=', $keepSessionId))
                 ->delete();
         }
+
+        // A phone has no session to keep: the change was made on the web, so every phone signs in again.
+        $user->tokens()->delete();
 
         $user->recordEvent($event, $description);
 

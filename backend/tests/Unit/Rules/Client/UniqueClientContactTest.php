@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Rules\Client;
 
 use App\Enums\Client\ContactKind;
-use App\Models\Client;
+use App\Models\Client\Client;
 use App\Rules\Client\UniqueClientContact;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;

@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Tests\Feature\Audit;
 
 use App\Enums\Auth\Role as RoleEnum;
-use App\Models\Matter;
-use App\Models\Narration;
-use App\Models\User;
+use App\Models\Matter\Matter;
+use App\Models\Narration\Narration;
+use App\Models\User\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Activitylog\Models\Activity;
@@ -147,6 +147,19 @@ class AuditLogControllerTest extends TestCase
             ->get(route('audit-log'))
             ->assertOk()
             ->assertViewHas('activities', fn ($page) => $page->first()->causer === null);
+    }
+
+    public function test_an_entry_by_someone_since_deactivated_still_names_them(): void
+    {
+        Activity::query()->delete();
+        $former = $this->userWithRole(RoleEnum::Attorney, ['name' => 'Lerato Former']);
+        $entry = $this->entry('updated', $former);
+        $former->delete();
+
+        $this->actingAs($this->userWithRole(RoleEnum::Director))
+            ->get(route('audit-log', ['action' => 'updated']))
+            ->assertOk()
+            ->assertViewHas('details', fn ($details) => $details[$entry->getKey()]['actor'] === 'Lerato Former');
     }
 
     public function test_the_export_follows_its_own_permission(): void

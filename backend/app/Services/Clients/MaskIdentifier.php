@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Clients;
 
+use App\Enums\Client\ContactKind;
 use Illuminate\Support\Str;
 
 /*
@@ -62,6 +63,12 @@ class MaskIdentifier
             : Str::mask($value, self::DOT, 0, -$keep);
     }
 
+    /** A date of birth gives nothing away until it is read in full: "·· ··· ····". */
+    public static function dateOfBirth(): string
+    {
+        return '·· ··· ····';
+    }
+
     /** 2011/123456/07 reads as "2011/······/07". */
     public static function registrationNumber(string $value): string
     {
@@ -72,6 +79,16 @@ class MaskIdentifier
         }
 
         return $parts[0].'/'.Str::mask($parts[1], self::DOT, 0).'/'.$parts[2];
+    }
+
+    /** A contact on file, masked the way its kind is: a number, an address, or a place. */
+    public static function contact(ContactKind $kind, string $value): string
+    {
+        return match ($kind) {
+            ContactKind::Mobile => self::mobile($value),
+            ContactKind::Email => self::email($value),
+            default => self::address($value),
+        };
     }
 
     /** 1142 Boitekong Ext 4, Rustenburg reads as "1142 Boi···". Enough to recognise, not to find. */

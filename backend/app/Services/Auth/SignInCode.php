@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Auth;
 
-use App\Models\User;
+use App\Models\User\User;
 use App\Notifications\SignInCodeNotification;
 use Illuminate\Support\Facades\Cache;
 

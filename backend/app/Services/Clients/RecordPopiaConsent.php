@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Services\Clients;
 
 use App\Enums\Client\PopiaConsentMethod;
-use App\Models\Client;
-use App\Models\PopiaConsent;
+use App\Models\Client\Client;
+use App\Models\Client\PopiaConsent;
 use Carbon\CarbonInterface;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;

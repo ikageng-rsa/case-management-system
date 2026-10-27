@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services\Diary;
 
-use App\Models\DiaryEntry;
-use App\Models\Narration;
-use App\Models\User;
+use App\Models\Diary\DiaryEntry;
+use App\Models\Narration\Narration;
+use App\Models\User\User;
 
 /*
  * Marks a diarised action done, recording who completed it and, optionally,

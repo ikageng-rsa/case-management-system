@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
-use App\Models\DiaryEntry;
+use App\Models\Diary\DiaryEntry;
 use App\Notifications\DiaryEntryDueSoon;
 use App\Services\Notifications\NotifyUser;
 use Illuminate\Console\Attributes\Description;

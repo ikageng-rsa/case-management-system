@@ -4,25 +4,31 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Models\ActivityType;
-use App\Models\Client;
-use App\Models\ClientContact;
-use App\Models\ClientContactPerson;
-use App\Models\Court;
-use App\Models\DiaryEntry;
-use App\Models\Matter;
-use App\Models\MatterAssignment;
-use App\Models\MatterParty;
-use App\Models\MatterType;
-use App\Models\Media;
-use App\Models\Narration;
-use App\Models\NotificationPreference;
-use App\Models\PopiaConsent;
-use App\Models\Role;
-use App\Models\User;
-use App\Models\UserInvitation;
+use App\Models\Client\Client;
+use App\Models\Client\ClientContact;
+use App\Models\Client\ClientContactPerson;
+use App\Models\Client\PopiaConsent;
+use App\Models\Diary\DiaryEntry;
+use App\Models\Document\Media;
+use App\Models\Invitation\UserInvitation;
+use App\Models\Matter\Matter;
+use App\Models\Matter\MatterAssignment;
+use App\Models\Matter\MatterParty;
+use App\Models\Narration\Narration;
+use App\Models\Reference\ActivityType;
+use App\Models\Reference\Court;
+use App\Models\Reference\MatterType;
+use App\Models\User\NotificationPreference;
+use App\Models\User\Role;
+use App\Models\User\User;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
+use Laravel\Sanctum\PersonalAccessToken;
+use Laravel\Sanctum\Sanctum;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -61,5 +67,24 @@ class AppServiceProvider extends ServiceProvider
             'user_invitation' => UserInvitation::class,
             'notification_preference' => NotificationPreference::class,
         ]);
+
+        // The API, per signed-in user, or per address before sign-in.
+        RateLimiter::for('api', function (Request $request) {
+            return Limit::perMinute(60)->by($request->user('sanctum')?->getKey() ?: $request->ip());
+        });
+
+        // Guessing at passwords or codes, held to a few tries per address or challenge.
+        RateLimiter::for('api-sign-in', function (Request $request) {
+            $who = Str::lower((string) ($request->input('email') ?? $request->input('challenge_id')));
+
+            return Limit::perMinute(5)->by("{$who}|{$request->ip()}");
+        });
+
+        // A token lapses once it has gone unused too long, not a fixed time after it was given.
+        Sanctum::authenticateAccessTokensUsing(function (PersonalAccessToken $token, bool $isValid): bool {
+            $lastUsed = $token->last_used_at ?? $token->created_at;
+
+            return $isValid && $lastUsed->gt(now()->subDays((int) config('security.api_tokens.idle_days')));
+        });
     }
 }

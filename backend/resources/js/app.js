@@ -146,11 +146,59 @@ document.addEventListener('click', (event) => {
 
 
 /*
- * The client intake form: which identity fields apply to the kind of client,
- * and whether the matter being opened alongside is before a court.
+ * On a wide screen, an element as tall as what is left of the window below its
+ * top edge, less whatever the page puts beneath it, so the page itself has
+ * nothing to scroll and what is inside the element scrolls instead. On a narrow
+ * screen it is left its natural height and the page scrolls as usual.
  */
-Alpine.data('clientIntake', ({ type = 'individual', matterTypeId = '', matterTypes = {} } = {}) => ({
+Alpine.data('fillHeight', () => ({
+    frame: null,
+    wide: window.matchMedia('(min-width: 992px)'),
+
+    init() {
+        this.refit = () => {
+            cancelAnimationFrame(this.frame);
+            this.frame = requestAnimationFrame(() => this.fit());
+        };
+
+        this.fit();
+        window.addEventListener('resize', this.refit, { passive: true });
+    },
+
+    destroy() {
+        window.removeEventListener('resize', this.refit);
+    },
+
+    fit() {
+        if (! this.wide.matches) {
+            this.$el.style.height = '';
+
+            return;
+        }
+
+        // Taller than the window while measuring, so the page runs past the bottom and what
+        // lies under the element is measured, not the empty space left by a short page.
+        this.$el.style.height = `${window.innerHeight * 2}px`;
+
+        const rect = this.$el.getBoundingClientRect();
+        const top = rect.top + window.scrollY;
+        // The padding and anything else the page lays out under the element.
+        const below = document.documentElement.scrollHeight - (rect.bottom + window.scrollY);
+
+        this.$el.style.height = `${Math.max(window.innerHeight - top - below, 0)}px`;
+    },
+}));
+
+/*
+ * The client intake form: which identity fields apply to the kind of client,
+ * which document an individual's number belongs to, how consent was given
+ * when it was, and whether the matter being opened alongside is before a court.
+ */
+Alpine.data('clientIntake', ({ type = 'individual', idType = 'sa_id', consent = false, consentMethod = 'signed_mandate', matterTypeId = '', matterTypes = {} } = {}) => ({
     type,
+    idType,
+    consent,
+    consentMethod,
     matterTypeId,
     matterTypes,
 

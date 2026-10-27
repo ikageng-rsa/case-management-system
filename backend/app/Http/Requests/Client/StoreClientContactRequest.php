@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Client;
 
 use App\Enums\Client\ContactKind;
-use App\Models\Client;
+use App\Models\Client\Client;
 use App\Rules\Client\UniqueClientContact;
 use App\Rules\Client\ValidContactValue;
 use Illuminate\Contracts\Validation\ValidationRule;

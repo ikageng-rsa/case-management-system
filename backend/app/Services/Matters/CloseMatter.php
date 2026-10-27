@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Matters;
 
-use App\Models\Matter;
+use App\Models\Matter\Matter;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Auth;
 

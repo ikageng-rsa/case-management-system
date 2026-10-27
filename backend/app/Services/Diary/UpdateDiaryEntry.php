@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Diary;
 
-use App\Models\DiaryEntry;
-use App\Models\Narration;
+use App\Models\Diary\DiaryEntry;
+use App\Models\Narration\Narration;
 use Carbon\CarbonInterface;
 
 /*
