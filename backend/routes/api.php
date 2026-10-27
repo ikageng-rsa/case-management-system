@@ -8,6 +8,11 @@ use App\Http\Controllers\Api\V1\Auth\SignInController;
 use App\Http\Controllers\Api\V1\Auth\SignOutController;
 use App\Http\Controllers\Api\V1\Auth\VerifySignInCodeController;
 use App\Http\Controllers\Api\V1\Client\ClientController;
+use App\Http\Controllers\Api\V1\Client\RevealClientFieldController;
+use App\Http\Controllers\Api\V1\Matter\MatterAssignmentController;
+use App\Http\Controllers\Api\V1\Matter\MatterController;
+use App\Http\Controllers\Api\V1\Matter\MatterPartyController;
+use App\Http\Controllers\Api\V1\Narration\NarrationController;
 use App\Http\Controllers\Api\V1\Reference\ActivityTypeController;
 use App\Http\Controllers\Api\V1\Reference\AssignmentCapacityController;
 use App\Http\Controllers\Api\V1\Reference\DocumentKindController;
@@ -34,5 +39,19 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
         // Clients are read here, never changed: they are taken on and kept on the web.
         Route::get('/clients', [ClientController::class, 'index'])->name('api.clients');
         Route::get('/clients/{client}', [ClientController::class, 'show'])->name('api.clients.show');
+        Route::post('/clients/{client}/reveal', RevealClientFieldController::class)->name('api.clients.reveal');
+
+        Route::get('/matters', [MatterController::class, 'index'])->name('api.matters');
+        Route::get('/matters/{matter:id}', [MatterController::class, 'show'])->name('api.matters.show');
+        Route::get('/matters/{matter:id}/parties', [MatterPartyController::class, 'index'])->name('api.matters.parties');
+
+        Route::scopeBindings()->group(function () {
+            Route::get('/matters/{matter:id}/assignments', [MatterAssignmentController::class, 'index'])->name('api.matters.assignments');
+            Route::post('/matters/{matter:id}/assignments', [MatterAssignmentController::class, 'store'])->name('api.matters.assignments.store');
+            Route::delete('/matters/{matter:id}/assignments/{assignment}', [MatterAssignmentController::class, 'destroy'])->name('api.matters.assignments.destroy');
+        });
+
+        Route::get('/matters/{matter:id}/narrations', [NarrationController::class, 'index'])->name('api.matters.narrations');
+        Route::post('/matters/{matter:id}/narrations', [NarrationController::class, 'store'])->name('api.matters.narrations.store');
     });
 });
