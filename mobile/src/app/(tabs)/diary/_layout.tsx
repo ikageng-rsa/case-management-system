@@ -7,6 +7,9 @@ export default function DiaryLayout() {
     <Stack screenOptions={stackScreenOptions}>
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="overdue" options={{ title: 'Overdue' }} />
+      <Stack.Screen name="new" options={{ title: 'New Diary Item' }} />
+      <Stack.Screen name="edit" options={{ title: 'Edit Diary Item' }} />
+      <Stack.Screen name="[darzationId]" options={{ title: 'Diary Item' }} />
     </Stack>
   );
 }

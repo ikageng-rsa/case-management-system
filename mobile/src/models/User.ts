@@ -1,3 +1,5 @@
+import { TwoFactorMethod } from "./TwoFactor";
+
 export type UserRole = 'Admin' | 'Director' | 'CA' | 'Secretary' | 'Messenger';
 
 export interface User {
@@ -5,4 +7,6 @@ export interface User {
   fullName: string;
   email: string;
   role: UserRole;
+  phoneNumber?: string; // SA format (+27xxxxxxxxx or 0xxxxxxxxx) — used for SMS OTP and overdue SMS alerts
+  twoFactorMethod?: TwoFactorMethod
 }

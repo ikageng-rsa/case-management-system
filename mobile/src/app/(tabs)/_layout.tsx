@@ -4,6 +4,7 @@ import { Tabs } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAppSelector } from '@/hooks/useAppDispatch';
 import { canAccessTab } from '@/constants/roles';
+import { useUnreadCounts } from '@/hooks/useUnreadNotifications';
 import { colors } from '@/theme/index';
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
@@ -20,13 +21,24 @@ const ICONS = {
   home: makeTabIcon('view-dashboard-outline'),
   cases: makeTabIcon('briefcase-outline'),
   diary: makeTabIcon('calendar-clock-outline'),
-  billing: makeTabIcon('cash-multiple'),
   more: makeTabIcon('dots-horizontal-circle-outline'),
 };
 
 export default function TabsLayout() {
   const role = useAppSelector(state => state.auth.user?.role);
+  const unread = useUnreadCounts();
+  const badge = (n: number) => {
+    if(n <= 0){
+      return undefined;
+    }
+
+    if(n > 99){
+      return '99+';
+    }
+    return n;
+  };
   const can = (tab: string) => (role ? canAccessTab(tab, role) : false);
+
 
   return (
     <Tabs
@@ -40,15 +52,12 @@ export default function TabsLayout() {
       {/* Tabs.Protected removes the tab (and blocks its URLs) for roles without access —
           keep TAB_ACCESS in constants/roles.ts as the single source of truth. */}
       <Tabs.Protected guard={can('Cases')}>
-        <Tabs.Screen name="cases" options={{ title: 'Cases', tabBarIcon: ICONS.cases }} />
+        <Tabs.Screen name="cases" options={{ title: 'Cases', tabBarIcon: ICONS.cases, tabBarBadge: badge(unread.cases) }} />
       </Tabs.Protected>
       <Tabs.Protected guard={can('Diary')}>
-        <Tabs.Screen name="diary" options={{ title: 'Diary', tabBarIcon: ICONS.diary }} />
+        <Tabs.Screen name="diary" options={{ title: 'Diary', tabBarIcon: ICONS.diary,  tabBarBadge: badge(unread.diary) }} />
       </Tabs.Protected>
-      <Tabs.Protected guard={can('Billing')}>
-        <Tabs.Screen name="billing" options={{ title: 'Billing', tabBarIcon: ICONS.billing }} />
-      </Tabs.Protected>
-      <Tabs.Screen name="more" options={{ title: 'More', tabBarIcon: ICONS.more }} />
+      <Tabs.Screen name="more" options={{ title: 'More', tabBarIcon: ICONS.more,  tabBarBadge: badge(unread.total) }} />
     </Tabs>
   );
 }

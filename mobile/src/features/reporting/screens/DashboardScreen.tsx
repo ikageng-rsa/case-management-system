@@ -1,73 +1,49 @@
-import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import React from 'react';
+import { RefreshControl, ScrollView, Text } from 'react-native';
 import { useRouter } from 'expo-router';
-import Card from '@/components/Card';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { fetchDashboardSummary, DashboardSummary } from '@/api/endpoint/reports.api';
-import { colors, spacing, typography } from '@/theme/index';
+import { useAppSelector } from '@/hooks/useAppDispatch';
+import { canAccessTab } from '@/constants/roles';
+import { useDashboardData } from '@/features/reporting/hooks/useDashboardData';
+import { buildTiles } from '@/utils/dashboardTiles';
+import DashboardTiles from '@/components/DashboardTiles';
+import DiaryAttentionSection from '@/components/DiaryAttentionSection';
+import CasesSection from '@/components/CasesSection';
+import RecentActivitySection from '@/components/RecentActivitySection';
+import { styles } from '@/features/reporting/dashboardStyles';
+
+const SCOPE_TEXT = {
+  firm: 'Firm-wide view — all cases, diary items and activity',
+  mine: 'Your view — cases you are assigned to or have worked on',
+};
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const [summary, setSummary] = useState<DashboardSummary | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchDashboardSummary()
-      .then(setSummary)
-      .catch(error => console.error('Error found in dashboard: ',error))
-      .finally(() => setLoading(false));
-  }, []);
+  const role = useAppSelector(state => state.auth.user?.role);
+  const { data, loading, error, reload } = useDashboardData();
 
   if (loading) {
     return <LoadingSpinner />;
   }
-  if (!summary) {
-    return null;
-  }
 
-  const tiles: { label: string; value: number; color: string; onPress?: () => void }[] = [
-    {
-      label: 'Open cases',
-      value: summary.openCases,
-      color: colors.navy,
-      onPress: () => router.navigate('/(tabs)/cases/index'),
-    },
-    {
-      label: 'Overdue diary items',
-      value: summary.overdueDarzations,
-      color: colors.red,
-      onPress: () => router.navigate('/(tabs)/diary'),
-    },
-    {
-      label: 'Unbilled entries',
-      value: summary.unbilledEntries,
-      color: colors.gold,
-      onPress: () => router.navigate('/(tabs)/billing'),
-    },
-    { label: 'Documents this week', value: summary.documentsThisWeek, color: colors.green },
-  ];
+  const showCases = !!role && canAccessTab('Cases', role);
+  const showDiary = !!role && canAccessTab('Diary', role);
+  const tiles = buildTiles(data.stats, { showCases, showDiary }, router);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      refreshControl={<RefreshControl refreshing={false} onRefresh={reload} />}
+    >
       <Text style={styles.title}>Dashboard</Text>
-      <View style={styles.grid}>
-        {tiles.map(tile => (
-          <Card key={tile.label} style={styles.tile}>
-            <Text style={[styles.tileValue, { color: tile.color }]}>{tile.value}</Text>
-            <Text style={styles.tileLabel}>{tile.label}</Text>
-          </Card>
-        ))}
-      </View>
+      <Text style={styles.scope}>{data.scope === 'firm' ? SCOPE_TEXT.firm : SCOPE_TEXT.mine}</Text>
+      {error ? <Text style={styles.error}>{error}</Text> : null}
+
+      <DashboardTiles tiles={tiles} />
+      {showDiary ? <DiaryAttentionSection items={data.overdue} /> : null}
+      {showCases ? <CasesSection cases={data.cases} scope={data.scope} /> : null}
+      {showCases ? <RecentActivitySection items={data.narrations} /> : null}
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.lg },
-  title: { ...typography.h1, color: colors.navy, marginBottom: spacing.md },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
-  tile: { width: '47%' },
-  tileValue: { ...typography.h1, fontSize: 32 },
-  tileLabel: { ...typography.body, color: colors.textSecondary, marginTop: spacing.xs },
-});

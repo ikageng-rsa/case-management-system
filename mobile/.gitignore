@@ -32,6 +32,7 @@ yarn-error.*
 
 # local env files
 .env*.local
+.env.example
 
 # Env
 .env
@@ -44,3 +45,7 @@ example
 # generated native folders
 /ios
 /android
+
+
+#ignore the mock api folder
+mock-api/

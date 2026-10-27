@@ -4,6 +4,10 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import QueryProvider from '@/providers/QueryProvider';
 import ThemeProvider from '@/providers/ThemeProvider';
 import AuthProvider from '@/providers/AuthProvider';
+import NotificationProvider from '@/providers/NotificationProvider';
+import SyncProvider from '@/providers/SyncProvider';
+import DeviceSecurityProvider from '@/providers/DeviceSecurityProvider';
+import SyncStatusBar from '@/components/SyncStatusBar';
 import OfflineBanner from '@/components/OfflineBanner';
 import { useAppSelector } from '@/hooks/useAppDispatch';
 import { useNetInfo } from '@/hooks/useNetInfo';
@@ -17,8 +21,15 @@ export default function RootLayout() {
       <AuthProvider>
         <SafeAreaProvider>
           <ThemeProvider>
-            <OfflineBannerHost />
-            <RootNavigator />
+            <DeviceSecurityProvider>
+              <OfflineBannerHost />
+              <SyncProvider>
+                <NotificationProvider>
+                  <SyncStatusHost />
+                  <RootNavigator />
+                </NotificationProvider>
+              </SyncProvider>
+            </DeviceSecurityProvider>
           </ThemeProvider>
         </SafeAreaProvider>
       </AuthProvider>
@@ -41,6 +52,15 @@ function OfflineBannerHost() {
       <OfflineBanner />
     </SafeAreaView>
   );
+}
+
+/** Sync progress strip; only exists while someone is signed in (it links into the signed-in area). */
+function SyncStatusHost() {
+  const isSignedIn = useAppSelector(state => state.auth.user !== null);
+  if (!isSignedIn) {
+    return null;
+  }
+  return <SyncStatusBar />;
 }
 
 /**

@@ -2,15 +2,17 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Card from '@/components/Card';
 import CaseStatusBadge from './CaseStatusBadge';
+import PriorityBadge from '@/components/PriorityBadge';
+import SyncBadge from '@/components/SyncBadge';
 import { colors, spacing, typography } from '@/theme/index';
 import { Case } from '@/models/index';
 
 interface CaseCardProps {
-  readonly item: Case;
-  readonly onPress: () => void;
+  item: Case;
+  onPress: () => void;
 }
 
-export default function CaseCard({ item, onPress }: CaseCardProps) {
+export default function CaseCard({ item, onPress }:Readonly<CaseCardProps>) {
   return (
     <Pressable onPress={onPress}>
       <Card>
@@ -20,6 +22,8 @@ export default function CaseCard({ item, onPress }: CaseCardProps) {
         </View>
         <Text style={styles.client}>{item.clientName}</Text>
         <Text style={styles.matterType}>{item.matterType}</Text>
+        {item.priority ? <PriorityBadge priority={item.priority} /> : null}
+        <SyncBadge state={item.syncState} />
       </Card>
     </Pressable>
   );

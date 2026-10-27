@@ -10,9 +10,16 @@ import { User } from '@/models/index';
 export const isDemoLoginEnabled: boolean =
   __DEV__ || process.env.EXPO_PUBLIC_ENABLE_DEMO_LOGIN === 'true';
 
+/**
+ * Once EXPO_PUBLIC_API_BASE_URL is set you're talking to a real (or mock) backend,
+ * so the demo account stops short-circuiting locally and only pre-fills the form —
+ * the credentials are then checked by the server (the mock API seeds this same user).
+ */
+const usesBackend = Boolean(process.env.EXPO_PUBLIC_API_BASE_URL);
+
 export const DEMO_CREDENTIALS = {
   email: process.env.EXPO_PUBLIC_DEMO_EMAIL ?? 'demo@legalcms.co.za',
-  password: process.env.EXPO_PUBLIC_DEMO_PASSWORD,
+  password: process.env.EXPO_PUBLIC_DEMO_PASSWORD ?? '',
 } as const;
 
 // Admin so every tab (Cases, Diary, Billing) and the Users & Roles screen are reachable.
@@ -29,6 +36,7 @@ export const DEMO_TOKEN = 'demo-token';
 export function isDemoLogin(email: string, password: string): boolean {
   return (
     isDemoLoginEnabled &&
+    !usesBackend &&
     email.trim().toLowerCase() === DEMO_CREDENTIALS.email.toLowerCase() &&
     password === DEMO_CREDENTIALS.password
   );

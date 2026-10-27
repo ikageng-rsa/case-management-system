@@ -7,3 +7,4 @@ Thumbs.db
 .vscode/
 *.swp
 .claude/
+mobile/.env.example
