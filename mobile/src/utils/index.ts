@@ -4,3 +4,4 @@ export * from './formatFileReference';
 export * from './validators';
 export * from './debounce';
 export * from './popiaLogger';
+export {formatDuration} from './formatDuration';

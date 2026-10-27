@@ -14,4 +14,15 @@ export interface ClientProfile {
   email: string;
   ficaVerified: boolean;
   riskRating: 'Low' | 'Medium' | 'High';
+  // Filled in by GET /clients/{id} (the backend never returns the raw ID number, only a masked copy).
+  idNumberMasked?: string;
+  address?: string;
+  notes?: string;
+  ficaVerifiedAt?: string;
+  contacts?: import('./ClientContact').ClientContact[];
+  consents?: import('./PopiaConsent').PopiaConsent[];
+  caseIds?: string[];
+  openCases?: number;
 }
+
+export type RiskRating = ClientProfile['riskRating'];

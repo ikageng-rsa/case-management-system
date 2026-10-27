@@ -8,7 +8,7 @@ import { useLogin } from '@/features/auth/hooks/useLogin';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { email, setEmail, password, setPassword, submit, loading, error } = useLogin();
+  const { email, setEmail, password, setPassword, submit, loading, error, demoEnable } = useLogin();
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -36,11 +36,12 @@ export default function LoginScreen() {
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
       <Button label="Sign In" onPress={submit} loading={loading} />
+      {demoEnable ? <Text style={styles.demoHint}>Demo account pre-filled — just tap Sign In.</Text> : null}
 
       <Button
         label="Forgot password?"
         variant="secondary"
-        onPress={() => router.push('/reset-password')}
+        onPress={() => router.push('/forgot-password')}
         style={styles.secondaryButton}
       />
     </KeyboardAvoidingView>
@@ -72,8 +73,15 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     textAlign: 'center',
   },
+  demoHint: {
+    ...typography.body,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: spacing.sm,
+  },
   secondaryButton: {
     marginTop: spacing.sm,
     borderColor: 'transparent',
   },
 });
+

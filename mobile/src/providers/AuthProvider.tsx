@@ -4,9 +4,13 @@ import { getAuthToken, clearAuthToken } from '@/api/client';
 import { fetchCurrentUser } from '@/api/endpoint/auth.api';
 import { useAppDispatch } from '@/hooks/useAppDispatch';
 import { setUser } from '@/features/auth/store/authSlice';
+import { DEMO_TOKEN, DEMO_USER, isDemoLoginEnabled } from '@/constants/demoUser';
+import { getSessionUser, saveSessionUser, clearSessionUser } from '@/features/auth/services/offlineAuth';
+import { isDeviceOffline } from '@/offline/connectivity';
+import { isAxiosError } from 'axios';
 
 // Keep the native splash up until the persisted session has been checked.
-SplashScreen.preventAutoHideAsync().catch(() => {});
+SplashScreen.preventAutoHideAsync().catch(() => { });
 
 /**
  * On cold start: if a token was persisted from a previous session, verify it
@@ -23,21 +27,44 @@ export default function AuthProvider({ children }: PropsWithChildren) {
     void (async () => {
       try {
         const token = await getAuthToken();
-
         if (!token) {
           return;
         }
-
+        // A demo session has no server-side counterpart, so restore it locally.
+        if (isDemoLoginEnabled && !process.env.EXPO_PUBLIC_API_BASE_URL && token === DEMO_TOKEN) {
+          dispatch(setUser(DEMO_USER));
+          return;
+        }
+        // Offline: keep the user signed in with the profile saved at their last online sign-in.
+        const restoreOffline = async () => {
+          const saved = await getSessionUser();
+          dispatch(setUser(saved));
+          if (!saved) {
+            await clearAuthToken();
+          }
+        };
+        if (await isDeviceOffline()) {
+          await restoreOffline();
+          return;
+        }
         try {
           const user = await fetchCurrentUser();
+          await saveSessionUser(user).catch(() => { });
           dispatch(setUser(user));
-        } catch {
-          await clearAuthToken();
-          dispatch(setUser(null));
+        } catch (error) {
+          if (isAxiosError(error) && error.response?.status === 401) {
+            // The server no longer accepts this session.
+            await clearAuthToken();
+            await clearSessionUser();
+            dispatch(setUser(null));
+          } else {
+            // Server unreachable / timed out: same as offline — don't throw the user out.
+            await restoreOffline();
+          }
         }
       } finally {
         setReady(true);
-        SplashScreen.hideAsync().catch(() => {});
+        SplashScreen.hideAsync().catch(() => { });
       }
     })();
   }, [dispatch]);
