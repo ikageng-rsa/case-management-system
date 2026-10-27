@@ -7,7 +7,6 @@ import { isDeviceOffline, isNetworkError } from './connectivity';
 import { containsTempId } from './ids';
 import { completeEntry, listOutbox, removeEntries, subscribeOutbox, updateEntry } from './outbox';
 import { bumpSyncEpoch, emitSynced, setCountsFromOutbox, setSyncStatus } from './syncStatus';
-import { OutboxEntry } from './types';
 
 const TEMP_TOKEN = /tmp_[a-f0-9]{16}/g;
 
@@ -16,8 +15,8 @@ type EntryDoneHandler = (entry: OutboxEntry, serverRecord: Record<string, any>) 
 type EntryDiscardHandler = (entry: OutboxEntry) => Promise<void>;
 const doneHandlers: EntryDoneHandler[] = [];
 const discardHandlers: EntryDiscardHandler[] = [];
-export const onEntrySynced = (h: EntryDoneHandler): void => void doneHandlers.push(h);
-export const onEntryDiscarded = (h: EntryDiscardHandler): void => void discardHandlers.push(h);
+export const onEntrySynced = (h: EntryDoneHandler): void => { doneHandlers.push(h) };
+export const onEntryDiscarded = (h: EntryDiscardHandler): void => { discardHandlers.push(h) };
 
 const tempIdsIn = (entry: OutboxEntry): string[] =>
     [...new Set(`${entry.url} ${JSON.stringify(entry.body ?? '')}`.match(TEMP_TOKEN) ?? [])];
@@ -70,7 +69,7 @@ async function sendEntry(entry: OutboxEntry): Promise<Outcome> {
             bumpSyncEpoch();
         });
         for (const handler of doneHandlers) {
-            await handler(entry, data).catch(() => { });
+            handler(entry, data).catch(() => { });
         }
         return 'done';
     } catch (error) {
@@ -98,6 +97,73 @@ async function sendEntry(entry: OutboxEntry): Promise<Outcome> {
 
 let running: Promise<void> | null = null;
 
+type OutboxEntries = Awaited<ReturnType<typeof listOutbox>>;
+type OutboxEntry = OutboxEntries[number];
+type SendOutcome = Awaited<ReturnType<typeof sendEntry>>;
+
+async function hasDependencyProblem(
+    all: OutboxEntries,
+    next: OutboxEntry,
+): Promise<boolean> {
+    const dependencies = tempIdsIn(next);
+
+    const missing = dependencies.find(
+        id => !all.some(entry => entry.entityId === id),
+    );
+
+    if (missing) {
+        await updateEntry(next.id, {
+            status: 'failed',
+            error: 'It depends on an item that was discarded or never saved.',
+        });
+        return true;
+    }
+
+    const blocker = all.find(
+        entry =>
+            entry.id !== next.id &&
+            entry.status !== 'pending' &&
+            dependencies.includes(entry.entityId),
+    );
+
+    if (blocker) {
+        await updateEntry(next.id, {
+            status: 'blocked',
+            error: `Waiting for "${blocker.label}", which needs attention.`,
+        });
+        return true;
+    }
+
+    return false;
+}
+
+
+function shouldStopSync(outcome: SendOutcome): boolean {
+    switch (outcome) {
+        case 'auth':
+            setSyncStatus({
+                authRequired: true,
+                lastError:
+                    'Your saved sign-in has expired. Sign in again while online to sync.',
+            });
+            return true;
+
+        case 'offline':
+        case 'retry-later':
+            setSyncStatus({
+                lastError:
+                    outcome === 'offline'
+                        ? 'No connection — will retry.'
+                        : 'The server is busy — will retry.',
+            });
+            return true;
+
+        default:
+            return false;
+    }
+}
+
+
 /**
  * Sends everything in the outbox, oldest first, stopping as soon as the connection drops.
  * Safe to call from anywhere, any number of times: overlapping calls share one run.
@@ -106,53 +172,51 @@ export function flushOutbox(): Promise<void> {
     if (running) {
         return running;
     }
+
     running = (async () => {
         if (!getActiveUserId() || (await isDeviceOffline())) {
             await refreshOutboxCounts();
             return;
         }
+
         setSyncStatus({ syncing: true, lastError: null });
         let completed = 0;
+
         try {
-            for (; ;) {
+            while (true) {
                 const all = await listOutbox();
-                const next = all.find(e => e.status === 'pending');
+                const next = all.find(entry => entry.status === 'pending');
+
                 if (!next) {
                     break;
                 }
 
-                // Needs something created offline first? That create is earlier in the queue (so already
-                // sent) unless it failed or was discarded.
-                const missing = tempIdsIn(next).find(t => !all.some(e => e.entityId === t));
-                if (missing) {
-                    await updateEntry(next.id, { status: 'failed', error: 'It depends on an item that was discarded or never saved.' });
-                    continue;
-                }
-                const blocker = all.find(e => e.id !== next.id && e.status !== 'pending' && tempIdsIn(next).includes(e.entityId));
-                if (blocker) {
-                    await updateEntry(next.id, { status: 'blocked', error: `Waiting for "${blocker.label}", which needs attention.` });
+                if (await hasDependencyProblem(all, next)) {
                     continue;
                 }
 
                 const outcome = await sendEntry(next);
+
                 if (outcome === 'done') {
                     completed += 1;
-                } else if (outcome === 'auth') {
-                    setSyncStatus({ authRequired: true, lastError: 'Your saved sign-in has expired. Sign in again while online to sync.' });
-                    break;
-                } else if (outcome === 'offline' || outcome === 'retry-later') {
-                    setSyncStatus({ lastError: outcome === 'offline' ? 'No connection — will retry.' : 'The server is busy — will retry.' });
+                    continue;
+                }
+
+                if (shouldStopSync(outcome)) {
                     break;
                 }
             }
+
             if (completed > 0) {
                 const now = new Date().toISOString();
+
                 await updateCacheMeta({ lastSyncAt: now });
                 setSyncStatus({ lastSyncAt: now, authRequired: false });
             }
         } finally {
             await refreshOutboxCounts();
             setSyncStatus({ syncing: false });
+
             if (completed > 0) {
                 emitSynced();
             }
@@ -160,6 +224,7 @@ export function flushOutbox(): Promise<void> {
     })().finally(() => {
         running = null;
     });
+
     return running;
 }
 
@@ -171,7 +236,7 @@ export async function retryEntry(id: string): Promise<void> {
         return;
     }
     for (const e of [entry, ...collectDependents(entry, all)]) {
-        await updateEntry(e.id, { status: 'pending', error: undefined });
+        updateEntry(e.id, { status: 'pending', error: undefined });
     }
     await flushOutbox();
 }
@@ -190,7 +255,7 @@ export async function discardEntry(id: string): Promise<void> {
     await removeEntries(doomed.map(e => e.id));
     for (const d of doomed) {
         for (const handler of discardHandlers) {
-            await handler(d).catch(() => { });
+            handler(d).catch(() => { });
         }
     }
     await refreshOutboxCounts();
@@ -204,4 +269,4 @@ export function startOutboxWatcher(): () => void {
     });
 }
 
-export { containsTempId };
+export { containsTempId } from './ids';

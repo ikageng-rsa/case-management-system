@@ -93,7 +93,7 @@ export default function AddNarrationScreen() {
       let failed = 0;
       for (const file of files) {
         try {
-          await attachDocumentToNarration({
+          attachDocumentToNarration({
             caseId,
             narrationId: created.id,
             file,

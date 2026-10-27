@@ -11,7 +11,7 @@ const PRIORITY_COLORS: Record<Priority, { fg: string; bg: string }> = {
     Urgent: { fg: colors.red, bg: colors.redTint },
 };
 
-export default function PriorityBadge({ priority }: { priority: Priority }) {
+export default function PriorityBadge({ priority }: Readonly<{ priority: Priority }>) {
     const { fg, bg } = PRIORITY_COLORS[priority] ?? PRIORITY_COLORS.Medium;
     return (
         <View style={[styles.badge, { backgroundColor: bg }]}>

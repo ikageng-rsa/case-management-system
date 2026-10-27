@@ -22,7 +22,7 @@ export function configureNotificationHandler(): void {
     }
     handlerConfigured = true;
     Notifications.setNotificationHandler({
-        handleNotification: async () => ({
+        handleNotification: () => Promise.resolve ({
             shouldShowAlert: true,
             shouldShowBanner: true,
             shouldShowList: true,

@@ -36,7 +36,7 @@ export default function NotificationsScreen() {
     const open = async (item: AppNotification) => {
         if (!item.readAt) {
             setItems(list => list.map(n => (n.id === item.id ? { ...n, readAt: new Date().toISOString() } : n)));
-            markNotificationRead(item.id).then(refreshUnreadCount).catch(() => { });
+            await markNotificationRead(item.id).then(refreshUnreadCount).catch(() => { });
         }
         router.push(routeForNotification(item.data));
     };

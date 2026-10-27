@@ -36,5 +36,5 @@ export function planReminders(items: Darzation[], now: Date = new Date()): Sched
             plans.push({ identifier: `${REMINDER_PREFIX}${item.id}:overdue`, title: 'Diary item overdue', body: 'Open LegalCMS to see what is overdue.', date: overdueMorning, data });
         }
     }
-    return plans.sort((a, b) => a.date.getTime() - b.date.getTime()).slice(0, MAX_REMINDERS);
+    return plans.toSorted((a, b) => a.date.getTime() - b.date.getTime()).slice(0, MAX_REMINDERS);
 }

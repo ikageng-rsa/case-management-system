@@ -39,7 +39,7 @@ const initialState: AuthState = {
 };
 
 /** Internal marker: skip the network and use the credential saved on this device. */
-class OfflineSignIn extends Error {}
+class OfflineSignIn extends Error { }
 
 // Kept in memory only while a two-factor challenge is open, so the offline sign-in credential can be saved
 // once the code is accepted. Never stored in Redux (which devtools/logging can serialise) or on disk.
@@ -48,70 +48,99 @@ export function clearPendingLogin(): void {
   pendingLogin = null;
 }
 
+const signInOffline = async (email: string, password: string) => {
+  const saved = await verifyOfflineLogin(email, password);
+
+  if (!saved.ok) {
+    throw new Error(saved.message);
+  }
+
+  // Require local device authentication when offline 2FA is enabled.
+  const requiresDeviceAuth =
+    saved.user.twoFactorMethod &&
+    saved.user.twoFactorMethod !== 'none';
+
+  if (requiresDeviceAuth) {
+    if (!(await deviceAuthAvailable())) {
+      throw new Error(
+        'Offline sign-in for accounts with two-factor needs a screen lock or biometrics set up on this phone. Connect to the internet to sign in.',
+      );
+    }
+
+    if (!(await requireDeviceAuth('Confirm it is you to sign in offline'))) {
+      throw new Error('Phone verification was not completed.');
+    }
+  }
+
+  if (saved.token) {
+    await setAuthToken(saved.token);
+  } else {
+    await clearAuthToken();
+  }
+
+  await saveSessionUser(saved.user).catch(() => { });
+
+  return { kind: 'authenticated' as const, user: saved.user };
+};
+
 type LoginResult = { kind: 'authenticated'; user: User } | { kind: 'challenge'; challenge: TwoFactorChallenge };
 
 export const login = createAsyncThunk<LoginResult, { email: string; password: string }>(
   'auth/login',
+
   async ({ email, password }) => {
-    // Demo account: authenticate locally, no network call (dev builds / opt-in only).
+    // Demo account: authenticate locally, no network call.
     if (isDemoLogin(email, password)) {
       await setAuthToken(DEMO_TOKEN);
-      await saveSessionUser(DEMO_USER).catch(() => {});
+      await saveSessionUser(DEMO_USER).catch(() => { });
       return { kind: 'authenticated', user: DEMO_USER };
     }
 
-    // No connection: don't wait for a request to time out — go straight to the saved sign-in.
     const offline = await isDeviceOffline();
+
     try {
       if (offline) {
         throw new OfflineSignIn();
       }
+
       const response = await loginRequest(email, password);
+
       if (isChallenge(response)) {
         pendingLogin = { email, password };
+
         return {
           kind: 'challenge',
-          challenge: { token: response.challengeToken, method: response.method, maskedPhone: response.maskedPhone },
+          challenge: {
+            token: response.challengeToken,
+            method: response.method,
+            maskedPhone: response.maskedPhone,
+          },
         };
       }
+
       await completeSignIn(response, email, password);
+
       return { kind: 'authenticated', user: response.user };
     } catch (error) {
-      if (!(error instanceof OfflineSignIn) && !isNetworkError(error)) {
-        // Surface the backend's own message (e.g. Laravel's 422 "These credentials do not match our records.").
+      if (
+        !(error instanceof OfflineSignIn) &&
+        !isNetworkError(error)
+      ) {
+        // Preserve the backend's own authentication error message.
         throw new Error(getApiErrorMessage(error, 'Login failed'));
       }
     }
 
-    const saved = await verifyOfflineLogin(email, password);
-    if (!saved.ok) {
-      throw new Error(saved.message);
-    }
-    // The second factor can't be checked without the server. This phone already passed it online, so for
-    // accounts that use one we additionally require the phone's own fingerprint/face/PIN.
-    if (saved.user.twoFactorMethod && saved.user.twoFactorMethod !== 'none') {
-      if (!(await deviceAuthAvailable())) {
-        throw new Error('Offline sign-in for accounts with two-factor needs a screen lock or biometrics set up on this phone. Connect to the internet to sign in.');
-      }
-      if (!(await requireDeviceAuth('Confirm it is you to sign in offline'))) {
-        throw new Error('Phone verification was not completed.');
-      }
-    }
-    if (saved.token) {
-      await setAuthToken(saved.token);
-    } else {
-      await clearAuthToken();
-    }
-    await saveSessionUser(saved.user).catch(() => {});
-    return { kind: 'authenticated', user: saved.user };
+    return signInOffline(email, password);
   },
+
 );
 
 async function completeSignIn(success: LoginSuccess, email: string, password: string): Promise<void> {
   await setAuthToken(success.token);
-  await saveSessionUser(success.user).catch(() => {});
+  await saveSessionUser(success.user).catch(() => { });
   // Remember this sign-in (hashed password + profile) so the next one can happen offline.
-  await saveOfflineCredential({ email, password, user: success.user, token: success.token }).catch(() => {});
+  await saveOfflineCredential({ email, password, user: success.user, token: success.token }).catch(() => { });
 }
 
 /** Second step: the backend checks the code and only then issues the session token. */
@@ -130,7 +159,7 @@ export const completeTwoFactor = createAsyncThunk<User, { code: string }, { stat
         await completeSignIn(success, creds.email, creds.password);
       } else {
         await setAuthToken(success.token);
-        await saveSessionUser(success.user).catch(() => {});
+        await saveSessionUser(success.user).catch(() => { });
       }
       return success.user;
     } catch (error) {

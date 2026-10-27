@@ -39,11 +39,22 @@ export async function fetchCaseById(id: string): Promise<Case> {
   });
 }
 
+//helder function for the label not be a nested template literals
+function getNewCaseLabel(payload:{
+  clientName?: string | null,
+  matterType?: string | null
+}){
+  const clientName = payload.clientName ?? 'untitled';
+  const matterType = payload.matterType ? `(${payload.matterType})` : '';
+
+  return `New case - ${clientName}${matterType}`;
+}
+
 export async function createCase(payload: Partial<Case>): Promise<Case> {
   const me = getActiveUserId() ?? '';
   return submitCreate<Case>({
     entity: 'case',
-    label: `New case — ${payload.clientName ?? 'untitled'}${payload.matterType ? ` (${payload.matterType})` : ''}`,
+    label: getNewCaseLabel(payload),
     url: '/cases',
     body: payload as Record<string, unknown>,
     optimistic: (id, createdAt) =>

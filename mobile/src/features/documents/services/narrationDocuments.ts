@@ -48,7 +48,7 @@ export async function attachDocumentToNarration(params: {
   const { caseId, narrationId, file, confidentiality, uploadedById } = params;
 
   const dir = `${FileSystem.documentDirectory}narration-documents/${narrationId}/`;
-  await FileSystem.makeDirectoryAsync(dir, { intermediates: true }).catch(() => {});
+  await FileSystem.makeDirectoryAsync(dir, { intermediates: true }).catch(() => { });
   const localUri = `${dir}${Date.now()}_${file.name}`;
   await FileSystem.copyAsync({ from: file.uri, to: localUri });
 
@@ -94,40 +94,72 @@ export async function attachDocumentToNarration(params: {
 }
 
 /** Retries any documents still waiting to reach the backend (call on app start / pull-to-refresh). */
-export async function retryPendingSync(caseId: string, narrationId: string): Promise<void> {
-  if (isTempId(narrationId) || isTempId(caseId) || (await isDeviceOffline())) {
+
+export async function retryPendingSync(
+  caseId: string,
+  narrationId: string,
+): Promise<void> {
+  if (
+    isTempId(narrationId) ||
+    isTempId(caseId) ||
+    (await isDeviceOffline())
+  ) {
     return;
   }
+
   const docs = await getDocumentsForNarration(narrationId);
-  let changed = false;
-  for (const doc of docs) {
-    if (doc.syncStatus === 'pending-sync' || doc.syncStatus === 'sync-failed') {
+
+  const pendingDocs = docs.filter(
+    doc =>
+      doc.syncStatus === 'pending-sync' ||
+      doc.syncStatus === 'sync-failed',
+  );
+
+  const results = await Promise.all(
+    pendingDocs.map(async doc => {
       try {
         const remote = await uploadDocument(
           caseId,
-          { uri: doc.localUri ?? doc.uri, name: doc.fileName, type: doc.mimeType ?? 'application/octet-stream' },
+          {
+            uri: doc.localUri ?? doc.uri,
+            name: doc.fileName,
+            type: doc.mimeType ?? 'application/octet-stream',
+          },
           doc.confidentiality,
           narrationId,
         );
-        doc.uri = remote.uri ?? doc.uri;
-        doc.syncStatus = 'synced';
-        changed = true;
+
+        return {
+          doc,
+          uri: remote.uri ?? doc.uri,
+          syncStatus: 'synced' as const,
+        };
       } catch {
-        doc.syncStatus = 'sync-failed';
-        changed = true;
+        return {
+          doc,
+          uri: doc.uri,
+          syncStatus: 'sync-failed' as const,
+        };
       }
-    }
+    }),
+  );
+
+  for (const result of results) {
+    result.doc.uri = result.uri;
+    result.doc.syncStatus = result.syncStatus;
   }
-  if (changed) {
+
+  if (results.length > 0) {
     await saveRegistry(narrationId, docs);
   }
 }
+
 
 export async function removeNarrationDocument(narrationId: string, documentId: string): Promise<void> {
   const docs = await getDocumentsForNarration(narrationId);
   const target = docs.find(d => d.id === documentId);
   if (target?.localUri) {
-    await FileSystem.deleteAsync(target.localUri, { idempotent: true }).catch(() => {});
+    await FileSystem.deleteAsync(target.localUri, { idempotent: true }).catch(() => { });
   }
   await saveRegistry(narrationId, docs.filter(d => d.id !== documentId));
 }
@@ -144,20 +176,30 @@ async function migrateRegistry(tempId: string, realId: string, realCaseId: strin
 }
 
 /** Uploads every attachment still waiting (call after a sync or when the connection returns). */
+
 export async function retryAllPendingNarrationDocuments(): Promise<void> {
-  const keys = (await AsyncStorage.getAllKeys()).filter(k => k.startsWith(REGISTRY_KEY_PREFIX));
-  for (const key of keys) {
-    const narrationId = key.slice(REGISTRY_KEY_PREFIX.length);
-    if (isTempId(narrationId)) {
-      continue;
-    }
-    const docs = await getDocumentsForNarration(narrationId);
-    const waiting = docs.find(d => d.syncStatus !== 'synced');
-    if (waiting) {
-      await retryPendingSync(waiting.caseId, narrationId);
-    }
-  }
+  const keys = (await AsyncStorage.getAllKeys()).filter(
+    key => key.startsWith(REGISTRY_KEY_PREFIX),
+  );
+
+  const narrationIds = keys
+    .map(key => key.slice(REGISTRY_KEY_PREFIX.length))
+    .filter(narrationId => !isTempId(narrationId));
+
+  await Promise.all(
+    narrationIds.map(async narrationId => {
+      const docs = await getDocumentsForNarration(narrationId);
+      const waiting = docs.find(
+        doc => doc.syncStatus !== 'synced',
+      );
+
+      if (waiting) {
+        await retryPendingSync(waiting.caseId, narrationId);
+      }
+    }),
+  );
 }
+
 
 let registered = false;
 
@@ -177,7 +219,7 @@ export function registerNarrationDocumentSync(): void {
       return;
     }
     for (const doc of await getDocumentsForNarration(entry.entityId)) {
-      await removeNarrationDocument(entry.entityId, doc.id);
+      removeNarrationDocument(entry.entityId, doc.id);
     }
   });
 }

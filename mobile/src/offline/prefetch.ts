@@ -36,7 +36,7 @@ export function prefetchAll(force = false): Promise<boolean> {
             const [cases] = await Promise.all([fetchCases(), fetchDiary(), fetchUsers().catch(() => [])]);
             const ids = cases.filter(c => !c.id.startsWith('tmp_')).slice(0, MAX_CASES).map(c => c.id);
             for (let i = 0; i < ids.length; i += PARALLEL) {
-                await Promise.all(
+                Promise.all(
                     ids.slice(i, i + PARALLEL).flatMap(id => [
                         fetchNarrationsForCase(id).catch(() => []),
                         fetchDocumentsForCase(id).catch(() => []),

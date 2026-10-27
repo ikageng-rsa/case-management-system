@@ -70,7 +70,7 @@ run('offline queue against the mock API', () => {
       timeSpentMinutes: 25, billable: true,
     });
     const savedAt = (await listOutbox()).at(-1)!.createdAt;
-    expect((await listOutbox()).length).toBe(3);
+    expect((await listOutbox()).length).toHaveLength(3);
     expect((await fetchNarrationsForCase(c.id))[0].id).toBe(n.id); // visible locally while offline
 
     await sleep(1500); // the time between writing it and getting signal back
@@ -79,7 +79,7 @@ run('offline queue against the mock API', () => {
 
     expect(await listOutbox()).toHaveLength(0);
     const cases = (await apiClient.get('/cases')).data;
-    expect(cases.length).toBe(before + 1);
+    expect(cases.length).toHaveLength(before + 1);
     const real = cases.find((x: any) => x.clientName === 'Offline Client (e2e)');
     expect(real.assignedUserIds).toContain(userId);
 
@@ -110,7 +110,7 @@ run('offline queue against the mock API', () => {
 
     expect(await listOutbox()).toHaveLength(0);
     const after = (await apiClient.get('/cases')).data;
-    expect(after.length).toBe(before + 1);
+    expect(after.length).toHaveLength(before + 1);
     expect(after.filter((x: any) => x.clientName === 'Lost Reply (e2e)')).toHaveLength(1);
   });
 

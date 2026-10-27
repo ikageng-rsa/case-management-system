@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing, typography } from '@/theme/index';
 
 /** Marks a record that was saved on this device but hasn't reached the server yet. */
-export default function SyncBadge({ state }: { state?: 'pending' | 'failed' }) {
+export default function SyncBadge({ state }:Readonly< { state?: 'pending' | 'failed' }>) {
     if (!state) {
         return null;
     }

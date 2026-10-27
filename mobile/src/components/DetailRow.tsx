@@ -3,7 +3,7 @@ import { StyleSheet, Text,View } from 'react-native';
 import { colors,spacing,typography } from '@/theme/index';
 
 //Label/value row; renders nothing when the value is empty so optional fields don't leave blanks.
-export default function DetailRow({label,value}: {label: string, value?:string | number | null}){
+export default function DetailRow({label,value}: Readonly<{label: string, value?:string | number | null}>){
     if(value === undefined || value === null || value === ''){
         return null;
     }

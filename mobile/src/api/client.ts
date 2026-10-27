@@ -50,8 +50,6 @@ if (__DEV__) {
     apiClient
       .get('/health')
       .then(res => {
-        const who = res.headers?.['x-mock-api'] ? 'the mock API' : 'a server that is NOT the mock API';
-        console.log(`[api] health check OK — answered by ${who}:`, JSON.stringify(res.data));
       })
       .catch(() => { }); // already logged by the interceptor above
   }
@@ -101,6 +99,6 @@ apiClient.interceptors.response.use(
       await clearAuthToken();
       onUnauthorized?.();
     }
-    return Promise.reject(error);
+    throw error;
   },
 );

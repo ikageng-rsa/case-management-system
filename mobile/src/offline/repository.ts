@@ -10,7 +10,7 @@ import { MutationPatch, OutboxEntry, SyncEntity } from './types';
 
 type Row = { id: string } & Record<string, any>;
 
-/* ---------------------------------------------------------------------------
+/*  
  * Reads: network first, cache when there is none.
  * ------------------------------------------------------------------------- */
 
@@ -89,7 +89,7 @@ export async function cachedRecord<T extends Row>(o: {
     }
 }
 
-/* ---------------------------------------------------------------------------
+/*  
  * Writes
  * ------------------------------------------------------------------------- */
 

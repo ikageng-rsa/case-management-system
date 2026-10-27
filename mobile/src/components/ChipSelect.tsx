@@ -17,14 +17,16 @@ export default function ChipSelect<T extends string>({
     selected,
     onChange,
     multiple = false,
-}: ChipSelectProps<T>) {
-    const toggle = (value: T) => {
-        if (multiple) {
-            onChange(selected.includes(value) ? selected.filter(v => v !== value) : [...selected, value]);
-        } else {
-            onChange([value]);
-        }
-    };
+}: Readonly<ChipSelectProps<T>>) {
+    const toggleSingle = (value: T) => {
+        onChange([value]);
+    }
+
+    const toggleMultiple = (value: T) =>{
+        const next = selected.includes(value)?selected.filter((v) => v !== value) : [...selected, value];
+        onChange(next);
+    }
+    const toggle = multiple ? toggleMultiple : toggleSingle;
 
     return (
         <View style={styles.container}>

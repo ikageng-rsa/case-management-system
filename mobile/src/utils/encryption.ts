@@ -20,10 +20,9 @@ const NONCE_BYTES = 24;
 let keyPromise: Promise<Uint8Array> | null = null;
 
 function getKey(): Promise<Uint8Array> {
-    if (!keyPromise) {
-        keyPromise = (async () => {
+        keyPromise ??= (async () => {
             const existing = await secureGet(KEY_NAME);
-            if (existing && existing.length === 64) {
+            if (existing?.length === 64) {
                 return hexToBytes(existing);
             }
             const fresh = getRandomBytes(32);
@@ -33,7 +32,7 @@ function getKey(): Promise<Uint8Array> {
             keyPromise = null; // let the next call try again
             throw error;
         });
-    }
+    
     return keyPromise;
 }
 

@@ -12,7 +12,7 @@ interface CaseCardProps {
   onPress: () => void;
 }
 
-export default function CaseCard({ item, onPress }: CaseCardProps) {
+export default function CaseCard({ item, onPress }:Readonly<CaseCardProps>) {
   return (
     <Pressable onPress={onPress}>
       <Card>

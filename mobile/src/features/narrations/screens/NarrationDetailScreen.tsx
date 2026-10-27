@@ -81,7 +81,7 @@ export default function NarrationDetailScreen() {
     }
     for (const asset of result.assets) {
       try {
-        await attachDocumentToNarration({
+        attachDocumentToNarration({
           caseId,
           narrationId,
           file: { uri: asset.uri, name: asset.name, mimeType: asset.mimeType, size: asset.size },

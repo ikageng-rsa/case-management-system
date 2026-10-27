@@ -27,7 +27,16 @@ const ICONS = {
 export default function TabsLayout() {
   const role = useAppSelector(state => state.auth.user?.role);
   const unread = useUnreadCounts();
-  const badge = (n: number) => (n > 0 ? (n > 99 ? '99+' : n) : undefined);
+  const badge = (n: number) => {
+    if(n <= 0){
+      return undefined;
+    }
+
+    if(n > 99){
+      return '99+';
+    }
+    return n;
+  };
   const can = (tab: string) => (role ? canAccessTab(tab, role) : false);
 
 
