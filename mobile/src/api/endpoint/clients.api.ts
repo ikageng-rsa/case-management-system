@@ -1,85 +1,44 @@
-import { apiClient } from '@/api/client';
-import { fetchCases } from '@/api/endpoint/cases.api';
-import { isNetworkError } from '@/offline/connectivity';
-import { ClientContactType, ClientProfile, PopiaConsentType, RiskRating } from '@/models/index';
+import { apiClient } from "../client";
+import { Document, indexIncluded, Resource } from "../jsonapi";
+import { mapClient, mapClientList } from "../mappers/client";
+import { fetchAllPage } from "../pagination";
+import { ClientProfile } from "@/models/index";
+import { CacheNames } from "@/offline/cache";
+import { cachedList } from "@/offline/repository";
 
-/** Only what the person is allowed to change here; the backend checks roles again. */
-export interface ClientChanges {
-    contactNumber?: string;
-    email?: string;
-    address?: string;
-    notes?: string;
-    /** Sent to the backend once and stored there only as a hash plus the last four digits. */
-    idNumber?: string;
-    ficaVerified?: boolean;
-    riskRating?: RiskRating;
+//Clients the user may see. The masked list is cached (it holds no real identity or contact values)
+export async function fetchClients(search?: string): Promise<{ clients: ClientProfile[]; offline: boolean }> {
+    const q = search?.trim();
+    let fromServer = false;
+    const clients = await cachedList<ClientProfile>(
+        {
+            name: CacheNames.clients,
+            cacheable: !q,
+            request: async () => {
+                const { data, included } = await fetchAllPage('/clients', q ? { q } : {})
+                fromServer = true;
+                return mapClientList(data, included);
+            },
+            filter: q ? rows => rows.filter(c => c.fullName.toLowerCase().includes(q.toLowerCase())) : undefined,
+        }
+    );
+    return {clients, offline: !fromServer}
 }
 
-/** Clients known from the cases already on this device (names only), for when there is no connection. */
-async function clientsFromCases(): Promise<ClientProfile[]> {
-    const cases = await fetchCases();
-    const byClient = new Map<string, ClientProfile>();
-    for (const c of cases) {
-        if (!c.clientId || byClient.has(c.clientId)) {
-            continue;
-        }
-        const mine = cases.filter(x => x.clientId === c.clientId);
-        byClient.set(c.clientId, {
-            id: c.clientId,
-            fullName: c.clientName,
-            contactNumber: '',
-            email: '',
-            ficaVerified: false,
-            riskRating: 'Low',
-            caseIds: mine.map(x => x.id),
-            openCases: mine.filter(x => x.status === 'Open' || x.status === 'In Progress').length,
-        });
+export async function fetchClient(id: string): Promise<ClientProfile>{
+    const { data: doc} = await apiClient.get<Document<Resource>>(`/clients/${id}`);
+    return mapClient(doc.data as Resource, indexIncluded(doc.included));
+}
+
+
+//Asks the server for the real value of one masked field : `identifier` or `contact:{contactId}`. The server records
+//who looked. The value is returned to the caller only - never cached, logged or put in Redux.
+
+export async function revealClientField(clientId: string, target: 'identifier' | `contact:${string}`): Promise<string>{
+    const {data: doc} = await apiClient.post<Document<Resource>>(`/clients/${clientId}/reveal`,{target});
+    const value = (doc.data as Resource).attributes?.value;
+    if(typeof value !== 'string'){
+        throw new Error('The server did not return the value.');
     }
-    return [...byClient.values()].sort((a, b) => a.fullName.localeCompare(b.fullName));
-}
-
-export async function fetchClients(): Promise<{ clients: ClientProfile[]; offline: boolean }> {
-    try {
-        const { data } = await apiClient.get<ClientProfile[]>('/clients');
-        return { clients: data, offline: false };
-    } catch (error) {
-        if (!isNetworkError(error)) {
-            throw error;
-        }
-        return { clients: await clientsFromCases(), offline: true };
-    }
-}
-
-export async function fetchClient(id: string): Promise<{ client: ClientProfile; offline: boolean }> {
-    try {
-        const { data } = await apiClient.get<ClientProfile>(`/clients/${id}`);
-        return { client: data, offline: false };
-    } catch (error) {
-        if (!isNetworkError(error)) {
-            throw error;
-        }
-        const known = (await clientsFromCases()).find(c => c.id === id);
-        if (!known) {
-            throw error;
-        }
-        return { client: known, offline: true };
-    }
-}
-
-export async function updateClient(id: string, changes: ClientChanges): Promise<ClientProfile> {
-    return (await apiClient.patch<ClientProfile>(`/clients/${id}`, changes)).data;
-}
-
-export async function addClientContact(
-    id: string,
-    contact: { type: ClientContactType; value: string; isPrimary?: boolean },
-): Promise<ClientProfile> {
-    return (await apiClient.post<ClientProfile>(`/clients/${id}/contacts`, contact)).data;
-}
-
-export async function recordClientConsent(
-    id: string,
-    consent: { consentType: PopiaConsentType; granted: boolean; consentVersion?: string },
-): Promise<ClientProfile> {
-    return (await apiClient.post<ClientProfile>(`/clients/${id}/consents`, consent)).data;
+    return value;
 }

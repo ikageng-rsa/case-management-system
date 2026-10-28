@@ -8,5 +8,7 @@ export type TwoFactorMethod = 'none' | 'totp' | 'sms';
 export interface TwoFactorChallenge {
   token: string;
   method: Exclude<TwoFactorMethod, 'none'>;
-  maskedPhone?: string
+  maskedPhone?: string;
+  //Seconds the code stays valid (the backend's `expires_in)
+  expiresIn?: number;
 }

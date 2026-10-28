@@ -1,16 +1,12 @@
-export type ClientContactType = 'Phone' | 'Email' | 'Fax' | 'Physical Address';
+export type ClientContactKind = 'email' | 'mobile' | 'phone' | 'physical-address' | string;
 
 /**
- * Mirrors the backend AddClientContact service — a client (ClientProfile)
- * can have multiple contacts, each blind-indexed on `value` (value_hash)
- * the same way ClientProfile.idNumber is. Treat `value` as sensitive: pass
- * it through popiaLogger rather than console.log directly.
+ * A contact detail of a client as the API returns it: only a masked copy ("038 ··· 1499").
+ * The real value is fetched on demand with the reveal call (see api/endpoints/clients.api.ts) and is never stored.
  */
 export interface ClientContact {
   id: string;
-  clientId: string;
-  type: ClientContactType;
-  value: string;
+  kind: ClientContactKind;
+  valueMasked: string;
   isPrimary: boolean;
-  createdAt: string;
 }
