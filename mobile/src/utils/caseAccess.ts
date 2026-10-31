@@ -1,58 +1,35 @@
 /**
- * Single source of truth for the "who sees what" rule behind the Director-vs-everyone-else
- * dashboard/list scoping: a Director (or Admin) sees every case/diary/narration in the firm;
- * every other role only sees records tied to a case they are currently assigned to or have
- * worked on before. Screens call these helpers instead of re-deriving the rule themselves.
+ * Who sees what. With the v1 API the SERVER decides: `/matters` only returns matters the signed-in user may open,
+ * and narrations come from those matters. The helpers below therefore pass the lists through for a signed-in user
+ * (and keep the old call sites working) instead of re-deriving access on the phone, where it could disagree with the
+ * server. Per-action rights come from each matter's `can` (see `canWorkOn`).
  */
 import { Case, Darzation, Narration, User } from '@/models/index';
-import { hasGlobalVisibility } from '@/constants/roles';
 
-/** Cases a user may see: all of them for Director/Admin, otherwise only ones they're assigned to. */
-export function visibleCasesFor(cases: Case[], user: Pick<User, 'id' | 'role'> | null | undefined): Case[] {
-    if (!user) {
-        return [];
-    }
-    if (hasGlobalVisibility(user.role)) {
-        return cases;
-    }
-    return cases.filter(c => c.assignedUserIds?.includes(user.id));
+type Who = Pick<User, 'id' | 'role'> | null | undefined;
+
+export function visibleCasesFor(cases: Case[], user: Who): Case[] {
+    return user ? cases : [];
 }
 
-export function canSeeCase(item: Case, user: Pick<User, 'id' | 'role'> | null | undefined): boolean {
-    if (!user) {
-        return false;
-    }
-    return hasGlobalVisibility(user.role) || item.assignedUserIds?.includes(user.id);
+export function canSeeCase(_item: Case, user: Who): boolean {
+    return Boolean(user);
 }
 
-/** Diary items scoped to the cases a user may see (or to their own assignment on the item itself). */
-export function visibleDarzationsFor(
-    darzations: Darzation[],
-    cases: Case[],
-    user: Pick<User, 'id' | 'role'> | null | undefined,
-): Darzation[] {
-    if (!user) {
-        return [];
-    }
-    if (hasGlobalVisibility(user.role)) {
-        return darzations;
-    }
-    const visibleCaseIds = new Set(visibleCasesFor(cases, user).map(c => c.id));
-    return darzations.filter(d => visibleCaseIds.has(d.caseId) || d.assignedUserIds?.includes(user.id) || d.ownerId === user.id);
+export function visibleDarzationsFor(darzations: Darzation[], _cases: Case[], user: Who): Darzation[] {
+    return user ? darzations : [];
 }
 
-/** Narrations scoped the same way — tied to a case the user can see. */
-export function visibleNarrationsFor(
-    narrations: Narration[],
-    cases: Case[],
-    user: Pick<User, 'id' | 'role'> | null | undefined,
-): Narration[] {
-    if (!user) {
-        return [];
-    }
-    if (hasGlobalVisibility(user.role)) {
-        return narrations;
-    }
-    const visibleCaseIds = new Set(visibleCasesFor(cases, user).map(c => c.id));
-    return narrations.filter(n => visibleCaseIds.has(n.caseId) || n.authorId === user.id);
+export function visibleNarrationsFor(narrations: Narration[], _cases: Case[], user: Who): Narration[] {
+    return user ? narrations : [];
+}
+
+/** May the signed-in user record work (narrations) on this matter? Uses the server's answer. */
+export function canWorkOn(item: Pick<Case, 'can'> | null | undefined): boolean {
+    return item?.can?.work !== false;
+}
+
+/** May the signed-in user manage who is assigned to this matter? */
+export function canAssignOn(item: Pick<Case, 'can'> | null | undefined): boolean {
+    return item?.can?.assign === true;
 }

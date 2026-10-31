@@ -1,15 +1,10 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import {
-  isChallenge,
-  login as loginRequest,
-  logoutRequest,
-  LoginSuccess,
-  verifyTwoFactorLogin,
-} from '@/api/endpoint/auth.api';
+import { Platform } from 'react-native';
+import { hasFeature } from '@/config/features';
+import { logoutRequest, signIn, SignInSuccess, verifySignIn } from '@/api/endpoint/auth.api';
 import { clearAuthToken, setAuthToken } from '@/api/client';
 import { getApiErrorMessage } from '@/api/errors';
 import { TwoFactorChallenge, User } from '@/models/index';
-import { DEMO_TOKEN, DEMO_USER, isDemoLogin } from '@/constants/demoUser';
 import {
   clearSessionUser,
   saveOfflineCredential,
@@ -21,19 +16,24 @@ import { deviceAuthAvailable, requireDeviceAuth } from '@/features/auth/services
 import { isDeviceOffline, isNetworkError } from '@/offline/connectivity';
 import { listOutbox } from '@/offline/outbox';
 import { clearOfflineData } from '@/offline/clear';
+import { clearExports } from '@/features/reporting/services/exportReport';
 import { unregisterPushDevice } from '@/services/notifications/pushRegistration';
+import { getErrorMessage } from '@/utils/ErrorMessage';
 
 interface AuthState {
   user: User | null;
   // Password accepted, second factor still to come: the backend has issued a challenge but NO token yet.
   challenge: TwoFactorChallenge | null;
-  status: 'idle' | 'loading' | 'authenticated' | 'error' | 'needs-2fa';
+  /** E-mail the code was sent to, shown on the verification screen. */
+  pendingEmail: string | null;
+  status: 'idle' | 'loading' | 'authenticated' | 'error' | 'needs-2fa' | 'failed';
   error: string | null;
 }
 
 const initialState: AuthState = {
   user: null,
   challenge: null,
+  pendingEmail: null,
   status: 'idle',
   error: null,
 };
@@ -48,95 +48,65 @@ export function clearPendingLogin(): void {
   pendingLogin = null;
 }
 
-const signInOffline = async (email: string, password: string) => {
-  const saved = await verifyOfflineLogin(email, password);
+type LoginResult =
+  | { kind: 'authenticated'; user: User }
+  | { kind: 'challenge'; challenge: TwoFactorChallenge; email: string };
 
-  if (!saved.ok) {
-    throw new Error(saved.message);
-  }
-
-  // Require local device authentication when offline 2FA is enabled.
-  const requiresDeviceAuth =
-    saved.user.twoFactorMethod &&
-    saved.user.twoFactorMethod !== 'none';
-
-  if (requiresDeviceAuth) {
-    if (!(await deviceAuthAvailable())) {
-      throw new Error(
-        'Offline sign-in for accounts with two-factor needs a screen lock or biometrics set up on this phone. Connect to the internet to sign in.',
-      );
-    }
-
-    if (!(await requireDeviceAuth('Confirm it is you to sign in offline'))) {
-      throw new Error('Phone verification was not completed.');
-    }
-  }
-
-  if (saved.token) {
-    await setAuthToken(saved.token);
-  } else {
-    await clearAuthToken();
-  }
-
-  await saveSessionUser(saved.user).catch(() => { });
-
-  return { kind: 'authenticated' as const, user: saved.user };
-};
-
-type LoginResult = { kind: 'authenticated'; user: User } | { kind: 'challenge'; challenge: TwoFactorChallenge };
+const deviceName = () => `LegalCMS ${Platform.OS} ${Platform.Version}`;
 
 export const login = createAsyncThunk<LoginResult, { email: string; password: string }>(
   'auth/login',
-
   async ({ email, password }) => {
-    // Demo account: authenticate locally, no network call.
-    if (isDemoLogin(email, password)) {
-      await setAuthToken(DEMO_TOKEN);
-      await saveSessionUser(DEMO_USER).catch(() => { });
-      return { kind: 'authenticated', user: DEMO_USER };
-    }
-
+    // No connection: don't wait for a request to time out — go straight to the saved sign-in.
     const offline = await isDeviceOffline();
-
     try {
       if (offline) {
         throw new OfflineSignIn();
       }
-
-      const response = await loginRequest(email, password);
-
-      if (isChallenge(response)) {
-        pendingLogin = { email, password };
-
-        return {
-          kind: 'challenge',
-          challenge: {
-            token: response.challengeToken,
-            method: response.method,
-            maskedPhone: response.maskedPhone,
-          },
-        };
-      }
-
-      await completeSignIn(response, email, password);
-
-      return { kind: 'authenticated', user: response.user };
+      // The v1 API always answers with an emailed-code challenge; the token only comes after the code.
+      const response = await signIn(email, password, deviceName());
+      pendingLogin = { email, password };
+      return {
+        kind: 'challenge',
+        email,
+        challenge: {
+          token: response.challengeId,
+          method: 'totp',
+          expiresIn: response.expiresIn,
+        } as TwoFactorChallenge,
+      };
     } catch (error) {
-      if (
-        !(error instanceof OfflineSignIn) &&
-        !isNetworkError(error)
-      ) {
-        // Preserve the backend's own authentication error message.
-        throw new Error(getApiErrorMessage(error, 'Login failed'));
+      if (!(error instanceof OfflineSignIn) && !isNetworkError(error)) {
+        // Surface the backend's own message (e.g. Laravel's 422 "These credentials do not match our records.").
+        throw new Error(getErrorMessage(error));
       }
     }
 
-    return signInOffline(email, password);
+    const saved = await verifyOfflineLogin(email, password);
+    if (!saved.ok) {
+      throw new Error(saved.message);
+    }
+    // The second factor can't be checked without the server. This phone already passed it online, so for
+    // accounts that use one we additionally require the phone's own fingerprint/face/PIN.
+    if (saved.user.twoFactorMethod && saved.user.twoFactorMethod !== 'none') {
+      if (!(await deviceAuthAvailable())) {
+        throw new Error('Offline sign-in for accounts with two-factor needs a screen lock or biometrics set up on this phone. Connect to the internet to sign in.');
+      }
+      if (!(await requireDeviceAuth('Confirm it is you to sign in offline'))) {
+        throw new Error('Phone verification was not completed.');
+      }
+    }
+    if (saved.token) {
+      await setAuthToken(saved.token);
+    } else {
+      await clearAuthToken();
+    }
+    await saveSessionUser(saved.user).catch(() => { });
+    return { kind: 'authenticated', user: saved.user };
   },
-
 );
 
-async function completeSignIn(success: LoginSuccess, email: string, password: string): Promise<void> {
+async function completeSignIn(success: SignInSuccess, email: string, password: string): Promise<void> {
   await setAuthToken(success.token);
   await saveSessionUser(success.user).catch(() => { });
   // Remember this sign-in (hashed password + profile) so the next one can happen offline.
@@ -152,7 +122,7 @@ export const completeTwoFactor = createAsyncThunk<User, { code: string }, { stat
       throw new Error('Your verification session has expired. Sign in again.');
     }
     try {
-      const success = await verifyTwoFactorLogin(challenge.token, code.trim());
+      const success = await verifySignIn(challenge.token, code.trim());
       const creds = pendingLogin;
       pendingLogin = null;
       if (creds) {
@@ -163,7 +133,7 @@ export const completeTwoFactor = createAsyncThunk<User, { code: string }, { stat
       }
       return success.user;
     } catch (error) {
-      throw new Error(getApiErrorMessage(error, 'Verification failed'));
+      throw new Error(getErrorMessage(error));
     }
   },
 );
@@ -185,11 +155,14 @@ export const logout = createAsyncThunk<void, void, { state: { auth: AuthState } 
   await attempt(unregisterPushDevice);
   // Revoke the session on the server, unless offline work still needs this token to sync later.
   if (unsynced === 0) {
-    await attempt(logoutRequest);
+    if (hasFeature('signOut')) {
+      await attempt(logoutRequest);
+    }
     if (email) {
       await attempt(() => stripSavedToken(email));
     }
   }
+  await attempt(clearExports);
   await clearAuthToken();
   await clearSessionUser();
   clearPendingLogin();
@@ -215,6 +188,7 @@ const authSlice = createSlice({
     },
     cancelTwoFactor(state) {
       state.challenge = null;
+      state.pendingEmail = null;
       state.status = 'idle';
       pendingLogin = null;
     },
@@ -229,18 +203,22 @@ const authSlice = createSlice({
         if (action.payload.kind === 'challenge') {
           state.status = 'needs-2fa';
           state.challenge = action.payload.challenge;
+          state.pendingEmail = action.payload.email;
         } else {
           state.status = 'authenticated';
           state.user = action.payload.user;
         }
       })
       .addCase(login.rejected, (state, action) => {
-        state.status = 'error';
-        state.error = action.error.message ?? 'Login failed';
+          state.status = 'error';
+          state.error = getErrorMessage(
+              action.payload ?? action.error.message,
+          );
       })
       .addCase(completeTwoFactor.fulfilled, (state, action) => {
         state.user = action.payload;
         state.challenge = null;
+        state.pendingEmail = null;
         state.status = 'authenticated';
       })
       .addCase(logout.fulfilled, state => {

@@ -37,14 +37,6 @@ export function parseFileReference(reference: string): ParsedFileReference | nul
   };
 }
 
-/** Initials for InitialsAvatar — "Thandiwe Mokoena" → "TM". */
-export function getInitials(fullName: string): string {
-  const parts = fullName.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) {
-    return '?';
-  }
-  if (parts.length === 1) {
-    return parts[0].slice(0, 2).toUpperCase();
-  }
-  return `${parts[0][0]}${parts.at(-1)?.[0] ?? ''}`.toUpperCase();
-}
+// getInitials now lives in its own module (@utils/initials / @/utils/initials)   
+// — re-exported here so anything still importing it from this file keeps working.
+export { getInitials } from './initials';                                         
