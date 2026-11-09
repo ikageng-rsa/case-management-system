@@ -45,14 +45,8 @@ if (__DEV__) {
 
   if (!process.env.EXPO_PUBLIC_API_BASE_URL) {
     console.log('[api] EXPO_PUBLIC_API_BASE_URL is NOT set -> using the placeholder URL. Is .env in the project root? Restart with: npx expo start -c');
-  } else if (process.env.NODE_ENV !== 'test') {
-    // Connectivity self-test at app start: GET {base}/health (public, no token).
-    apiClient
-      .get('/health')
-      .then(res => {
-      })
-      .catch(() => { }); // already logged by the interceptor above
   }
+
 }
 
 // In-memory copy so every request doesn't hit the keystore.

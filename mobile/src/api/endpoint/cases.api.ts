@@ -3,6 +3,10 @@ import { Case } from '@/models/index';
 import { CacheNames } from '@/offline/cache';
 import { getActiveUserId } from '@/offline/context';
 import { cachedList, cachedRecord, submitCreate, submitUpdate } from '@/offline/repository';
+import { FeatureUnavailableError } from '@/config/features';
+import { fetchAllPage } from '../pagination';
+import { mapMatter, mapMatterList } from '../mappers/matter';
+import { Document, indexIncluded, Resource } from '../jsonapi';
 
 type CaseFilter = { status?: string; search?: string };
 
@@ -19,13 +23,18 @@ function filterCases(rows: Case[], params?: CaseFilter): Case[] {
   );
 }
 
+//Matters the signed-in user can see (the server decides which). Follows every page
 export async function fetchCases(params?: CaseFilter): Promise<Case[]> {
   const unfiltered = !params?.status && !params?.search;
   return cachedList<Case>({
     name: CacheNames.cases,
     entity: 'case',
     cacheable: unfiltered,
-    request: async () => (await apiClient.get<Case[]>('/cases', { params })).data,
+    request: async () => {
+      const q = params?.search?.trim();
+      const {data,included} = await fetchAllPage('/matters', q ? {q}: {});
+      return mapMatterList(data, included, getActiveUserId());
+    },
     filter: unfiltered ? undefined : rows => filterCases(rows, params),
   });
 }
@@ -35,12 +44,28 @@ export async function fetchCaseById(id: string): Promise<Case> {
     id,
     listName: CacheNames.cases,
     entity: 'case',
-    request: async () => (await apiClient.get<Case>(`/cases/${id}`)).data,
+    request: async () => {
+      const {data:doc} = await apiClient.get<Document<Resource>>(`/matters/${id}`);
+      return mapMatter(doc.data as Resource, indexIncluded(doc.included), getActiveUserId());
+    },
   });
 }
+//The v1 API has no create /edit for matters. These stay so the screens compile and fail politely if reached
+export async function createCase(_payload: Partial<Case>): Promise<Case>{
+  throw new FeatureUnavailableError('Opening a new matter/case');
+}
 
+export async function updateCase(_id:string,_payload: Partial<Case>): Promise<Case>{
+  throw new FeatureUnavailableError('Editing a matter');
+
+}
+
+export async function updateCaseStatus(_id: string, _status: Case['status']): Promise<Case>{
+    throw new FeatureUnavailableError('Changin a matter status');
+
+}
 //helder function for the label not be a nested template literals
-function getNewCaseLabel(payload:{
+/*function getNewCaseLabel(payload:{
   clientName?: string | null,
   matterType?: string | null
 }){
@@ -101,3 +126,4 @@ export async function updateCaseStatus(id: string, status: Case['status']): Prom
     listName: CacheNames.cases,
   });
 }
+*/

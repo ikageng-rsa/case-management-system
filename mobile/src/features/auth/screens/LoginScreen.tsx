@@ -1,4 +1,4 @@
-import React from 'react';
+import React ,{useEffect, useState}from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import Button from '@/components/Button';
@@ -8,8 +8,25 @@ import { useLogin } from '@/features/auth/hooks/useLogin';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { email, setEmail, password, setPassword, submit, loading, error, demoEnable } = useLogin();
+  const { email, setEmail, password, setPassword, submit, loading, error } = useLogin();
+  const [lockoutSeconds, setLockoutSeconds] = useState(0);
 
+  //Start a 30-second localout when too many login attempts are detected.
+  useEffect(()=>{
+    if(error?.toLowerCase().includes('too many attempts')){
+      setLockoutSeconds(30);
+    }
+  }, [error]);
+
+  //Count down once per second
+  useEffect(() => {
+    if(lockoutSeconds <= 0) return;
+
+    const timer = setTimeout(() =>{
+      setLockoutSeconds(seconds => Math.max(0,seconds - 1));
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [lockoutSeconds]);
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.header}>
@@ -35,9 +52,12 @@ export default function LoginScreen() {
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-      <Button label="Sign In" onPress={submit} loading={loading} />
-      {demoEnable ? <Text style={styles.demoHint}>Demo account pre-filled — just tap Sign In.</Text> : null}
-
+      <Button
+        label={lockoutSeconds > 0 ? `Try again in ${lockoutSeconds}s`: 'Sign In'}
+        onPress={submit}
+        loading={loading}
+        disabled = {loading || lockoutSeconds > 0}
+      />
       <Button
         label="Forgot password?"
         variant="secondary"
