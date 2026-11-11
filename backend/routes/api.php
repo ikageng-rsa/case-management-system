@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\Diary\CompleteDiaryEntryController;
 use App\Http\Controllers\Api\V1\Diary\DiaryEntryController;
 use App\Http\Controllers\Api\V1\Diary\UpdateDiaryReminderController;
 use App\Http\Controllers\Api\V1\Diary\UserDiaryEntryController;
+use App\Http\Controllers\Api\V1\Document\MatterDocumentController;
 use App\Http\Controllers\Api\V1\Matter\MatterAssignmentController;
 use App\Http\Controllers\Api\V1\Matter\MatterController;
 use App\Http\Controllers\Api\V1\Matter\MatterPartyController;
@@ -44,6 +45,10 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
         Route::get('/clients', [ClientController::class, 'index'])->name('api.clients');
         Route::get('/clients/{client}', [ClientController::class, 'show'])->name('api.clients.show');
         Route::post('/clients/{client}/reveal', RevealClientFieldController::class)->name('api.clients.reveal');
+
+        Route::get('/matters/{matter:id}/documents', [MatterDocumentController::class, 'index'])->name('api.matters.documents');
+        Route::post('/matters/{matter:id}/documents', [MatterDocumentController::class, 'store'])->name('api.matters.documents.store');
+        Route::get('/matters/{matter:id}/documents/{document}', [MatterDocumentController::class, 'show'])->whereNumber('document')->name('api.matters.documents.show');
 
         Route::get('/diary-entries', [UserDiaryEntryController::class, 'index'])->name('api.diary-entries');
 
