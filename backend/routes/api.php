@@ -3,6 +3,9 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\Account\CurrentUserController;
+use App\Http\Controllers\Api\V1\Account\NotificationController;
+use App\Http\Controllers\Api\V1\Account\ReadAllNotificationsController;
+use App\Http\Controllers\Api\V1\Account\ReadNotificationController;
 use App\Http\Controllers\Api\V1\Audit\MatterAuditEntryController;
 use App\Http\Controllers\Api\V1\Auth\ResendSignInCodeController;
 use App\Http\Controllers\Api\V1\Auth\SignInController;
@@ -35,6 +38,10 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/auth/sign-out', SignOutController::class)->name('api.sign-out');
         Route::get('/me', CurrentUserController::class)->name('api.me');
+
+        Route::get('/notifications', [NotificationController::class, 'index'])->name('api.notifications');
+        Route::post('/notifications/read-all', ReadAllNotificationsController::class)->name('api.notifications.read-all');
+        Route::post('/notifications/{notification}/read', ReadNotificationController::class)->name('api.notifications.read');
 
         // The lists the app's forms are filled from. Read only: they are kept on the web.
         Route::get('/activity-types', [ActivityTypeController::class, 'index'])->name('api.activity-types');
