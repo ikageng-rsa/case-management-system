@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\Auth\SignOutController;
 use App\Http\Controllers\Api\V1\Auth\VerifySignInCodeController;
 use App\Http\Controllers\Api\V1\Client\ClientController;
 use App\Http\Controllers\Api\V1\Client\RevealClientFieldController;
+use App\Http\Controllers\Api\V1\Diary\DiaryEntryController;
 use App\Http\Controllers\Api\V1\Matter\MatterAssignmentController;
 use App\Http\Controllers\Api\V1\Matter\MatterController;
 use App\Http\Controllers\Api\V1\Matter\MatterPartyController;
@@ -53,5 +54,8 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
 
         Route::get('/matters/{matter:id}/narrations', [NarrationController::class, 'index'])->name('api.matters.narrations');
         Route::post('/matters/{matter:id}/narrations', [NarrationController::class, 'store'])->name('api.matters.narrations.store');
+
+        Route::get('/matters/{matter:id}/diary-entries', [DiaryEntryController::class, 'index'])->name('api.matters.diary-entries');
+        Route::post('/matters/{matter:id}/diary-entries', [DiaryEntryController::class, 'store'])->name('api.matters.diary-entries.store');
     });
 });

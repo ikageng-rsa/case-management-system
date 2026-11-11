@@ -27,6 +27,9 @@ class ServiceBoundariesTest extends TestCase
         'MatterTypes' => [
             'Reference' => 'Matter types are reference data, so they share its locked rule.',
         ],
+        'Diary' => [
+            'Notifications' => 'Diarising an entry for someone else tells them.',
+        ],
         'Matters' => [
             'Notifications' => 'Assigning or unassigning someone on a matter tells them.',
         ],
