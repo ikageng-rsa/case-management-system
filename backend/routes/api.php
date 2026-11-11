@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\Account\CurrentUserController;
+use App\Http\Controllers\Api\V1\Audit\MatterAuditEntryController;
 use App\Http\Controllers\Api\V1\Auth\ResendSignInCodeController;
 use App\Http\Controllers\Api\V1\Auth\SignInController;
 use App\Http\Controllers\Api\V1\Auth\SignOutController;
@@ -49,6 +50,8 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
         Route::get('/matters/{matter:id}/documents', [MatterDocumentController::class, 'index'])->name('api.matters.documents');
         Route::post('/matters/{matter:id}/documents', [MatterDocumentController::class, 'store'])->name('api.matters.documents.store');
         Route::get('/matters/{matter:id}/documents/{document}', [MatterDocumentController::class, 'show'])->whereNumber('document')->name('api.matters.documents.show');
+
+        Route::get('/matters/{matter:id}/audit-entries', [MatterAuditEntryController::class, 'index'])->name('api.matters.audit-entries');
 
         Route::get('/diary-entries', [UserDiaryEntryController::class, 'index'])->name('api.diary-entries');
 
