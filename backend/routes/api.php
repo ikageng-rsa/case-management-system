@@ -61,6 +61,7 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
         Route::post('/matters/{matter:id}/diary-entries', [DiaryEntryController::class, 'store'])->name('api.matters.diary-entries.store');
 
         Route::scopeBindings()->group(function () {
+            Route::patch('/matters/{matter:id}/diary-entries/{diaryEntry}', [DiaryEntryController::class, 'update'])->name('api.matters.diary-entries.update');
             Route::patch('/matters/{matter:id}/diary-entries/{diaryEntry}/reminder', UpdateDiaryReminderController::class)->name('api.matters.diary-entries.reminder');
             Route::post('/matters/{matter:id}/diary-entries/{diaryEntry}/complete', CompleteDiaryEntryController::class)->name('api.matters.diary-entries.complete');
         });
