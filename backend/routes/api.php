@@ -9,7 +9,9 @@ use App\Http\Controllers\Api\V1\Auth\SignOutController;
 use App\Http\Controllers\Api\V1\Auth\VerifySignInCodeController;
 use App\Http\Controllers\Api\V1\Client\ClientController;
 use App\Http\Controllers\Api\V1\Client\RevealClientFieldController;
+use App\Http\Controllers\Api\V1\Diary\CompleteDiaryEntryController;
 use App\Http\Controllers\Api\V1\Diary\DiaryEntryController;
+use App\Http\Controllers\Api\V1\Diary\UpdateDiaryReminderController;
 use App\Http\Controllers\Api\V1\Matter\MatterAssignmentController;
 use App\Http\Controllers\Api\V1\Matter\MatterController;
 use App\Http\Controllers\Api\V1\Matter\MatterPartyController;
@@ -57,5 +59,10 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
 
         Route::get('/matters/{matter:id}/diary-entries', [DiaryEntryController::class, 'index'])->name('api.matters.diary-entries');
         Route::post('/matters/{matter:id}/diary-entries', [DiaryEntryController::class, 'store'])->name('api.matters.diary-entries.store');
+
+        Route::scopeBindings()->group(function () {
+            Route::patch('/matters/{matter:id}/diary-entries/{diaryEntry}/reminder', UpdateDiaryReminderController::class)->name('api.matters.diary-entries.reminder');
+            Route::post('/matters/{matter:id}/diary-entries/{diaryEntry}/complete', CompleteDiaryEntryController::class)->name('api.matters.diary-entries.complete');
+        });
     });
 });
