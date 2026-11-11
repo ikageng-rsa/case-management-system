@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\Client\RevealClientFieldController;
 use App\Http\Controllers\Api\V1\Diary\CompleteDiaryEntryController;
 use App\Http\Controllers\Api\V1\Diary\DiaryEntryController;
 use App\Http\Controllers\Api\V1\Diary\UpdateDiaryReminderController;
+use App\Http\Controllers\Api\V1\Diary\UserDiaryEntryController;
 use App\Http\Controllers\Api\V1\Matter\MatterAssignmentController;
 use App\Http\Controllers\Api\V1\Matter\MatterController;
 use App\Http\Controllers\Api\V1\Matter\MatterPartyController;
@@ -43,6 +44,8 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
         Route::get('/clients', [ClientController::class, 'index'])->name('api.clients');
         Route::get('/clients/{client}', [ClientController::class, 'show'])->name('api.clients.show');
         Route::post('/clients/{client}/reveal', RevealClientFieldController::class)->name('api.clients.reveal');
+
+        Route::get('/diary-entries', [UserDiaryEntryController::class, 'index'])->name('api.diary-entries');
 
         Route::get('/matters', [MatterController::class, 'index'])->name('api.matters');
         Route::get('/matters/{matter:id}', [MatterController::class, 'show'])->name('api.matters.show');
