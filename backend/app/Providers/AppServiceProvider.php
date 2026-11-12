@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Models\Billing\TariffSchedule;
 use App\Models\Client\Client;
 use App\Models\Client\ClientContact;
 use App\Models\Client\ClientContactPerson;
@@ -62,6 +63,7 @@ class AppServiceProvider extends ServiceProvider
             'court' => Court::class,
             'matter_type' => MatterType::class,
             'activity_type' => ActivityType::class,
+            'tariff_schedule' => TariffSchedule::class,
             'user' => User::class,
             'role' => Role::class,
             'user_invitation' => UserInvitation::class,
