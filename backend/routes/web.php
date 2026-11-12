@@ -6,6 +6,9 @@ use App\Http\Controllers\Account\AccountController;
 use App\Http\Controllers\Account\NotificationController;
 use App\Http\Controllers\Account\SignInCodeController;
 use App\Http\Controllers\Audit\AuditLogController;
+use App\Http\Controllers\Billing\DownloadTariffSourceController;
+use App\Http\Controllers\Billing\DownloadTariffTemplateController;
+use App\Http\Controllers\Billing\TariffScheduleController;
 use App\Http\Controllers\Client\ClientContactController;
 use App\Http\Controllers\Client\ClientController;
 use App\Http\Controllers\Client\ClientFicaDocumentController;
@@ -150,6 +153,15 @@ Route::middleware('auth')->group(function () {
         Route::patch('/activity-types/{activityType}', [ActivityTypeController::class, 'update'])->name('activity-type.update');
         Route::delete('/activity-types/{activityType}', [ActivityTypeController::class, 'destroy'])->name('activity-type.destroy');
         Route::post('/activity-types/{activityType}/restore', [ActivityTypeController::class, 'restore'])->withTrashed()->name('activity-type.restore');
+    });
+
+    // The court tariffs bills are priced from, one schedule per date it starts.
+    Route::middleware('can:manage_tariffs')->group(function () {
+        Route::get('/tariffs/template', DownloadTariffTemplateController::class)->name('tariff-schedule.template');
+        Route::post('/tariffs', [TariffScheduleController::class, 'store'])->name('tariff-schedule.store');
+        Route::get('/tariffs/{tariffSchedule}', [TariffScheduleController::class, 'show'])->name('tariff-schedule.show');
+        Route::get('/tariffs/{tariffSchedule}/source', DownloadTariffSourceController::class)->name('tariff-schedule.source');
+        Route::delete('/tariffs/{tariffSchedule}', [TariffScheduleController::class, 'destroy'])->name('tariff-schedule.destroy');
     });
 
     Route::get('/audit-log', [AuditLogController::class, 'index'])->middleware('can:view_audit_log')->name('audit-log');

@@ -384,4 +384,103 @@ $used = $type->narrations_count > 0;
             </x-ui.sheet>
         @endforeach
     @endif
+
+    {{-- ===================================================== Tariffs --}}
+    @if ($tab === 'tariffs')
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <div>
+                    <h3 class="card-title mb-0">Tariffs</h3>
+                    <p class="text-meta mb-0">Each tariff is in force from its date until a newer one starts. One already in force stays on record.</p>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <x-ui.button :href="route('tariff-schedule.template')" variant="outline-secondary" icon="download" size="sm">Template</x-ui.button>
+                    <x-ui.button variant="primary" icon="upload" size="sm"
+                        x-data x-on:click="$dispatch('sheet-open', 'new-tariff-schedule')">Upload tariff</x-ui.button>
+                </div>
+            </div>
+
+            @if ($errors->getBag('tariff_schedules')->any())
+                <div class="alert alert-danger m-3 mb-0">{{ $errors->getBag('tariff_schedules')->first() }}</div>
+            @endif
+
+            <div class="table-responsive">
+                <table class="table table-vcenter card-table">
+                    <thead>
+                        <tr>
+                            <th>Tariff</th>
+                            <th>In force from</th>
+                            <th class="text-center">Rates</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($tariffSchedules as $schedule)
+                            <tr>
+                                <td>
+                                    <a href="{{ route('tariff-schedule.show', $schedule) }}">{{ $schedule->name }}</a>
+                                    @if ($tariffInForce?->is($schedule))
+                                        <x-ui.stage-badge tone="success" class="ms-2">In force</x-ui.stage-badge>
+                                    @elseif (! $schedule->hasStarted())
+                                        <x-ui.stage-badge tone="info" class="ms-2">Upcoming</x-ui.stage-badge>
+                                    @else
+                                        <x-ui.stage-badge tone="neutral" class="ms-2">Replaced</x-ui.stage-badge>
+                                    @endif
+                                </td>
+                                <td>{{ $schedule->effective_from->format('j M Y') }}</td>
+                                <td class="text-center">{{ $schedule->items_count }}</td>
+                                <td class="text-end text-nowrap">
+                                    <x-ui.button :href="route('tariff-schedule.source', $schedule)" variant="ghost-secondary" size="sm">Download</x-ui.button>
+
+                                    @unless ($schedule->hasStarted())
+                                        <form method="POST" action="{{ route('tariff-schedule.destroy', $schedule) }}" class="d-inline"
+                                            data-confirm="Remove {{ $schedule->name }}? It has not come into force, so nothing has been charged from it."
+                                            data-confirm-title="Remove tariff" data-confirm-action="Remove"
+                                            data-confirm-tone="danger" data-confirm-icon="trash">
+                                            @csrf
+                                            @method('DELETE')
+                                            <x-ui.button type="submit" variant="ghost-danger" size="sm">Remove</x-ui.button>
+                                        </form>
+                                    @endunless
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="4" class="text-center text-secondary py-4">No tariffs yet. Download the template, fill in the gazette's rates and upload it.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <x-ui.sheet name="new-tariff-schedule" title="Upload a tariff" bag="tariff_schedule_new"
+            :action="route('tariff-schedule.store')" method="POST" enctype="multipart/form-data">
+            <x-ui.input label="Name" name="name" id="tariff_name" hint="As the gazette calls it, e.g. Magistrates' Courts tariff 2027"
+                :value="$input('tariff_schedule_new', 'name', '')" :error="$errors->getBag('tariff_schedule_new')->first('name')" />
+
+            <x-ui.input label="In force from" name="effective_from" id="tariff_effective_from" type="date"
+                :value="$input('tariff_schedule_new', 'effective_from', '')" :error="$errors->getBag('tariff_schedule_new')->first('effective_from')" />
+
+            <x-ui.input label="Tariff file" name="file" id="tariff_file" type="file" accept=".csv"
+                hint="A .csv in the template's layout. Rates in rand; leave scale or role empty for a rate that applies to any." />
+
+            @if ($errors->getBag('tariff_schedule_new')->has('file'))
+                <div class="alert alert-danger">
+                    <p class="mb-1">Nothing was saved. Fix these lines and upload the file again:</p>
+                    <ul class="mb-0">
+                        @foreach ($errors->getBag('tariff_schedule_new')->get('file') as $problem)
+                            <li>{{ $problem }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            <x-slot:footer>
+                <div class="d-flex align-items-center justify-content-between">
+                    <x-ui.button variant="outline-secondary" size="sm" x-on:click="close()">Cancel</x-ui.button>
+                    <x-ui.button type="submit" variant="primary" size="sm">Upload tariff</x-ui.button>
+                </div>
+            </x-slot:footer>
+        </x-ui.sheet>
+    @endif
 @endsection
