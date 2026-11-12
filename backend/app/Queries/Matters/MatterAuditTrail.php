@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Builder;
 class MatterAuditTrail
 {
     /** @return LengthAwarePaginator<int, Activity> */
-    public function for(Matter $matter): LengthAwarePaginator
+    public function for(Matter $matter, int $perPage = 8, string $pageName = 'audit_page'): LengthAwarePaginator
     {
         $related = [
             'narration' => $matter->narrations()->pluck('id'),
@@ -41,7 +41,7 @@ class MatterAuditTrail
             })
             ->with('causer')
             ->latest('id')
-            ->paginate(8, ['*'], 'audit_page')
+            ->paginate($perPage, ['*'], $pageName)
             ->withQueryString();
     }
 }

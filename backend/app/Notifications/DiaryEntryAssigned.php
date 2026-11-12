@@ -39,6 +39,8 @@ class DiaryEntryAssigned extends PersonalNotification
             'type' => $this->type()->value,
             'message' => $this->message(),
             'url' => route('matter.show', [$this->entry->matter, 'tab' => 'diary']),
+            'diary_entry_id' => $this->entry->getKey(),
+            'matter_id' => $this->entry->matter_id,
         ];
     }
 

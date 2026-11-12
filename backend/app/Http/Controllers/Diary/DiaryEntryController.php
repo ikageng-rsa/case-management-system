@@ -9,35 +9,27 @@ use App\Http\Requests\Diary\StoreDiaryEntryRequest;
 use App\Http\Requests\Diary\UpdateDiaryReminderRequest;
 use App\Models\Diary\DiaryEntry;
 use App\Models\Matter\Matter;
-use App\Notifications\DiaryEntryAssigned;
 use App\Services\Diary\CompleteDiaryEntry;
+use App\Services\Diary\DiariseNextAction;
 use App\Services\Diary\ResolveReminderLead;
-use App\Services\Notifications\NotifyUser;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 
 class DiaryEntryController extends Controller
 {
-    public function store(StoreDiaryEntryRequest $request, Matter $matter, NotifyUser $notify, ResolveReminderLead $resolveLead): RedirectResponse
+    public function store(StoreDiaryEntryRequest $request, Matter $matter, DiariseNextAction $diarise, ResolveReminderLead $resolveLead): RedirectResponse
     {
         Gate::authorize('work', $matter);
 
-        $entry = new DiaryEntry($request->safe()->only(['body', 'due_at']));
-
-        // What was chosen on the form; failing that, how this person usually likes to be reminded.
-        $entry->remind_before_minutes = $request->choseReminder()
-            ? $request->reminderMinutes()
-            : $resolveLead->for($request->user());
-
-        $entry->matter()->associate($matter);
-        $entry->assignee()->associate($request->assignee());
-
-        $entry->save();
-
-        // Told only when someone else has put it on their plate.
-        if (! $entry->assignee->is($request->user())) {
-            $notify->about($entry->assignee, new DiaryEntryAssigned($entry, $request->user()));
-        }
+        $diarise->diarise(
+            matter: $matter,
+            assignee: $request->assignee(),
+            body: $request->validated('body'),
+            dueAt: $request->date('due_at'),
+            diarisedBy: $request->user(),
+            // What was chosen on the form; failing that, how this person usually likes to be reminded.
+            remindBeforeMinutes: $request->choseReminder() ? $request->reminderMinutes() : $resolveLead->for($request->user()),
+        );
 
         return redirect()
             ->route('matter.show', [$matter, 'tab' => 'diary'])

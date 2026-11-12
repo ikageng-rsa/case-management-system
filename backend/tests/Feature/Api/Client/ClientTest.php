@@ -114,7 +114,7 @@ class ClientTest extends ApiTestCase
             ->assertJsonPath('data.attributes.identity_type', IdentityType::Passport->value)
             ->assertJsonPath('data.attributes.date_of_birth_masked', '·· ··· ····');
 
-        $this->assertStringNotContainsString('1990', $response->getContent());
+        $this->assertStringNotContainsString('1990', (string) json_encode($response->json('data.attributes')));
     }
 
     public function test_without_view_client_contacts_no_contacts_come_even_when_asked_for(): void

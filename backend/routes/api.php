@@ -3,12 +3,21 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\Account\CurrentUserController;
+use App\Http\Controllers\Api\V1\Account\NotificationController;
+use App\Http\Controllers\Api\V1\Account\ReadAllNotificationsController;
+use App\Http\Controllers\Api\V1\Account\ReadNotificationController;
+use App\Http\Controllers\Api\V1\Audit\MatterAuditEntryController;
 use App\Http\Controllers\Api\V1\Auth\ResendSignInCodeController;
 use App\Http\Controllers\Api\V1\Auth\SignInController;
 use App\Http\Controllers\Api\V1\Auth\SignOutController;
 use App\Http\Controllers\Api\V1\Auth\VerifySignInCodeController;
 use App\Http\Controllers\Api\V1\Client\ClientController;
 use App\Http\Controllers\Api\V1\Client\RevealClientFieldController;
+use App\Http\Controllers\Api\V1\Diary\CompleteDiaryEntryController;
+use App\Http\Controllers\Api\V1\Diary\DiaryEntryController;
+use App\Http\Controllers\Api\V1\Diary\UpdateDiaryReminderController;
+use App\Http\Controllers\Api\V1\Diary\UserDiaryEntryController;
+use App\Http\Controllers\Api\V1\Document\MatterDocumentController;
 use App\Http\Controllers\Api\V1\Matter\MatterAssignmentController;
 use App\Http\Controllers\Api\V1\Matter\MatterController;
 use App\Http\Controllers\Api\V1\Matter\MatterPartyController;
@@ -30,6 +39,10 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
         Route::post('/auth/sign-out', SignOutController::class)->name('api.sign-out');
         Route::get('/me', CurrentUserController::class)->name('api.me');
 
+        Route::get('/notifications', [NotificationController::class, 'index'])->name('api.notifications');
+        Route::post('/notifications/read-all', ReadAllNotificationsController::class)->name('api.notifications.read-all');
+        Route::post('/notifications/{notification}/read', ReadNotificationController::class)->name('api.notifications.read');
+
         // The lists the app's forms are filled from. Read only: they are kept on the web.
         Route::get('/activity-types', [ActivityTypeController::class, 'index'])->name('api.activity-types');
         Route::get('/assignment-capacities', [AssignmentCapacityController::class, 'index'])->name('api.assignment-capacities');
@@ -40,6 +53,14 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
         Route::get('/clients', [ClientController::class, 'index'])->name('api.clients');
         Route::get('/clients/{client}', [ClientController::class, 'show'])->name('api.clients.show');
         Route::post('/clients/{client}/reveal', RevealClientFieldController::class)->name('api.clients.reveal');
+
+        Route::get('/matters/{matter:id}/documents', [MatterDocumentController::class, 'index'])->name('api.matters.documents');
+        Route::post('/matters/{matter:id}/documents', [MatterDocumentController::class, 'store'])->name('api.matters.documents.store');
+        Route::get('/matters/{matter:id}/documents/{document}', [MatterDocumentController::class, 'show'])->whereNumber('document')->name('api.matters.documents.show');
+
+        Route::get('/matters/{matter:id}/audit-entries', [MatterAuditEntryController::class, 'index'])->name('api.matters.audit-entries');
+
+        Route::get('/diary-entries', [UserDiaryEntryController::class, 'index'])->name('api.diary-entries');
 
         Route::get('/matters', [MatterController::class, 'index'])->name('api.matters');
         Route::get('/matters/{matter:id}', [MatterController::class, 'show'])->name('api.matters.show');
@@ -53,5 +74,14 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
 
         Route::get('/matters/{matter:id}/narrations', [NarrationController::class, 'index'])->name('api.matters.narrations');
         Route::post('/matters/{matter:id}/narrations', [NarrationController::class, 'store'])->name('api.matters.narrations.store');
+
+        Route::get('/matters/{matter:id}/diary-entries', [DiaryEntryController::class, 'index'])->name('api.matters.diary-entries');
+        Route::post('/matters/{matter:id}/diary-entries', [DiaryEntryController::class, 'store'])->name('api.matters.diary-entries.store');
+
+        Route::scopeBindings()->group(function () {
+            Route::patch('/matters/{matter:id}/diary-entries/{diaryEntry}', [DiaryEntryController::class, 'update'])->name('api.matters.diary-entries.update');
+            Route::patch('/matters/{matter:id}/diary-entries/{diaryEntry}/reminder', UpdateDiaryReminderController::class)->name('api.matters.diary-entries.reminder');
+            Route::post('/matters/{matter:id}/diary-entries/{diaryEntry}/complete', CompleteDiaryEntryController::class)->name('api.matters.diary-entries.complete');
+        });
     });
 });
