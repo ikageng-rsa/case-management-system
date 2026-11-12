@@ -67,6 +67,7 @@ enum Role: string
                 Permission::ManageMatterTypes,
                 Permission::ManageActivityTypes,
                 Permission::ManageCourts,
+                Permission::ManageTariffs,
                 Permission::ViewAuditLog,
                 Permission::ExportAuditLog,
             ],
