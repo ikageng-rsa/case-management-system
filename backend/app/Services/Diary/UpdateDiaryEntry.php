@@ -11,7 +11,6 @@ use App\Notifications\DiaryEntryAssigned;
 use App\Services\Notifications\NotifyUser;
 use Carbon\CarbonInterface;
 
-
 class UpdateDiaryEntry
 {
     public function __construct(private readonly NotifyUser $notify) {}
