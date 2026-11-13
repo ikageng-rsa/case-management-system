@@ -23,7 +23,7 @@ class ImportTariffScheduleTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const HEADER = "activity_code,scale_a,scale_b,scale_c,scale_d,time_rate,time_block_minutes\n";
+    private const HEADER = "activity_code,scale_a,scale_b,scale_c,scale_d\n";
 
     protected function setUp(): void
     {
@@ -59,22 +59,21 @@ class ImportTariffScheduleTest extends TestCase
 
     public function test_it_saves_each_line_as_a_draft_with_its_rate_on_each_scale(): void
     {
-        $schedule = $this->import("DRAFT,128.00,160,208,,,\nTRAVEL,6,7.50,9.75,,223,15\nCONS,720,900,1170,,,\n");
+        $schedule = $this->import("DRAFT,128.00,160,208,\nTRAVEL,6,7.50,9.75,\nCONS,720,900,1170,1500\n");
 
         $this->assertFalse($schedule->isPublished());
         $this->assertSame('2027-04-01', $schedule->effective_from->toDateString());
         $this->assertCount(3, $schedule->items);
 
-        $travel = $schedule->items->firstWhere('time_rate_cents', 22300);
-        $this->assertSame(600, $travel->rate(TariffScale::A));
+        $travel = $schedule->items->firstWhere('scale_a_cents', 600);
         $this->assertSame(975, $travel->rate(TariffScale::C));
         $this->assertNull($travel->rate(TariffScale::D));
-        $this->assertSame(15, $travel->time_block_minutes);
+        $this->assertSame(150000, $schedule->items->firstWhere('scale_a_cents', 72000)->rate(TariffScale::D));
     }
 
     public function test_it_keeps_the_uploaded_file_with_the_schedule(): void
     {
-        $this->assertSame('tariff.csv', $this->import("DRAFT,49,,,,,\n")->source()->file_name);
+        $this->assertSame('tariff.csv', $this->import("DRAFT,49,,,\n")->source()->file_name);
     }
 
     public function test_each_role_starts_with_its_markup_on_the_latest_published_tariff(): void
@@ -85,7 +84,7 @@ class ImportTariffScheduleTest extends TestCase
         TariffAdjustment::factory()->for(TariffSchedule::factory()->startingOn('2026-10-01')->draft()->create(), 'schedule')
             ->amount(99)->create(['role_id' => $candidate->getKey()]);
 
-        $adjustment = $this->import("DRAFT,49,,,,,\n")->adjustments->sole();
+        $adjustment = $this->import("DRAFT,49,,,\n")->adjustments->sole();
 
         $this->assertSame($candidate->getKey(), $adjustment->role_id);
         $this->assertSame(TariffAdjustmentKind::Percent, $adjustment->kind);
@@ -94,7 +93,7 @@ class ImportTariffScheduleTest extends TestCase
 
     public function test_it_lists_every_problem_by_line_and_saves_nothing(): void
     {
-        $problems = $this->problemsWith("NOPE,49,,,,,\nDRAFT,abc,,,,,\nTRAVEL,,,,,,\n");
+        $problems = $this->problemsWith("NOPE,49,,,\nDRAFT,abc,,,\nTRAVEL,,,,\n");
 
         $this->assertSame([
             'Line 2: there is no kind of work with the code "NOPE".',
@@ -106,22 +105,14 @@ class ImportTariffScheduleTest extends TestCase
 
     public function test_it_refuses_the_same_kind_of_work_twice(): void
     {
-        $this->assertSame(['Line 3: DRAFT is already on line 2.'], $this->problemsWith("DRAFT,49,,,,,\ndraft,50,,,,,\n"));
-    }
-
-    public function test_a_time_rate_needs_its_block_and_work_already_counted_in_minutes_takes_none(): void
-    {
-        $problems = $this->problemsWith("TRAVEL,6,,,,223,\nCONS,500,,,,100,15\n");
-
-        $this->assertStringContainsString('a time rate and its block of minutes go together', $problems[0]);
-        $this->assertStringContainsString('CONS is already counted in minutes', $problems[1]);
+        $this->assertSame(['Line 3: DRAFT is already on line 2.'], $this->problemsWith("DRAFT,49,,,\ndraft,50,,,\n"));
     }
 
     public function test_it_refuses_a_retired_kind_of_work(): void
     {
         ActivityType::where('code', 'DRAFT')->first()->delete();
 
-        $this->assertStringContainsString('DRAFT has been retired', $this->problemsWith("DRAFT,49,,,,,\n")[0]);
+        $this->assertStringContainsString('DRAFT has been retired', $this->problemsWith("DRAFT,49,,,\n")[0]);
     }
 
     public function test_it_refuses_a_file_with_no_rates_or_the_wrong_headings(): void

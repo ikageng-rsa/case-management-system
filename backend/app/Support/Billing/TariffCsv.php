@@ -16,7 +16,7 @@ use InvalidArgumentException;
  */
 class TariffCsv
 {
-    public const COLUMNS = ['activity_code', 'scale_a', 'scale_b', 'scale_c', 'scale_d', 'time_rate', 'time_block_minutes'];
+    public const COLUMNS = ['activity_code', 'scale_a', 'scale_b', 'scale_c', 'scale_d'];
 
     /**
      * The rows of the file, keyed by column, each with the line it is on.

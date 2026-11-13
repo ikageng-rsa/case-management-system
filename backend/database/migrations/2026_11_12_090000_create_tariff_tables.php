@@ -33,8 +33,6 @@ return new class extends Migration
             $table->unsignedInteger('scale_b_cents')->nullable();
             $table->unsignedInteger('scale_c_cents')->nullable();
             $table->unsignedInteger('scale_d_cents')->nullable();
-            $table->unsignedInteger('time_rate_cents')->nullable();
-            $table->unsignedSmallInteger('time_block_minutes')->nullable();
             $table->timestamps();
 
             $table->unique(['tariff_schedule_id', 'activity_type_id']);

@@ -28,8 +28,6 @@ class TariffItemFactory extends Factory
             'scale_b_cents' => null,
             'scale_c_cents' => null,
             'scale_d_cents' => null,
-            'time_rate_cents' => null,
-            'time_block_minutes' => null,
         ];
     }
 }

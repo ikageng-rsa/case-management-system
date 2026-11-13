@@ -21,7 +21,7 @@ class TariffScheduleTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const HEADER = "activity_code,scale_a,scale_b,scale_c,scale_d,time_rate,time_block_minutes\n";
+    private const HEADER = "activity_code,scale_a,scale_b,scale_c,scale_d\n";
 
     protected function setUp(): void
     {
@@ -57,7 +57,7 @@ class TariffScheduleTest extends TestCase
         $candidate = Role::findByName(RoleEnum::CandidateAttorney->value);
         $director = Role::findByName(RoleEnum::Director->value);
 
-        $this->upload($manager, "APP,1440.00,1800.00,2340.00,,,\nTRAVEL,6.00,7.50,9.75,,1760.00,60\n");
+        $this->upload($manager, "APP,1440.00,1800.00,2340.00,\nTRAVEL,6.00,7.50,9.75,\n");
 
         $schedule = TariffSchedule::sole();
         $this->assertFalse($schedule->isPublished());
@@ -76,8 +76,7 @@ class TariffScheduleTest extends TestCase
         ])->assertRedirect(route('tariff-schedule.show', $schedule));
 
         $this->actingAs($manager)->get(route('tariff-schedule.show', [$schedule, 'role' => $candidate->getKey()]))
-            ->assertSeeInOrder(['Court appearance', 'R 720.00', 'R 900.00', 'R 1 170.00'])
-            ->assertSee('R 880.00');
+            ->assertSeeInOrder(['Court appearance', 'R 720.00', 'R 900.00', 'R 1 170.00']);
         $this->actingAs($manager)->get(route('tariff-schedule.show', [$schedule, 'role' => $director->getKey()]))
             ->assertSee('R 2 094.55');
 
@@ -88,7 +87,7 @@ class TariffScheduleTest extends TestCase
 
     public function test_a_file_with_mistakes_saves_nothing_and_lists_each_line(): void
     {
-        $this->upload($this->manager(), "NOPE,49,,,,,\n")
+        $this->upload($this->manager(), "NOPE,49,,,\n")
             ->assertRedirect(route('reference-data', ['tab' => 'tariffs']))
             ->assertSessionHasErrorsIn('tariff_schedule_new', 'file');
 
@@ -99,7 +98,7 @@ class TariffScheduleTest extends TestCase
     {
         TariffSchedule::factory()->startingOn('2027-04-01')->create();
 
-        $this->upload($this->manager(), "APP,1440,,,,,\n")->assertSessionHasErrorsIn('tariff_schedule_new', 'effective_from');
+        $this->upload($this->manager(), "APP,1440,,,\n")->assertSessionHasErrorsIn('tariff_schedule_new', 'effective_from');
     }
 
     public function test_a_markup_needs_an_amount(): void
@@ -121,7 +120,7 @@ class TariffScheduleTest extends TestCase
         $response = $this->actingAs($this->manager())->get(route('tariff-schedule.template'));
 
         $response->assertOk()->assertDownload('tariff-template.csv');
-        $this->assertSame(self::HEADER."APP,,,,,,\nTRAVEL,,,,,,\n", $response->getContent());
+        $this->assertSame(self::HEADER."APP,,,,\nTRAVEL,,,,\n", $response->getContent());
     }
 
     public function test_a_tariff_in_force_cannot_be_removed_but_a_draft_or_upcoming_one_can(): void

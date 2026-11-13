@@ -459,7 +459,7 @@ $used = $type->narrations_count > 0;
                 :value="$input('tariff_schedule_new', 'effective_from', '')" :error="$errors->getBag('tariff_schedule_new')->first('effective_from')" />
 
             <x-ui.input label="Tariff file" name="file" id="tariff_file" type="file" accept=".csv"
-                hint="A .csv in the template's layout: one line per kind of work, with its rate in rand on each scale. Leave a scale empty when the gazette does not quote it." />
+                hint="A .csv in the template's layout: one line per kind of work, with its rate in rand on each scale. Leave a scale empty when the gazette does not quote it. What each role charges is set after the upload." />
 
             @if ($errors->getBag('tariff_schedule_new')->has('file'))
                 <div class="alert alert-danger">

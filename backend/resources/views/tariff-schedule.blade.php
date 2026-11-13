@@ -89,7 +89,6 @@
                                 @foreach ($scales as $scale)
                                     <th class="text-end">Scale {{ $scale->value }}</th>
                                 @endforeach
-                                <th class="text-end">Time on top</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -102,17 +101,9 @@
                                     @foreach ($scales as $scale)
                                         <td class="text-end text-nowrap">{{ $rand($schedule->rateFor($item, $scale, $asRole)) }}</td>
                                     @endforeach
-                                    <td class="text-end text-nowrap">
-                                        @if ($item->chargesTime())
-                                            {{ $rand($asRole && $adjustmentFor($asRole) ? $adjustmentFor($asRole)->apply($item->time_rate_cents) : $item->time_rate_cents) }}
-                                            <div class="text-meta">per {{ $item->time_block_minutes }} minutes</div>
-                                        @else
-                                            —
-                                        @endif
-                                    </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="{{ count($scales) + 2 }}" class="text-center text-secondary py-4">This tariff has no rates.</td></tr>
+                                <tr><td colspan="{{ count($scales) + 1 }}" class="text-center text-secondary py-4">This tariff has no rates.</td></tr>
                             @endforelse
                         </tbody>
                     </table>

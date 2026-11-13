@@ -97,11 +97,6 @@ class ImportTariffSchedule
                 $found[] = 'it has no rate on any scale';
             }
 
-            $timeRate = $row['time_rate'] === '' ? null : TariffCsv::cents((string) $row['time_rate']);
-            $block = $row['time_block_minutes'] === '' ? null : filter_var($row['time_block_minutes'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 1440]]);
-
-            $found = [...$found, ...$this->timeProblems($row, $type, $timeRate, $block)];
-
             if ($found === [] && isset($seen[$code])) {
                 $found[] = "{$code} is already on line {$seen[$code]}";
             }
@@ -114,7 +109,7 @@ class ImportTariffSchedule
 
             $seen[$code] = $row['line'];
 
-            $items[] = ['activity_type_id' => $type->getKey(), ...$rates, 'time_rate_cents' => $timeRate, 'time_block_minutes' => $block];
+            $items[] = ['activity_type_id' => $type->getKey(), ...$rates];
         }
 
         if ($problems !== []) {
@@ -122,35 +117,5 @@ class ImportTariffSchedule
         }
 
         return $items;
-    }
-
-    /**
-     * Time is charged on top only for work counted in something else, and a
-     * time rate needs the size of the block it is charged per.
-     *
-     * @param  array<string, string|int>  $row
-     * @return list<string>
-     */
-    protected function timeProblems(array $row, ?ActivityType $type, ?int $timeRate, int|false|null $block): array
-    {
-        $found = [];
-
-        if ($row['time_rate'] !== '' && $timeRate === null) {
-            $found[] = "the time rate \"{$row['time_rate']}\" is not an amount in rand";
-        }
-
-        if ($block === false) {
-            $found[] = "the time block \"{$row['time_block_minutes']}\" is not a whole number of minutes";
-        }
-
-        if (($row['time_rate'] === '') !== ($row['time_block_minutes'] === '')) {
-            $found[] = 'a time rate and its block of minutes go together';
-        }
-
-        if ($row['time_rate'] !== '' && $type?->measure->isTimed()) {
-            $found[] = "{$type->code} is already counted in minutes, so it takes no separate time rate";
-        }
-
-        return $found;
     }
 }

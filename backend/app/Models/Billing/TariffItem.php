@@ -14,10 +14,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /*
  * One line of a tariff: what a kind of work is worth per unit of its measure
- * on each scale the gazette quotes it on. Work counted in pages or kilometres
- * can carry a second rate for the time it took, charged per block of minutes.
+ * on each scale the gazette quotes it on. Time spent travelling or drafting is
+ * a line of its own, under its own kind of work.
  */
-#[Fillable(['activity_type_id', 'scale_a_cents', 'scale_b_cents', 'scale_c_cents', 'scale_d_cents', 'time_rate_cents', 'time_block_minutes'])]
+#[Fillable(['activity_type_id', 'scale_a_cents', 'scale_b_cents', 'scale_c_cents', 'scale_d_cents'])]
 class TariffItem extends Model
 {
     /** @use HasFactory<TariffItemFactory> */
@@ -35,8 +35,6 @@ class TariffItem extends Model
             'scale_b_cents' => 'integer',
             'scale_c_cents' => 'integer',
             'scale_d_cents' => 'integer',
-            'time_rate_cents' => 'integer',
-            'time_block_minutes' => 'integer',
         ];
     }
 
@@ -59,10 +57,5 @@ class TariffItem extends Model
     public function rate(TariffScale $scale): ?int
     {
         return $this->{static::scaleColumn($scale)};
-    }
-
-    public function chargesTime(): bool
-    {
-        return $this->time_rate_cents !== null;
     }
 }

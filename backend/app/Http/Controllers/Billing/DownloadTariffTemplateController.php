@@ -22,7 +22,7 @@ class DownloadTariffTemplateController extends Controller
         Gate::authorize(Permission::ManageTariffs->value);
 
         $rows = ActivityType::query()->billable()->orderBy('code')->pluck('code')
-            ->map(fn (string $code) => [$code, '', '', '', '', '', ''])
+            ->map(fn (string $code) => [$code, '', '', '', ''])
             ->all();
 
         return response(TariffCsv::write($rows), 200, [
