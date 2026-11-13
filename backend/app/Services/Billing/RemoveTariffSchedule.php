@@ -10,9 +10,9 @@ use Illuminate\Support\Facades\DB;
 class RemoveTariffSchedule
 {
     /**
-     * A schedule can be taken back until its date arrives. Once it is in force
-     * its rates may have been charged, so it stays on record, and a newer
-     * schedule replaces it instead.
+     * A draft can always be thrown away, and a published schedule can be taken
+     * back until its date arrives. Once it is in force its rates may have been
+     * charged, so it stays on record, and a newer schedule replaces it instead.
      */
     public function remove(TariffSchedule $schedule): void
     {

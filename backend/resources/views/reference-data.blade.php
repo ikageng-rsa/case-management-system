@@ -391,7 +391,7 @@ $used = $type->narrations_count > 0;
             <div class="card-header d-flex align-items-center justify-content-between">
                 <div>
                     <h3 class="card-title mb-0">Tariffs</h3>
-                    <p class="text-meta mb-0">Each tariff is in force from its date until a newer one starts. One already in force stays on record.</p>
+                    <p class="text-meta mb-0">An upload is a draft until it is checked and published. Each tariff is then in force from its date until a newer one starts.</p>
                 </div>
 
                 <div class="d-flex gap-2">
@@ -420,13 +420,10 @@ $used = $type->narrations_count > 0;
                             <tr>
                                 <td>
                                     <a href="{{ route('tariff-schedule.show', $schedule) }}">{{ $schedule->name }}</a>
-                                    @if ($tariffInForce?->is($schedule))
-                                        <x-ui.stage-badge tone="success" class="ms-2">In force</x-ui.stage-badge>
-                                    @elseif (! $schedule->hasStarted())
-                                        <x-ui.stage-badge tone="info" class="ms-2">Upcoming</x-ui.stage-badge>
-                                    @else
-                                        <x-ui.stage-badge tone="neutral" class="ms-2">Replaced</x-ui.stage-badge>
-                                    @endif
+                                    @php
+                                        [$tone, $label] = ['draft' => ['accent', 'Draft'], 'upcoming' => ['info', 'Upcoming'], 'in_force' => ['success', 'In force'], 'replaced' => ['neutral', 'Replaced']][$schedule->status($tariffInForce)];
+                                    @endphp
+                                    <x-ui.stage-badge :tone="$tone" class="ms-2">{{ $label }}</x-ui.stage-badge>
                                 </td>
                                 <td>{{ $schedule->effective_from->format('j M Y') }}</td>
                                 <td class="text-center">{{ $schedule->items_count }}</td>
@@ -446,7 +443,7 @@ $used = $type->narrations_count > 0;
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="4" class="text-center text-secondary py-4">No tariffs yet. Download the template, fill in the gazette's rates and upload it.</td></tr>
+                            <tr><td colspan="4" class="text-center text-secondary py-4">No tariffs yet. Download the template, copy in the gazette's rates and upload it.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -462,7 +459,7 @@ $used = $type->narrations_count > 0;
                 :value="$input('tariff_schedule_new', 'effective_from', '')" :error="$errors->getBag('tariff_schedule_new')->first('effective_from')" />
 
             <x-ui.input label="Tariff file" name="file" id="tariff_file" type="file" accept=".csv"
-                hint="A .csv in the template's layout. Rates in rand; leave scale or role empty for a rate that applies to any." />
+                hint="A .csv in the template's layout: one line per kind of work, with its rate in rand on each scale. Leave a scale empty when the gazette does not quote it." />
 
             @if ($errors->getBag('tariff_schedule_new')->has('file'))
                 <div class="alert alert-danger">

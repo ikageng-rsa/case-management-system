@@ -26,6 +26,15 @@ class RemoveTariffScheduleTest extends TestCase
         $this->assertSame(0, TariffItem::count());
     }
 
+    public function test_a_draft_is_removed_whatever_its_date(): void
+    {
+        $schedule = TariffSchedule::factory()->startingOn('2020-01-01')->draft()->create();
+
+        (new RemoveTariffSchedule)->remove($schedule);
+
+        $this->assertModelMissing($schedule);
+    }
+
     public function test_a_schedule_in_force_stays_on_record(): void
     {
         $schedule = TariffSchedule::factory()->startingOn(today()->toDateString())->create();

@@ -5,16 +5,20 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Billing;
 
 use App\Enums\Auth\Permission;
+use App\Enums\Billing\TariffAdjustmentKind;
+use App\Enums\Billing\TariffScale;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Billing\StoreTariffScheduleRequest;
 use App\Models\Billing\TariffItem;
 use App\Models\Billing\TariffSchedule;
+use App\Models\User\Role;
 use App\Services\Billing\ImportTariffSchedule;
 use App\Services\Billing\RemoveTariffSchedule;
 use App\Services\Billing\TariffImportFailed;
 use App\Services\Billing\TariffScheduleHasStarted;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 class TariffScheduleController extends Controller
@@ -30,21 +34,29 @@ class TariffScheduleController extends Controller
         }
 
         return redirect()->route('tariff-schedule.show', $schedule)
-            ->with('status', "Tariff uploaded with {$schedule->items()->count()} rates.");
+            ->with('status', "Read {$schedule->items()->count()} lines. Check the rates and markups, then publish.");
     }
 
-    public function show(TariffSchedule $tariffSchedule): View
+    /*
+     * The tariff as it was read, with the markup each role charges against it.
+     * The rates can be seen as any role would charge them, to check a markup
+     * before the tariff is published.
+     */
+    public function show(Request $request, TariffSchedule $tariffSchedule): View
     {
         Gate::authorize(Permission::ManageTariffs->value);
 
-        $items = $tariffSchedule->items()->with(['activityType', 'role'])->get()
-            ->sortBy(fn (TariffItem $item) => [$item->activityType->name, $item->scale?->value ?? '', $item->role?->name ?? ''])
-            ->values();
+        $tariffSchedule->load(['items.activityType', 'adjustments']);
+        $roles = Role::query()->orderBy('name')->get();
 
         return view('tariff-schedule', [
             'schedule' => $tariffSchedule,
-            'items' => $items,
-            'inForce' => TariffSchedule::inForceOn(today())?->is($tariffSchedule) ?? false,
+            'items' => $tariffSchedule->items->sortBy(fn (TariffItem $item) => $item->activityType->name)->values(),
+            'roles' => $roles,
+            'asRole' => $roles->firstWhere('id', (int) $request->query('role')),
+            'status' => $tariffSchedule->status(TariffSchedule::inForceOn(today())),
+            'scales' => TariffScale::cases(),
+            'kinds' => TariffAdjustmentKind::cases(),
         ]);
     }
 
