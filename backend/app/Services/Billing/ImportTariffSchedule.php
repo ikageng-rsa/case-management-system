@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace App\Services\Billing;
 
 use App\Enums\Billing\TariffScale;
+use App\Models\Billing\TariffAdjustment;
+use App\Models\Billing\TariffItem;
 use App\Models\Billing\TariffSchedule;
 use App\Models\Reference\ActivityType;
-use App\Models\User\Role;
 use App\Support\Billing\TariffCsv;
 use Carbon\CarbonInterface;
 use Illuminate\Http\UploadedFile;
@@ -17,9 +18,10 @@ use InvalidArgumentException;
 class ImportTariffSchedule
 {
     /**
-     * Read a tariff file into a new schedule that is in force from the given
-     * date. Nothing is saved unless every line is sound, and the file itself is
-     * kept with the schedule.
+     * Read a tariff file into a draft schedule for the given date. Nothing is
+     * saved unless every line is sound, and the file itself is kept with the
+     * schedule. Each role starts with the markup it had on the latest published
+     * tariff, so a new gazette usually needs only checking and publishing.
      */
     public function import(string $name, CarbonInterface $effectiveFrom, UploadedFile $file): TariffSchedule
     {
@@ -36,12 +38,17 @@ class ImportTariffSchedule
         $items = $this->items($rows);
 
         return DB::transaction(function () use ($name, $effectiveFrom, $file, $items): TariffSchedule {
+            $previous = TariffSchedule::query()->whereNotNull('published_at')->latestFirst()->with('adjustments')->first();
+
             $schedule = TariffSchedule::create([
                 'name' => trim($name),
                 'effective_from' => $effectiveFrom->toDateString(),
             ]);
 
             $schedule->items()->createMany($items);
+            $schedule->adjustments()->createMany(
+                $previous?->adjustments->map(fn (TariffAdjustment $adjustment) => $adjustment->only(['role_id', 'kind', 'value']))->all() ?? [],
+            );
             $schedule->attachSource($file);
 
             return $schedule;
@@ -49,7 +56,7 @@ class ImportTariffSchedule
     }
 
     /**
-     * The rates the rows describe, or every problem with them.
+     * The lines the rows describe, or every problem with them.
      *
      * @param  list<array<string, string|int>>  $rows
      * @return list<array<string, mixed>>
@@ -57,22 +64,15 @@ class ImportTariffSchedule
     protected function items(array $rows): array
     {
         $activityTypes = ActivityType::withTrashed()->get()->keyBy('code');
-        $roles = Role::query()->get()->keyBy(fn (Role $role) => strtolower($role->name));
 
         $items = [];
         $problems = [];
         $seen = [];
 
         foreach ($rows as $row) {
-            $line = $row['line'];
+            $code = strtoupper((string) $row['activity_code']);
+            $type = $activityTypes->get($code);
             $found = [];
-
-            $type = $activityTypes->get(strtoupper((string) $row['activity_code']));
-            $scale = $row['scale'] === '' ? null : TariffScale::tryFrom(strtoupper((string) $row['scale']));
-            $role = $row['role'] === '' ? null : $roles->get(strtolower((string) $row['role']));
-            $unitRate = TariffCsv::cents((string) $row['unit_rate']);
-            $timeRate = $row['time_rate'] === '' ? null : TariffCsv::cents((string) $row['time_rate']);
-            $block = $row['time_block_minutes'] === '' ? null : filter_var($row['time_block_minutes'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 1440]]);
 
             if ($type === null) {
                 $found[] = "there is no kind of work with the code \"{$row['activity_code']}\"";
@@ -82,42 +82,39 @@ class ImportTariffSchedule
                 $found[] = "{$type->code} has been retired";
             }
 
-            if ($row['scale'] !== '' && $scale === null) {
-                $found[] = "the scale \"{$row['scale']}\" is not one of A, B, C or D";
+            $rates = [];
+
+            foreach (TariffScale::cases() as $scale) {
+                $cell = (string) $row['scale_'.strtolower($scale->value)];
+                $rates[TariffItem::scaleColumn($scale)] = $cell === '' ? null : TariffCsv::cents($cell);
+
+                if ($cell !== '' && $rates[TariffItem::scaleColumn($scale)] === null) {
+                    $found[] = "the scale {$scale->value} rate \"{$cell}\" is not an amount in rand, such as 49 or 49.50";
+                }
             }
 
-            if ($row['role'] !== '' && $role === null) {
-                $found[] = "there is no role called \"{$row['role']}\"";
+            if (array_filter($rates, fn (?int $rate) => $rate !== null) === [] && $found === []) {
+                $found[] = 'it has no rate on any scale';
             }
 
-            if ($unitRate === null) {
-                $found[] = "the unit rate \"{$row['unit_rate']}\" is not an amount in rand, such as 49 or 49.50";
-            }
+            $timeRate = $row['time_rate'] === '' ? null : TariffCsv::cents((string) $row['time_rate']);
+            $block = $row['time_block_minutes'] === '' ? null : filter_var($row['time_block_minutes'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 1440]]);
 
             $found = [...$found, ...$this->timeProblems($row, $type, $timeRate, $block)];
 
-            $key = implode('|', [$type?->code, $scale?->value, $role?->getKey()]);
-
-            if ($found === [] && isset($seen[$key])) {
-                $found[] = "it repeats the rate on line {$seen[$key]} for the same kind of work, scale and role";
+            if ($found === [] && isset($seen[$code])) {
+                $found[] = "{$code} is already on line {$seen[$code]}";
             }
 
             if ($found !== []) {
-                $problems[] = "Line {$line}: ".implode('; ', $found).'.';
+                $problems[] = "Line {$row['line']}: ".implode('; ', $found).'.';
 
                 continue;
             }
 
-            $seen[$key] = $line;
+            $seen[$code] = $row['line'];
 
-            $items[] = [
-                'activity_type_id' => $type->getKey(),
-                'scale' => $scale,
-                'role_id' => $role?->getKey(),
-                'unit_rate_cents' => $unitRate,
-                'time_rate_cents' => $timeRate,
-                'time_block_minutes' => $block ?: null,
-            ];
+            $items[] = ['activity_type_id' => $type->getKey(), ...$rates, 'time_rate_cents' => $timeRate, 'time_block_minutes' => $block];
         }
 
         if ($problems !== []) {

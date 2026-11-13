@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Models\Billing;
 
 use App\Concerns\RecordsActivity;
+use App\Enums\Billing\TariffScale;
 use App\Models\Document\Media;
+use App\Models\User\Role;
 use Carbon\CarbonInterface;
 use Database\Factories\Billing\TariffScheduleFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -18,11 +20,12 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
 /*
- * One published court tariff, as the firm uploaded it. It is in force from its
+ * One court tariff, as the firm uploaded it, with what each role charges
+ * against it. It is a draft until it is published, and then in force from its
  * date until a later schedule starts, so uploading next year's tariff never
  * changes the rates that applied before it.
  */
-#[Fillable(['name', 'effective_from'])]
+#[Fillable(['name', 'effective_from', 'published_at'])]
 class TariffSchedule extends Model implements HasMedia
 {
     /** @use HasFactory<TariffScheduleFactory> */
@@ -43,12 +46,18 @@ class TariffSchedule extends Model implements HasMedia
     {
         return [
             'effective_from' => 'date',
+            'published_at' => 'datetime',
         ];
     }
 
     public function items(): HasMany
     {
         return $this->hasMany(TariffItem::class);
+    }
+
+    public function adjustments(): HasMany
+    {
+        return $this->hasMany(TariffAdjustment::class);
     }
 
     public function registerMediaCollections(): void
@@ -72,14 +81,46 @@ class TariffSchedule extends Model implements HasMedia
     public static function inForceOn(CarbonInterface $date): ?self
     {
         return static::query()
+            ->whereNotNull('published_at')
             ->whereDate('effective_from', '<=', $date)
             ->orderByDesc('effective_from')
             ->first();
     }
 
+    public function isPublished(): bool
+    {
+        return $this->published_at !== null;
+    }
+
+    /** Published and past its date, so its rates may already have been charged. */
     public function hasStarted(): bool
     {
-        return $this->effective_from->lte(today());
+        return $this->isPublished() && $this->effective_from->lte(today());
+    }
+
+    /** draft, upcoming, in_force or replaced. */
+    public function status(?self $inForce): string
+    {
+        return match (true) {
+            ! $this->isPublished() => 'draft',
+            ! $this->hasStarted() => 'upcoming',
+            $inForce?->is($this) ?? false => 'in_force',
+            default => 'replaced',
+        };
+    }
+
+    /** What a role charges for an item on a scale: the gazette rate with the role's markup. */
+    public function rateFor(TariffItem $item, TariffScale $scale, ?Role $role): ?int
+    {
+        $rate = $item->rate($scale);
+
+        if ($rate === null) {
+            return null;
+        }
+
+        $adjustment = $role === null ? null : $this->adjustments->firstWhere('role_id', $role->getKey());
+
+        return $adjustment?->apply($rate) ?? $rate;
     }
 
     public function scopeLatestFirst(Builder $query): void

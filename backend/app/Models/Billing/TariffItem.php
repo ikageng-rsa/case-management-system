@@ -6,7 +6,6 @@ namespace App\Models\Billing;
 
 use App\Enums\Billing\TariffScale;
 use App\Models\Reference\ActivityType;
-use App\Models\User\Role;
 use Database\Factories\Billing\TariffItemFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,12 +13,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /*
- * One rate in a tariff schedule: what a kind of work is worth per unit of its
- * measure, on a scale and for a role, or for any scale or role when those are
- * left empty. Work counted in pages or kilometres can carry a second rate for
- * the time it took, charged per block of minutes.
+ * One line of a tariff: what a kind of work is worth per unit of its measure
+ * on each scale the gazette quotes it on. Work counted in pages or kilometres
+ * can carry a second rate for the time it took, charged per block of minutes.
  */
-#[Fillable(['activity_type_id', 'scale', 'role_id', 'unit_rate_cents', 'time_rate_cents', 'time_block_minutes'])]
+#[Fillable(['activity_type_id', 'scale_a_cents', 'scale_b_cents', 'scale_c_cents', 'scale_d_cents', 'time_rate_cents', 'time_block_minutes'])]
 class TariffItem extends Model
 {
     /** @use HasFactory<TariffItemFactory> */
@@ -33,11 +31,18 @@ class TariffItem extends Model
     protected function casts(): array
     {
         return [
-            'scale' => TariffScale::class,
-            'unit_rate_cents' => 'integer',
+            'scale_a_cents' => 'integer',
+            'scale_b_cents' => 'integer',
+            'scale_c_cents' => 'integer',
+            'scale_d_cents' => 'integer',
             'time_rate_cents' => 'integer',
             'time_block_minutes' => 'integer',
         ];
+    }
+
+    public static function scaleColumn(TariffScale $scale): string
+    {
+        return 'scale_'.strtolower($scale->value).'_cents';
     }
 
     public function schedule(): BelongsTo
@@ -50,9 +55,10 @@ class TariffItem extends Model
         return $this->belongsTo(ActivityType::class)->withTrashed();
     }
 
-    public function role(): BelongsTo
+    /** The gazette's rate on a scale, or null when it is not quoted on that scale. */
+    public function rate(TariffScale $scale): ?int
     {
-        return $this->belongsTo(Role::class);
+        return $this->{static::scaleColumn($scale)};
     }
 
     public function chargesTime(): bool

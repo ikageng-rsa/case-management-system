@@ -20,17 +20,17 @@ class TariffCsvTest extends TestCase
 
     public function test_it_reads_each_row_by_column_with_its_line_number(): void
     {
-        $rows = TariffCsv::read($this->file("activity_code,scale,role,unit_rate,time_rate,time_block_minutes\nDRAFT,A,,49.00,,\n\nTRAVEL,,,10.50,223,15\n"));
+        $rows = TariffCsv::read($this->file("activity_code,scale_a,scale_b,scale_c,scale_d,time_rate,time_block_minutes\nDRAFT,128.00,160,208,,,\n\nTRAVEL,6,7.50,9.75,,223,15\n"));
 
         $this->assertCount(2, $rows);
-        $this->assertSame(['line' => 2, 'activity_code' => 'DRAFT', 'scale' => 'A', 'role' => '', 'unit_rate' => '49.00', 'time_rate' => '', 'time_block_minutes' => ''], $rows[0]);
+        $this->assertSame(['line' => 2, 'activity_code' => 'DRAFT', 'scale_a' => '128.00', 'scale_b' => '160', 'scale_c' => '208', 'scale_d' => '', 'time_rate' => '', 'time_block_minutes' => ''], $rows[0]);
         $this->assertSame(4, $rows[1]['line']);
         $this->assertSame('15', $rows[1]['time_block_minutes']);
     }
 
     public function test_it_accepts_headings_saved_by_a_spreadsheet_with_a_byte_order_mark_and_capitals(): void
     {
-        $rows = TariffCsv::read($this->file("\xEF\xBB\xBFActivity_Code,Scale,Role,Unit_Rate,Time_Rate,Time_Block_Minutes\nCALL,,,100,,\n"));
+        $rows = TariffCsv::read($this->file("\xEF\xBB\xBFActivity_Code,Scale_A,Scale_B,Scale_C,Scale_D,Time_Rate,Time_Block_Minutes\nCALL,100,,,,,\n"));
 
         $this->assertSame('CALL', $rows[0]['activity_code']);
     }
@@ -61,8 +61,8 @@ class TariffCsvTest extends TestCase
     public function test_it_writes_the_headings_above_the_rows(): void
     {
         $this->assertSame(
-            "activity_code,scale,role,unit_rate,time_rate,time_block_minutes\nDRAFT,,,,,\n",
-            TariffCsv::write([['DRAFT', '', '', '', '', '']]),
+            "activity_code,scale_a,scale_b,scale_c,scale_d,time_rate,time_block_minutes\nDRAFT,,,,,,\n",
+            TariffCsv::write([['DRAFT', '', '', '', '', '', '']]),
         );
     }
 }

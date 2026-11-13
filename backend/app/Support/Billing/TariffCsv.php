@@ -7,14 +7,16 @@ namespace App\Support\Billing;
 use InvalidArgumentException;
 
 /*
- * The spreadsheet a tariff is uploaded as. Gazettes are laid out differently
+ * The spreadsheet a tariff is uploaded as: the gazette's table, one line per
+ * kind of work with its rate on each scale. Gazettes are laid out differently
  * every year, so the firm copies the rates into this one fixed layout rather
  * than the app trying to read the gazette itself. Rates are in rand, such as
- * 49 or 49.50, and a blank scale or role means the rate applies to any.
+ * 49 or 49.50, and a blank scale is one the gazette does not quote. What each
+ * role charges is set in the app, not in the file.
  */
 class TariffCsv
 {
-    public const COLUMNS = ['activity_code', 'scale', 'role', 'unit_rate', 'time_rate', 'time_block_minutes'];
+    public const COLUMNS = ['activity_code', 'scale_a', 'scale_b', 'scale_c', 'scale_d', 'time_rate', 'time_block_minutes'];
 
     /**
      * The rows of the file, keyed by column, each with the line it is on.

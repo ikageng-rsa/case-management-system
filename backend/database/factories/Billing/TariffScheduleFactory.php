@@ -22,12 +22,18 @@ class TariffScheduleFactory extends Factory
         return [
             'name' => 'Magistrates\' Courts tariff '.fake()->unique()->year(),
             'effective_from' => fake()->unique()->dateTimeBetween('-5 years', '-1 day')->format('Y-m-d'),
+            'published_at' => now(),
         ];
     }
 
     public function startingOn(string $date): static
     {
         return $this->state(fn (array $attributes) => ['effective_from' => $date]);
+    }
+
+    public function draft(): static
+    {
+        return $this->state(fn (array $attributes) => ['published_at' => null]);
     }
 
     public function upcoming(): static

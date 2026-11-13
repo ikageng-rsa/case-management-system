@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\Billing;
 
+use App\Enums\Billing\TariffAdjustmentKind;
 use App\Enums\Billing\TariffScale;
 use App\Enums\Narration\ActivityMeasure;
+use App\Models\Billing\TariffAdjustment;
 use App\Models\Billing\TariffSchedule;
 use App\Models\Reference\ActivityType;
 use App\Models\User\Role;
@@ -21,7 +23,7 @@ class ImportTariffScheduleTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const HEADER = "activity_code,scale,role,unit_rate,time_rate,time_block_minutes\n";
+    private const HEADER = "activity_code,scale_a,scale_b,scale_c,scale_d,time_rate,time_block_minutes\n";
 
     protected function setUp(): void
     {
@@ -32,14 +34,13 @@ class ImportTariffScheduleTest extends TestCase
         ActivityType::factory()->measuredIn(ActivityMeasure::Page)->create(['code' => 'DRAFT']);
         ActivityType::factory()->measuredIn(ActivityMeasure::Kilometre)->create(['code' => 'TRAVEL']);
         ActivityType::factory()->measuredIn(ActivityMeasure::Minutes, 15)->create(['code' => 'CONS']);
-        Role::findOrCreate('candidate_attorney');
     }
 
-    protected function import(string $rows): TariffSchedule
+    protected function import(string $rows, string $date = '2027-04-01'): TariffSchedule
     {
         return (new ImportTariffSchedule)->import(
             'Magistrates\' Courts tariff 2027',
-            Carbon::parse('2027-04-01'),
+            Carbon::parse($date),
             UploadedFile::fake()->createWithContent('tariff.csv', self::HEADER.$rows),
         );
     }
@@ -56,52 +57,61 @@ class ImportTariffScheduleTest extends TestCase
         $this->fail('The file was accepted.');
     }
 
-    public function test_it_saves_each_rate_with_its_scale_role_and_time_charge(): void
+    public function test_it_saves_each_line_as_a_draft_with_its_rate_on_each_scale(): void
     {
-        $schedule = $this->import("DRAFT,A,candidate_attorney,49.00,,\nDRAFT,A,,52,,\nTRAVEL,,,10.50,223,15\n");
+        $schedule = $this->import("DRAFT,128.00,160,208,,,\nTRAVEL,6,7.50,9.75,,223,15\nCONS,720,900,1170,,,\n");
 
+        $this->assertFalse($schedule->isPublished());
         $this->assertSame('2027-04-01', $schedule->effective_from->toDateString());
         $this->assertCount(3, $schedule->items);
 
-        $draft = $schedule->items->firstWhere('role_id', Role::findByName('candidate_attorney')->getKey());
-        $this->assertSame(TariffScale::A, $draft->scale);
-        $this->assertSame(4900, $draft->unit_rate_cents);
-
-        $travel = $schedule->items->firstWhere('unit_rate_cents', 1050);
-        $this->assertNull($travel->role_id);
-        $this->assertSame(22300, $travel->time_rate_cents);
+        $travel = $schedule->items->firstWhere('time_rate_cents', 22300);
+        $this->assertSame(600, $travel->rate(TariffScale::A));
+        $this->assertSame(975, $travel->rate(TariffScale::C));
+        $this->assertNull($travel->rate(TariffScale::D));
         $this->assertSame(15, $travel->time_block_minutes);
     }
 
     public function test_it_keeps_the_uploaded_file_with_the_schedule(): void
     {
-        $schedule = $this->import("DRAFT,,,49,,\n");
+        $this->assertSame('tariff.csv', $this->import("DRAFT,49,,,,,\n")->source()->file_name);
+    }
 
-        $this->assertSame('tariff.csv', $schedule->source()->file_name);
+    public function test_each_role_starts_with_its_markup_on_the_latest_published_tariff(): void
+    {
+        $candidate = Role::findOrCreate('candidate_attorney');
+        $published = TariffSchedule::factory()->startingOn('2026-04-01')->create();
+        TariffAdjustment::factory()->for($published, 'schedule')->percent(-50)->create(['role_id' => $candidate->getKey()]);
+        TariffAdjustment::factory()->for(TariffSchedule::factory()->startingOn('2026-10-01')->draft()->create(), 'schedule')
+            ->amount(99)->create(['role_id' => $candidate->getKey()]);
+
+        $adjustment = $this->import("DRAFT,49,,,,,\n")->adjustments->sole();
+
+        $this->assertSame($candidate->getKey(), $adjustment->role_id);
+        $this->assertSame(TariffAdjustmentKind::Percent, $adjustment->kind);
+        $this->assertSame(-5000, $adjustment->value);
     }
 
     public function test_it_lists_every_problem_by_line_and_saves_nothing(): void
     {
-        $problems = $this->problemsWith("NOPE,,,49,,\nDRAFT,E,,49,,\nDRAFT,,partner,abc,,\n");
+        $problems = $this->problemsWith("NOPE,49,,,,,\nDRAFT,abc,,,,,\nTRAVEL,,,,,,\n");
 
-        $this->assertCount(3, $problems);
-        $this->assertStringStartsWith('Line 2: there is no kind of work with the code "NOPE"', $problems[0]);
-        $this->assertStringContainsString('Line 3: the scale "E"', $problems[1]);
-        $this->assertStringContainsString('there is no role called "partner"', $problems[2]);
-        $this->assertStringContainsString('the unit rate "abc"', $problems[2]);
+        $this->assertSame([
+            'Line 2: there is no kind of work with the code "NOPE".',
+            'Line 3: the scale A rate "abc" is not an amount in rand, such as 49 or 49.50.',
+            'Line 4: it has no rate on any scale.',
+        ], $problems);
         $this->assertSame(0, TariffSchedule::count());
     }
 
-    public function test_it_refuses_the_same_rate_twice(): void
+    public function test_it_refuses_the_same_kind_of_work_twice(): void
     {
-        $problems = $this->problemsWith("DRAFT,A,,49,,\ndraft,a,,50,,\n");
-
-        $this->assertSame(['Line 3: it repeats the rate on line 2 for the same kind of work, scale and role.'], $problems);
+        $this->assertSame(['Line 3: DRAFT is already on line 2.'], $this->problemsWith("DRAFT,49,,,,,\ndraft,50,,,,,\n"));
     }
 
     public function test_a_time_rate_needs_its_block_and_work_already_counted_in_minutes_takes_none(): void
     {
-        $problems = $this->problemsWith("TRAVEL,,,10.50,223,\nCONS,,,500,100,15\n");
+        $problems = $this->problemsWith("TRAVEL,6,,,,223,\nCONS,500,,,,100,15\n");
 
         $this->assertStringContainsString('a time rate and its block of minutes go together', $problems[0]);
         $this->assertStringContainsString('CONS is already counted in minutes', $problems[1]);
@@ -111,7 +121,7 @@ class ImportTariffScheduleTest extends TestCase
     {
         ActivityType::where('code', 'DRAFT')->first()->delete();
 
-        $this->assertStringContainsString('DRAFT has been retired', $this->problemsWith("DRAFT,,,49,,\n")[0]);
+        $this->assertStringContainsString('DRAFT has been retired', $this->problemsWith("DRAFT,49,,,,,\n")[0]);
     }
 
     public function test_it_refuses_a_file_with_no_rates_or_the_wrong_headings(): void
@@ -120,6 +130,6 @@ class ImportTariffScheduleTest extends TestCase
 
         $this->expectException(TariffImportFailed::class);
 
-        (new ImportTariffSchedule)->import('Tariff', Carbon::parse('2027-04-01'), UploadedFile::fake()->createWithContent('t.csv', "code,rate\nDRAFT,49\n"));
+        (new ImportTariffSchedule)->import('Tariff', Carbon::parse('2027-04-01'), UploadedFile::fake()->createWithContent('t.csv', "activity_code,scale,role,unit_rate\nDRAFT,A,,49\n"));
     }
 }
