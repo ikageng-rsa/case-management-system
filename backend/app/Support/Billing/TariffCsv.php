@@ -33,10 +33,12 @@ class TariffCsv
 
         $header = fgetcsv($handle, escape: '');
 
-        if (! is_array($header) || static::normaliseHeader($header) !== self::COLUMNS) {
+        $headings = is_array($header) ? static::normaliseHeader($header) : [];
+
+        if ($headings !== self::COLUMNS) {
             fclose($handle);
 
-            throw new InvalidArgumentException('The first line must be the template\'s headings: '.implode(', ', self::COLUMNS).'.');
+            throw new InvalidArgumentException(static::headingProblem($headings));
         }
 
         $rows = [];
@@ -101,6 +103,25 @@ class TariffCsv
         $header[0] = preg_replace('/^\xEF\xBB\xBF/', '', (string) $header[0]);
 
         return array_map(fn ($cell) => strtolower(trim((string) $cell)), $header);
+    }
+
+    /**
+     * What is wrong with the first line, naming the columns to remove or add.
+     *
+     * @param  list<string>  $headings
+     */
+    protected static function headingProblem(array $headings): string
+    {
+        $extra = array_values(array_diff(array_filter($headings, fn (string $heading) => $heading !== ''), self::COLUMNS));
+        $missing = array_values(array_diff(self::COLUMNS, $headings));
+
+        $problems = array_filter([
+            $extra === [] ? null : 'remove the column'.(count($extra) > 1 ? 's ' : ' ').implode(', ', $extra),
+            $missing === [] ? null : 'add the column'.(count($missing) > 1 ? 's ' : ' ').implode(', ', $missing),
+            $extra === [] && $missing === [] ? 'put the columns in the template\'s order' : null,
+        ]);
+
+        return 'The first line must be the template\'s headings: '.implode(', ', self::COLUMNS).'. To fix it, '.implode(' and ', $problems).'.';
     }
 
     /** @param  array<int, string|null>  $cells */

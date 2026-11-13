@@ -42,6 +42,15 @@ class TariffCsvTest extends TestCase
         TariffCsv::read($this->file("code,rate\nDRAFT,49\n"));
     }
 
+    public function test_it_names_the_columns_to_remove_or_add(): void
+    {
+        $problem = fn (string $header) => rescue(fn () => TariffCsv::read($this->file("{$header}\nAPP,450,,,\n")), fn ($e) => $e->getMessage(), false);
+
+        $this->assertStringEndsWith('To fix it, remove the column time_rate.', $problem('activity_code,scale_a,scale_b,scale_c,scale_d,time_rate'));
+        $this->assertStringEndsWith('To fix it, add the column scale_d.', $problem('activity_code,scale_a,scale_b,scale_c'));
+        $this->assertStringEndsWith('To fix it, put the columns in the template\'s order.', $problem('scale_a,activity_code,scale_b,scale_c,scale_d'));
+    }
+
     public function test_it_reads_rand_amounts_as_cents(): void
     {
         $this->assertSame(4900, TariffCsv::cents('49'));
