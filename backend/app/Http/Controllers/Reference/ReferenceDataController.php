@@ -50,7 +50,7 @@ class ReferenceDataController extends Controller
                 ? MatterType::withTrashed()->withCount(['matters' => fn ($q) => $q->withTrashed()])->orderBy('name')->get()
                 : collect(),
             'activityTypes' => $tab === 'activity-types'
-                ? ActivityType::withTrashed()->withCount('narrations')->orderBy('name')->get()
+                ? ActivityType::withTrashed()->with('timeActivityType')->withCount('narrations')->orderBy('name')->get()
                 : collect(),
             'tariffSchedules' => $tab === 'tariffs'
                 ? TariffSchedule::query()->withCount('items')->latestFirst()->get()

@@ -23,12 +23,28 @@ class ActivityTypeSeeder extends Seeder
         ['code' => 'TRAVEL', 'name' => 'Travelling', 'measure' => ActivityMeasure::Kilometre, 'increment' => 1, 'default_billable' => true, 'requires_court' => false],
         ['code' => 'FILE', 'name' => 'Filing and service', 'measure' => ActivityMeasure::Item, 'increment' => 1, 'default_billable' => true, 'requires_court' => false],
         ['code' => 'ADMIN', 'name' => 'File administration', 'measure' => ActivityMeasure::Minutes, 'increment' => 15, 'default_billable' => false, 'requires_court' => false],
+        ['code' => 'TRAVTIME', 'name' => 'Travelling time', 'measure' => ActivityMeasure::Minutes, 'increment' => 15, 'default_billable' => true, 'requires_court' => false],
+        ['code' => 'DRAFTTIME', 'name' => 'Drafting time', 'measure' => ActivityMeasure::Minutes, 'increment' => 15, 'default_billable' => true, 'requires_court' => false],
+    ];
+
+    /**
+     * Work that also charges the time it took, and the kind of work the time is charged as.
+     *
+     * @var array<string, string>
+     */
+    private const TIME_ON_TOP = [
+        'TRAVEL' => 'TRAVTIME',
+        'DRAFT' => 'DRAFTTIME',
     ];
 
     public function run(): void
     {
         foreach (self::TYPES as $type) {
             ActivityType::updateOrCreate(['code' => $type['code']], $type);
+        }
+
+        foreach (self::TIME_ON_TOP as $code => $timeCode) {
+            ActivityType::where('code', $code)->update(['time_activity_type_id' => ActivityType::where('code', $timeCode)->value('id')]);
         }
     }
 }

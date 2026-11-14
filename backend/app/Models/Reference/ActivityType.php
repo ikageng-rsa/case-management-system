@@ -15,12 +15,13 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 #[Appends(['unit_label'])]
-#[Fillable(['code', 'name', 'measure', 'increment', 'default_billable', 'requires_court'])]
+#[Fillable(['code', 'name', 'measure', 'increment', 'default_billable', 'requires_court', 'time_activity_type_id'])]
 #[RouteKey('code')]
 class ActivityType extends Model
 {
@@ -51,6 +52,18 @@ class ActivityType extends Model
     public function isSystem(): bool
     {
         return in_array($this->code, self::SYSTEM_CODES, true);
+    }
+
+    /** The kind of work counted in minutes whose rate the time spent on this work is charged at. */
+    public function timeActivityType(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'time_activity_type_id')->withTrashed();
+    }
+
+    /** Whether a narration of this work also records the time it took, charged on top. */
+    public function chargesTimeOnTop(): bool
+    {
+        return $this->time_activity_type_id !== null;
     }
 
     public function narrations(): HasMany

@@ -277,6 +277,7 @@ $used = $type->matters_count > 0;
                             <th>Counted in</th>
                             <th>Billable</th>
                             <th>Needs a court</th>
+                            <th>Time on top</th>
                             <th class="text-center">Narrations</th>
                             <th></th>
                         </tr>
@@ -297,6 +298,7 @@ $used = $type->matters_count > 0;
                                 <td>{{ $type->unit_label }}</td>
                                 <td>{{ $type->default_billable ? 'Yes' : 'No' }}</td>
                                 <td>{{ $type->requires_court ? 'Yes' : 'No' }}</td>
+                                <td>{{ $type->timeActivityType?->name ?? '—' }}</td>
                                 <td class="text-center">{{ $type->narrations_count }}</td>
                                 <td class="text-end text-nowrap">
                                     @if ($type->trashed())
@@ -325,7 +327,7 @@ $used = $type->narrations_count > 0;
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="7" class="text-center text-secondary py-4">No kinds of work yet.</td></tr>
+                            <tr><td colspan="8" class="text-center text-secondary py-4">No kinds of work yet.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -337,13 +339,13 @@ $used = $type->narrations_count > 0;
                 'sheet' => 'edit-activity-type-'.$type->getKey(), 'bag' => 'activity_type_'.$type->getKey(), 'title' => 'Edit kind of work',
                 'action' => route('activity-type.update', $type), 'method' => 'PATCH',
                 'code' => $type->code, 'name' => $type->name, 'measure' => $type->measure->value, 'increment' => $type->increment,
-                'billable' => $type->default_billable, 'court' => $type->requires_court,
+                'billable' => $type->default_billable, 'court' => $type->requires_court, 'time' => $type->time_activity_type_id, 'id' => $type->getKey(),
                 'counting_locked' => $type->narrations_count > 0, 'code_locked' => $type->narrations_count > 0 || $type->isSystem(),
                 'submit' => 'Save kind of work',
             ])->push([
                 'sheet' => 'new-activity-type', 'bag' => 'activity_type_new', 'title' => 'Add a kind of work',
                 'action' => route('activity-type.store'), 'method' => 'POST',
-                'code' => '', 'name' => '', 'measure' => 'minutes', 'increment' => 6, 'billable' => true, 'court' => false,
+                'code' => '', 'name' => '', 'measure' => 'minutes', 'increment' => 6, 'billable' => true, 'court' => false, 'time' => null, 'id' => null,
                 'counting_locked' => false, 'code_locked' => false, 'submit' => 'Add kind of work',
             ]);
         @endphp
@@ -382,6 +384,34 @@ $used = $type->narrations_count > 0;
                     <input class="form-check-input" type="checkbox" name="requires_court" value="1" @checked($input($form['bag'], 'requires_court', $form['court']))>
                     <span class="form-check-label">Needs a court (for appearances)</span>
                 </label>
+
+                @php
+                    $chargesTime = (bool) $input($form['bag'], 'charges_time', $form['time'] !== null);
+                    $timeTypes = $activityTypes->reject->trashed()
+                        ->filter(fn ($candidate) => $candidate->measure->isTimed() && $candidate->getKey() !== $form['id']);
+                @endphp
+
+                <div x-data="{ chargesTime: @js($chargesTime) }" class="mt-2">
+                    <input type="hidden" name="charges_time" value="0">
+                    <label class="form-check">
+                        <input class="form-check-input" type="checkbox" name="charges_time" value="1" x-model="chargesTime">
+                        <span class="form-check-label">Charge time on top, e.g. travelling time with the kilometres</span>
+                    </label>
+                    @if ($errors->getBag($form['bag'])->has('charges_time'))
+                        <div class="text-danger small">{{ $errors->getBag($form['bag'])->first('charges_time') }}</div>
+                    @endif
+
+                    <div x-show="chargesTime" x-cloak class="mt-2">
+                        <x-ui.select label="Time is charged as" name="time_activity_type_id" id="{{ $form['sheet'] }}_time"
+                            hint="A kind of work counted in minutes. Narrations of this work then ask for the time taken."
+                            :error="$errors->getBag($form['bag'])->first('time_activity_type_id')">
+                            <option value="">Choose…</option>
+                            @foreach ($timeTypes as $timeType)
+                                <option value="{{ $timeType->getKey() }}" @selected((string) $input($form['bag'], 'time_activity_type_id', $form['time']) === (string) $timeType->getKey())>{{ $timeType->name }} ({{ $timeType->unit_label }})</option>
+                            @endforeach
+                        </x-ui.select>
+                    </div>
+                </div>
 
                 <x-slot:footer>
                     <div class="d-flex align-items-center justify-content-between">
