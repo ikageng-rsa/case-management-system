@@ -7,6 +7,7 @@ use App\Http\Controllers\Account\NotificationController;
 use App\Http\Controllers\Account\SignInCodeController;
 use App\Http\Controllers\Audit\AuditLogController;
 use App\Http\Controllers\Billing\BillingSettingsController;
+use App\Http\Controllers\Billing\BillsController;
 use App\Http\Controllers\Billing\DisbursementsController;
 use App\Http\Controllers\Billing\DownloadDisbursementReceiptController;
 use App\Http\Controllers\Billing\DownloadFeeAgreementController;
@@ -89,6 +90,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/matters/{matter}/disbursements', [DisbursementsController::class, 'store'])->name('matter.disbursements.store');
     Route::delete('/disbursements/{disbursement}', [DisbursementsController::class, 'destroy'])->name('disbursement.destroy');
     Route::get('/disbursements/{disbursement}/receipt', DownloadDisbursementReceiptController::class)->name('disbursement.receipt');
+
+    // Statements of account and bills of cost on a matter.
+    Route::post('/matters/{matter}/bills', [BillsController::class, 'store'])->name('matter.bills.store');
+    Route::get('/bills/{bill}', [BillsController::class, 'show'])->name('bill.show');
+    Route::delete('/bills/{bill}', [BillsController::class, 'destroy'])->name('bill.destroy');
     Route::get('/matters/{matter}', [MatterController::class, 'show'])->name('matter.show');
 
     Route::post('/matters/{matter}/parties', [MatterPartyController::class, 'store'])->name('matter.parties.store');

@@ -19,6 +19,7 @@ use App\Models\Reference\ActivityType;
 use App\Models\Reference\Court;
 use App\Models\Reference\MatterType;
 use App\Models\User\User;
+use App\Queries\Billing\MatterBills;
 use App\Queries\Billing\MatterDisbursements;
 use App\Queries\Billing\MatterFeeAgreements;
 use App\Queries\Billing\MatterWorkValue;
@@ -93,6 +94,7 @@ class MatterController extends Controller
         MatterFeeAgreements $feeAgreements,
         MatterDisbursements $disbursements,
         MatterWorkValue $workValue,
+        MatterBills $bills,
     ): View {
         Gate::authorize('view', $matter);
 
@@ -101,7 +103,7 @@ class MatterController extends Controller
 
         $tabs = ['ledger', 'documents', 'parties', 'diary'];
 
-        if ($user->can('manageFees', $matter)) {
+        if ($user->can('manageFees', $matter) || $user->can('draftBills', $matter)) {
             $tabs[] = 'billing';
         }
 
@@ -140,7 +142,7 @@ class MatterController extends Controller
             'documents' => $documents->for($matter, $request->documentKind()),
             'parties' => $parties->for($matter, $user),
             'diary' => $diary->for($matter, $user, $request->diaryShow()),
-            'billing' => $feeAgreements->for($matter) + $disbursements->for($matter) + $workValue->for($matter),
+            'billing' => $feeAgreements->for($matter) + $disbursements->for($matter) + $workValue->for($matter) + $bills->for($matter),
             'audit' => ['activities' => $auditTrail->for($matter)],
         });
     }

@@ -70,6 +70,12 @@ class MatterPolicy
         return $user->can(Permission::ManageFeeAgreements->value) && $this->view($user, $matter);
     }
 
+    /** Drawing a bill on the matter, and changing or deleting it while it is a draft. */
+    public function draftBills(User $user, Matter $matter): bool
+    {
+        return $user->can(Permission::DraftBills->value) && $this->view($user, $matter);
+    }
+
     public function deleteDocument(User $user, Matter $matter): bool
     {
         return $user->can(Permission::DeleteDocuments->value) && $this->view($user, $matter);

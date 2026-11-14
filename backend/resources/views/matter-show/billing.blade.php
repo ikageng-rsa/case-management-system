@@ -10,10 +10,12 @@
         <div class="d-flex align-items-center justify-content-between mb-3">
             <h3 class="card-title text-meta text-uppercase mb-0">Fee agreement</h3>
 
-            @unless ($activeAgreement)
-                <x-ui.button variant="primary" icon="plus" size="sm"
-                    x-data x-on:click="$dispatch('sheet-open', 'new-fee-agreement')">Record fee agreement</x-ui.button>
-            @endunless
+            @can('manageFees', $matter)
+                @unless ($activeAgreement)
+                    <x-ui.button variant="primary" icon="plus" size="sm"
+                        x-data x-on:click="$dispatch('sheet-open', 'new-fee-agreement')">Record fee agreement</x-ui.button>
+                @endunless
+            @endcan
         </div>
 
         @if ($agreementErrors->has('fee_agreement'))
@@ -33,6 +35,7 @@
                     @endif
                 </div>
 
+                @can('manageFees', $matter)
                 <div class="text-nowrap">
                     @if ($activeAgreement->kind === \App\Enums\Billing\FeeAgreementKind::Contingency)
                         <form method="POST" action="{{ route('fee-agreement.fail', $activeAgreement) }}" class="d-inline"
@@ -48,6 +51,7 @@
                             x-data x-on:click="$dispatch('sheet-open', 'finalise-fee-agreement')">Finalise</x-ui.button>
                     @endif
                 </div>
+                @endcan
             </div>
         @else
             <p class="text-secondary mb-0">No fee agreement in place. Matters of this type are usually charged under {{ strtolower($suggestedFeeKind->label()) }}{{ $suggestedFeeKind->isPercentage() ? ' at '.$percent($defaultPercents[$suggestedFeeKind->value]).'%' : '' }}.</p>
@@ -83,6 +87,42 @@
         </div>
     </div>
 @endif
+
+@php
+    $billTones = ['draft' => 'accent', 'issued' => 'success', 'void' => 'neutral'];
+@endphp
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h3 class="card-title text-meta text-uppercase mb-0">Bills</h3>
+
+            @can('draftBills', $matter)
+                <x-ui.button variant="primary" icon="plus" size="sm"
+                    x-data x-on:click="$dispatch('sheet-open', 'new-bill')">Raise a bill</x-ui.button>
+            @endcan
+        </div>
+
+        @forelse ($bills as $bill)
+            <div @class(['d-flex align-items-center justify-content-between gap-2', 'mb-3' => ! $loop->last])>
+                <div>
+                    <div class="mb-0">
+                        @can('draftBills', $matter)
+                            <a href="{{ route('bill.show', $bill) }}">{{ $bill->number ?? 'Draft' }}</a>
+                        @else
+                            {{ $bill->number ?? 'Draft' }}
+                        @endcan
+                        <x-ui.stage-badge :tone="$billTones[$bill->status->value]" class="ms-2">{{ $bill->status->label() }}</x-ui.stage-badge>
+                    </div>
+                    <div class="text-meta">{{ $bill->kind->label() }} · {{ $bill->addressee }} · {{ ($bill->issued_at ?? $bill->created_at)->format('j M Y') }}</div>
+                </div>
+                <span class="text-nowrap">{{ $rand($bill->total_cents) }}</span>
+            </div>
+        @empty
+            <p class="text-secondary mb-0">No bills on this matter yet.</p>
+        @endforelse
+    </div>
+</div>
 
 <div class="card mb-3">
     <div class="card-body">
@@ -123,8 +163,10 @@
                 @endif
             </div>
 
-            <x-ui.button variant="ghost-secondary" icon="plus" size="sm" aria-label="Add a disbursement"
-                x-data x-on:click="$dispatch('sheet-open', 'new-disbursement')" />
+            @can('manageFees', $matter)
+                <x-ui.button variant="ghost-secondary" icon="plus" size="sm" aria-label="Add a disbursement"
+                    x-data x-on:click="$dispatch('sheet-open', 'new-disbursement')" />
+            @endcan
         </div>
 
         @forelse ($disbursements as $disbursement)
@@ -141,6 +183,7 @@
 
                 <div class="text-nowrap">
                     <span class="me-2">{{ $rand($disbursement->amount_cents) }}</span>
+@can('manageFees', $matter)
                     <form method="POST" action="{{ route('disbursement.destroy', $disbursement) }}" class="d-inline"
                         data-confirm="Remove the disbursement “{{ $disbursement->description }}”? Use this only for one recorded in error."
                         data-confirm-title="Remove disbursement" data-confirm-action="Remove" data-confirm-tone="danger" data-confirm-icon="trash">
@@ -148,6 +191,7 @@
                         @method('DELETE')
                         <x-ui.button type="submit" variant="ghost-danger" size="sm">Remove</x-ui.button>
                     </form>
+                    @endcan
                 </div>
             </div>
         @empty
@@ -227,3 +271,76 @@
         </div>
     </x-slot:footer>
 </x-ui.sheet>
+
+@can('draftBills', $matter)
+    @php
+        $billErrors = $errors->getBag('bill');
+    @endphp
+
+    <x-ui.sheet name="new-bill" title="Raise a bill" lede="Drawn as a draft from the work and disbursements not yet billed, to check before it is issued."
+        bag="bill" :action="route('matter.bills.store', $matter)">
+        @if ($billErrors->has('bill'))
+            <div class="alert alert-danger">
+                <p class="mb-1">Nothing was drawn:</p>
+                <ul class="mb-0">
+                    @foreach ($billErrors->get('bill') as $problem)
+                        <li>{{ $problem }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <x-ui.select label="Bill" name="kind" id="bill_kind" :error="$billErrors->first('kind')">
+            @foreach ($billKinds as $kind)
+                <option value="{{ $kind->value }}" @selected(old('kind') === $kind->value)>{{ $kind->label() }}</option>
+            @endforeach
+        </x-ui.select>
+
+        <x-ui.input label="Addressed to" name="addressee" id="bill_addressee" list="bill_addressees"
+            :value="old('addressee', $addressees->first())"
+            hint="The client for a statement; the other side, such as the Minister of Police, for a bill of cost."
+            :error="$billErrors->first('addressee')" />
+        <datalist id="bill_addressees">
+            @foreach ($addressees as $addressee)
+                <option value="{{ $addressee }}"></option>
+            @endforeach
+        </datalist>
+
+        <x-ui.select label="Tariff scale" name="scale" id="bill_scale" :error="$billErrors->first('scale')"
+            hint="Starts on the matter's scale; change it for this bill only.">
+            <option value="">{{ $matter->tariff_scale ? 'Scale '.$matter->tariff_scale->value.' (the matter\'s)' : 'Choose…' }}</option>
+            @foreach ($scales as $scale)
+                <option value="{{ $scale->value }}" @selected(old('scale') === $scale->value)>Scale {{ $scale->value }}</option>
+            @endforeach
+        </x-ui.select>
+
+        <div class="row g-2">
+            <div class="col-6">
+                <x-ui.input label="Work from" name="from" id="bill_from" type="date" :value="old('from')" :error="$billErrors->first('from')" />
+            </div>
+            <div class="col-6">
+                <x-ui.input label="Up to" name="to" id="bill_to" type="date" :value="old('to')" :error="$billErrors->first('to')" />
+            </div>
+        </div>
+        <p class="form-hint mt-n2">Leave both empty for all work not yet billed.</p>
+
+        @if ($timeOnTop->isNotEmpty())
+            <h4 class="text-meta text-uppercase mt-3 mb-2">Time on top</h4>
+            <p class="form-hint">The hourly rate to charge each person's time at on this bill.</p>
+
+            @foreach ($timeOnTop as $person)
+                <x-ui.input :label="$person['user']->name.' ('.intdiv($person['minutes'], 60).' h '.($person['minutes'] % 60).' min) — R an hour'"
+                    name="time_rates[{{ $person['user']->getKey() }}]" id="bill_rate_{{ $loop->index }}" type="number" step="0.01" min="0"
+                    :value="old('time_rates.'.$person['user']->getKey())"
+                    :error="$billErrors->first('time_rates.'.$person['user']->getKey())" />
+            @endforeach
+        @endif
+
+        <x-slot:footer>
+            <div class="d-flex align-items-center justify-content-between">
+                <x-ui.button variant="outline-secondary" size="sm" x-on:click="close()">Cancel</x-ui.button>
+                <x-ui.button type="submit" variant="primary" size="sm">Draw the bill</x-ui.button>
+            </div>
+        </x-slot:footer>
+    </x-ui.sheet>
+@endcan
