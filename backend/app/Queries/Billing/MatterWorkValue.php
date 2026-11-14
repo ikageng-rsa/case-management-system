@@ -23,7 +23,7 @@ class MatterWorkValue
     {
         $narrations = $matter->narrations()
             ->whereHas('activityType', fn ($query) => $query->billable())
-            ->with(['activityType', 'author.roles'])
+            ->with(['activityType.timeActivityType', 'author.roles'])
             ->latestFirst()
             ->get()
             ->each(fn (Narration $narration) => $narration->setRelation('matter', $matter));

@@ -102,6 +102,43 @@ class NarrationPriceTest extends TestCase
         $this->assertSame(5500, (new NarrationPrice)->for($this->narration(['attorney']))['rateCents']);
     }
 
+    public function test_time_on_top_is_charged_in_blocks_at_the_time_rate_with_the_work(): void
+    {
+        $travelTime = ActivityType::factory()->measuredIn(ActivityMeasure::Minutes, 15)->create(['name' => 'Travelling time']);
+        $travel = ActivityType::factory()->measuredIn(ActivityMeasure::Kilometre)->create(['name' => 'Travelling', 'time_activity_type_id' => $travelTime->getKey()]);
+        TariffItem::factory()->for($this->tariff, 'schedule')->create(['activity_type_id' => $travel->getKey(), 'scale_b_cents' => 750]);
+        TariffItem::factory()->for($this->tariff, 'schedule')->create(['activity_type_id' => $travelTime->getKey(), 'scale_b_cents' => 22300]);
+
+        $author = tap(User::factory()->create())->assignRole(['attorney']);
+        $narration = Narration::factory()
+            ->for(Matter::factory()->create(['tariff_scale' => TariffScale::B]))
+            ->for($travel)
+            ->for($author, 'author')
+            ->create(['quantity' => 80, 'minutes' => 50, 'occurred_at' => '2026-06-01']);
+
+        $price = (new NarrationPrice)->for($narration);
+
+        // 80 km at R 7.50, and 50 minutes as 4 blocks of 15 at R 223.00.
+        $this->assertSame(60000, $price['workAmountCents']);
+        $this->assertSame(4, $price['timeUnits']);
+        $this->assertSame(89200, $price['timeAmountCents']);
+        $this->assertSame(149200, $price['amountCents']);
+    }
+
+    public function test_time_on_top_with_no_time_rate_on_the_tariff_is_not_priced(): void
+    {
+        $travelTime = ActivityType::factory()->measuredIn(ActivityMeasure::Minutes, 15)->create(['name' => 'Travelling time']);
+        $travel = ActivityType::factory()->measuredIn(ActivityMeasure::Kilometre)->create(['time_activity_type_id' => $travelTime->getKey()]);
+        TariffItem::factory()->for($this->tariff, 'schedule')->create(['activity_type_id' => $travel->getKey(), 'scale_b_cents' => 750]);
+
+        $narration = Narration::factory()
+            ->for(Matter::factory()->create(['tariff_scale' => TariffScale::B]))
+            ->for($travel)
+            ->create(['quantity' => 80, 'minutes' => 50, 'occurred_at' => '2026-06-01']);
+
+        $this->assertSame('Tariff 2026 has no scale B rate for Travelling time.', (new NarrationPrice)->for($narration)['reason']);
+    }
+
     public function test_work_that_cannot_be_priced_says_why(): void
     {
         $price = new NarrationPrice;
