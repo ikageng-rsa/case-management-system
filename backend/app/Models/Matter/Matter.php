@@ -8,6 +8,7 @@ use App\Concerns\RecordsActivity;
 use App\Enums\Billing\TariffScale;
 use App\Enums\Document\DocumentKind;
 use App\Enums\Matter\Assignment;
+use App\Models\Billing\Disbursement;
 use App\Models\Billing\FeeAgreement;
 use App\Models\Client\Client;
 use App\Models\Diary\DiaryEntry;
@@ -122,6 +123,11 @@ class Matter extends Model implements HasMedia
     public function narrations(): HasMany
     {
         return $this->hasMany(Narration::class);
+    }
+
+    public function disbursements(): HasMany
+    {
+        return $this->hasMany(Disbursement::class);
     }
 
     public function feeAgreements(): HasMany

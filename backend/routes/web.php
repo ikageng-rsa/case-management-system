@@ -7,6 +7,8 @@ use App\Http\Controllers\Account\NotificationController;
 use App\Http\Controllers\Account\SignInCodeController;
 use App\Http\Controllers\Audit\AuditLogController;
 use App\Http\Controllers\Billing\BillingSettingsController;
+use App\Http\Controllers\Billing\DisbursementsController;
+use App\Http\Controllers\Billing\DownloadDisbursementReceiptController;
 use App\Http\Controllers\Billing\DownloadFeeAgreementController;
 use App\Http\Controllers\Billing\DownloadTariffSourceController;
 use App\Http\Controllers\Billing\DownloadTariffTemplateController;
@@ -82,6 +84,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/fee-agreements/{feeAgreement}/finalise', FinaliseFeeAgreementController::class)->name('fee-agreement.finalise');
     Route::post('/fee-agreements/{feeAgreement}/fail', MarkFeeAgreementFailedController::class)->name('fee-agreement.fail');
     Route::get('/fee-agreements/{feeAgreement}/signed-copy', DownloadFeeAgreementController::class)->name('fee-agreement.signed-copy');
+
+    // Money paid out on a matter for the client.
+    Route::post('/matters/{matter}/disbursements', [DisbursementsController::class, 'store'])->name('matter.disbursements.store');
+    Route::delete('/disbursements/{disbursement}', [DisbursementsController::class, 'destroy'])->name('disbursement.destroy');
+    Route::get('/disbursements/{disbursement}/receipt', DownloadDisbursementReceiptController::class)->name('disbursement.receipt');
     Route::get('/matters/{matter}', [MatterController::class, 'show'])->name('matter.show');
 
     Route::post('/matters/{matter}/parties', [MatterPartyController::class, 'store'])->name('matter.parties.store');

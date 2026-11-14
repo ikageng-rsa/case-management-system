@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Models\Billing\Disbursement;
 use App\Models\Billing\FeeAgreement;
 use App\Models\Billing\TariffAdjustment;
 use App\Models\Billing\TariffSchedule;
@@ -68,6 +69,7 @@ class AppServiceProvider extends ServiceProvider
             'tariff_schedule' => TariffSchedule::class,
             'tariff_adjustment' => TariffAdjustment::class,
             'fee_agreement' => FeeAgreement::class,
+            'disbursement' => Disbursement::class,
             'user' => User::class,
             'role' => Role::class,
             'user_invitation' => UserInvitation::class,
