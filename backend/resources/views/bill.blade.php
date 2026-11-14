@@ -56,6 +56,9 @@
                         <th>Description</th>
                         <th class="text-end">Fees</th>
                         <th class="text-end">Disbursements</th>
+                        @if ($bill->isDraft())
+                            <th></th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -70,9 +73,25 @@
                                 @elseif ($line->kind === \App\Enums\Billing\BillLineKind::Work)
                                     <div class="text-meta">{{ $units($line) }} × {{ $rand($line->rate_cents) }} · {{ $line->user?->name }}</div>
                                 @endif
+                                @if ($line->original_amount_cents !== null)
+                                    <div class="text-meta">Changed from {{ $rand($line->original_amount_cents) }}{{ $line->overriddenBy ? ' by '.$line->overriddenBy->name : '' }}</div>
+                                @endif
                             </td>
-                            <td class="text-end text-nowrap">{{ $line->fee_cents ? $rand($line->fee_cents) : '' }}</td>
-                            <td class="text-end text-nowrap">{{ $line->disbursement_cents ? $rand($line->disbursement_cents) : '' }}</td>
+                            <td class="text-end text-nowrap">{{ $line->kind->isFee() ? $rand($line->fee_cents) : '' }}</td>
+                            <td class="text-end text-nowrap">{{ $line->kind->isFee() ? '' : $rand($line->disbursement_cents) }}</td>
+                            @if ($bill->isDraft())
+                                <td class="text-end text-nowrap">
+                                    <x-ui.button variant="ghost-secondary" size="sm" icon="pencil" aria-label="Change the amount" title="Change the amount"
+                                        x-data x-on:click="$dispatch('sheet-open', 'edit-line-{{ $line->getKey() }}')" />
+                                    <form method="POST" action="{{ route('bill.lines.destroy', [$bill, $line]) }}" class="d-inline"
+                                        data-confirm="Take “{{ Str::limit($line->description, 60) }}” off this draft? Its work stays unbilled for a later bill."
+                                        data-confirm-title="Remove line" data-confirm-action="Remove" data-confirm-tone="danger" data-confirm-icon="trash">
+                                        @csrf
+                                        @method('DELETE')
+                                        <x-ui.button type="submit" variant="ghost-danger" size="sm" icon="trash" aria-label="Remove the line" title="Remove the line" />
+                                    </form>
+                                </td>
+                            @endif
                         </tr>
                     @endforeach
                 </tbody>
@@ -81,23 +100,49 @@
                         <td colspan="3" class="text-end">Fees</td>
                         <td class="text-end text-nowrap">{{ $rand($bill->fees_cents) }}</td>
                         <td></td>
+                        @if ($bill->isDraft()) <td></td> @endif
                     </tr>
                     <tr>
                         <td colspan="3" class="text-end">Drawing fee ({{ $percent }}%)</td>
                         <td class="text-end text-nowrap">{{ $rand($bill->drawing_fee_cents) }}</td>
                         <td></td>
+                        @if ($bill->isDraft()) <td></td> @endif
                     </tr>
                     <tr>
                         <td colspan="3" class="text-end">Disbursements</td>
                         <td></td>
                         <td class="text-end text-nowrap">{{ $rand($bill->disbursements_cents) }}</td>
+                        @if ($bill->isDraft()) <td></td> @endif
                     </tr>
                     <tr>
                         <td colspan="3" class="text-end"><strong>Total due</strong></td>
                         <td colspan="2" class="text-end text-nowrap"><strong>{{ $rand($bill->total_cents) }}</strong></td>
+                        @if ($bill->isDraft()) <td></td> @endif
                     </tr>
                 </tfoot>
             </table>
         </div>
     </div>
+
+    @if ($bill->isDraft())
+        @foreach ($bill->lines as $line)
+            @php
+                $bag = 'bill_line_'.$line->getKey();
+            @endphp
+            <x-ui.sheet name="edit-line-{{ $line->getKey() }}" title="Change the amount" :lede="Str::limit($line->description, 120)"
+                :bag="$bag" :action="route('bill.lines.update', [$bill, $line])" method="PATCH">
+                <x-ui.input label="Amount (R)" name="amount" id="line_amount_{{ $line->getKey() }}" type="number" step="0.01" min="0"
+                    :value="$errors->getBag($bag)->any() ? old('amount') : number_format($line->amount() / 100, 2, '.', '')"
+                    :hint="'Drawn at '.$rand($line->original_amount_cents ?? $line->amount()).'. The change is kept with your name.'"
+                    :error="$errors->getBag($bag)->first('amount')" />
+
+                <x-slot:footer>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <x-ui.button variant="outline-secondary" size="sm" x-on:click="close()">Cancel</x-ui.button>
+                        <x-ui.button type="submit" variant="primary" size="sm">Save amount</x-ui.button>
+                    </div>
+                </x-slot:footer>
+            </x-ui.sheet>
+        @endforeach
+    @endif
 @endsection

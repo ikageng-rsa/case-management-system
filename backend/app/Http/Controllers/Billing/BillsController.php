@@ -45,7 +45,7 @@ class BillsController extends Controller
         Gate::authorize('draftBills', $bill->matter);
 
         return view('bill', [
-            'bill' => $bill->load(['matter.client', 'lines.user', 'draftedBy']),
+            'bill' => $bill->load(['matter.client', 'lines.user', 'lines.overriddenBy', 'draftedBy']),
         ]);
     }
 

@@ -7,6 +7,7 @@ use App\Http\Controllers\Account\NotificationController;
 use App\Http\Controllers\Account\SignInCodeController;
 use App\Http\Controllers\Audit\AuditLogController;
 use App\Http\Controllers\Billing\BillingSettingsController;
+use App\Http\Controllers\Billing\BillLinesController;
 use App\Http\Controllers\Billing\BillsController;
 use App\Http\Controllers\Billing\DisbursementsController;
 use App\Http\Controllers\Billing\DownloadDisbursementReceiptController;
@@ -95,6 +96,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/matters/{matter}/bills', [BillsController::class, 'store'])->name('matter.bills.store');
     Route::get('/bills/{bill}', [BillsController::class, 'show'])->name('bill.show');
     Route::delete('/bills/{bill}', [BillsController::class, 'destroy'])->name('bill.destroy');
+    Route::patch('/bills/{bill}/lines/{line}', [BillLinesController::class, 'update'])->scopeBindings()->name('bill.lines.update');
+    Route::delete('/bills/{bill}/lines/{line}', [BillLinesController::class, 'destroy'])->scopeBindings()->name('bill.lines.destroy');
     Route::get('/matters/{matter}', [MatterController::class, 'show'])->name('matter.show');
 
     Route::post('/matters/{matter}/parties', [MatterPartyController::class, 'store'])->name('matter.parties.store');

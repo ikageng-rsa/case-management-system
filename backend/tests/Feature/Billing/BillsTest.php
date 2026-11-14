@@ -8,6 +8,7 @@ use App\Enums\Auth\Role as RoleEnum;
 use App\Enums\Billing\TariffScale;
 use App\Enums\Narration\ActivityMeasure;
 use App\Models\Billing\Bill;
+use App\Models\Billing\BillLine;
 use App\Models\Billing\FeeAgreement;
 use App\Models\Billing\TariffItem;
 use App\Models\Billing\TariffSchedule;
@@ -104,6 +105,35 @@ class BillsTest extends TestCase
 
         $this->assertModelMissing($draft);
         $this->assertModelExists($issued);
+    }
+
+    public function test_a_line_on_a_draft_is_changed_or_removed_from_the_bill_page(): void
+    {
+        $bill = Bill::factory()->for($this->matter)->create();
+        $line = BillLine::factory()->for($bill)->create(['fee_cents' => 20000]);
+        $other = BillLine::factory()->for($bill)->create(['fee_cents' => 5000]);
+
+        $this->actingAs($this->director)->get(route('bill.show', $bill))->assertSee('aria-label="Change the amount"', false)->assertSee('aria-label="Remove the line"', false);
+
+        $this->actingAs($this->director)->patch(route('bill.lines.update', [$bill, $line]), ['amount' => '150.00'])
+            ->assertRedirect(route('bill.show', $bill));
+        $this->actingAs($this->director)->get(route('bill.show', $bill))->assertSee('Changed from R 200.00 by Thandiwe Mokoena');
+
+        $this->actingAs($this->director)->patch(route('bill.lines.update', [$bill, $line]), ['amount' => '-1'])
+            ->assertSessionHasErrorsIn('bill_line_'.$line->id, 'amount');
+
+        $this->actingAs($this->director)->delete(route('bill.lines.destroy', [$bill, $other]))->assertRedirect(route('bill.show', $bill));
+        $this->assertModelMissing($other);
+        $this->assertSame(15000, $bill->fresh()->fees_cents);
+    }
+
+    public function test_a_line_is_reached_only_through_its_own_bill(): void
+    {
+        $bill = Bill::factory()->for($this->matter)->create();
+        $elsewhere = BillLine::factory()->create();
+
+        $this->actingAs($this->director)->delete(route('bill.lines.destroy', [$bill, $elsewhere]))->assertNotFound();
+        $this->assertModelExists($elsewhere);
     }
 
     public function test_billing_needs_the_draft_bills_permission_on_a_matter_the_user_can_see(): void
