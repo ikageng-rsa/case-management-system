@@ -10,11 +10,20 @@ use App\Models\Billing\Bill;
 use App\Models\Billing\BillLine;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class BillTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_a_bill_is_known_by_a_uuid_its_lines_point_to(): void
+    {
+        $line = BillLine::factory()->create();
+
+        $this->assertTrue(Str::isUuid($line->bill->id));
+        $this->assertSame($line->bill->id, $line->bill_id);
+    }
 
     public function test_a_claim_names_the_kind_of_bill_and_what_the_line_came_from(): void
     {

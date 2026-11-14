@@ -13,6 +13,7 @@ use App\Models\User\User;
 use Database\Factories\Billing\BillFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -33,6 +34,7 @@ class Bill extends Model
     /** @use HasFactory<BillFactory> */
     use HasFactory;
 
+    use HasUuids;
     use RecordsActivity;
 
     /**

@@ -29,7 +29,7 @@ class MatterBills
             ->unique('id');
 
         return [
-            'bills' => $matter->bills()->latest('id')->get(),
+            'bills' => $matter->bills()->latest()->latest('id')->get(),
             'billKinds' => $matter->matterType->is_litigation ? [BillKind::Statement, BillKind::BillOfCost] : [BillKind::Statement],
             'addressees' => collect([$matter->client->full_name])->merge($matter->parties()->pluck('name'))->unique()->values(),
             'scales' => TariffScale::cases(),

@@ -18,7 +18,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('bills', function (Blueprint $table) {
-            $table->id();
+            // A bill's address is shared outside the firm, so it is not a number that can be guessed or counted.
+            $table->uuid('id')->primary();
             // A bill is part of the firm's books, so a matter with bills is not removed with them.
             $table->foreignUuid('matter_id')->constrained('matters')->restrictOnDelete();
             $table->enum('kind', array_column(BillKind::cases(), 'value'));
@@ -48,7 +49,7 @@ return new class extends Migration
 
         Schema::create('bill_lines', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('bill_id')->constrained('bills')->cascadeOnDelete();
+            $table->foreignUuid('bill_id')->constrained('bills')->cascadeOnDelete();
             $table->enum('kind', array_column(BillLineKind::cases(), 'value'));
             $table->unsignedSmallInteger('position')->default(0);
             $table->date('occurred_on');
