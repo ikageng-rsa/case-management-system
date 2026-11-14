@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Narration;
 
+use App\Enums\Narration\TimeUnit;
 use App\Models\Reference\ActivityType;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -34,6 +35,9 @@ class StoreNarrationRequest extends FormRequest
             'body' => ['required', 'string', 'max:5000'],
             'quantity' => ['required', 'numeric', 'gt:0', 'max:99999'],
             'occurred_at' => ['nullable', 'date', 'before_or_equal:now'],
+            // The time taken, for work that charges time on top, in minutes or hours.
+            'time_value' => ['nullable', 'numeric', 'gt:0', 'decimal:0,2', 'max:1440'],
+            'time_unit' => ['nullable', 'required_with:time_value', Rule::enum(TimeUnit::class)],
         ];
     }
 
@@ -43,6 +47,23 @@ class StoreNarrationRequest extends FormRequest
      *
      * @return array<int, callable>
      */
+    /** The time taken in minutes, for work whose kind charges time on top; otherwise none. */
+    public function minutes(): ?int
+    {
+        $unit = TimeUnit::tryFrom((string) $this->input('time_unit'));
+
+        if (! $this->chargesTime() || ! is_numeric($this->input('time_value')) || $unit === null) {
+            return null;
+        }
+
+        return $unit->toMinutes((float) $this->input('time_value'));
+    }
+
+    protected function chargesTime(): bool
+    {
+        return ActivityType::query()->whereKey($this->input('activity_type_id'))->whereNotNull('time_activity_type_id')->exists();
+    }
+
     public function after(): array
     {
         return [function (Validator $validator): void {
@@ -52,6 +73,18 @@ class StoreNarrationRequest extends FormRequest
 
             if ($needsCourt && $this->route('matter')->court_id === null) {
                 $validator->errors()->add('activity_type_id', 'This work is before a court and the matter has none yet. Set the court on the matter first.');
+            }
+
+            if ($this->chargesTime() && ! $this->filled('time_value')) {
+                $validator->errors()->add('time_value', 'Give the time this took. It is charged on top.');
+            }
+
+            if ($this->chargesTime() && ($this->minutes() ?? 0) > 1440) {
+                $validator->errors()->add('time_value', 'The time taken cannot be more than a day.');
+            }
+
+            if (ActivityType::query()->whereKey($this->input('activity_type_id'))->first()?->isTimeRate()) {
+                $validator->errors()->add('activity_type_id', 'This is the rate other work charges its time at. Log the work itself, with the time it took.');
             }
         }];
     }

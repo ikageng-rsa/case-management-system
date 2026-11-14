@@ -11,9 +11,9 @@ use Illuminate\Http\Resources\JsonApi\AnonymousResourceCollection;
 
 class ActivityTypeController extends Controller
 {
-    /** What work can be narrated as. Retired types are left out. */
+    /** What work can be narrated as. Retired types, and those that only carry a time rate, are left out. */
     public function index(): AnonymousResourceCollection
     {
-        return ActivityTypeResource::collection(ActivityType::query()->orderBy('name')->get());
+        return ActivityTypeResource::collection(ActivityType::query()->narratable()->orderBy('name')->get());
     }
 }

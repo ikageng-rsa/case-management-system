@@ -25,6 +25,7 @@ class NarrationController extends Controller
         $narration = new Narration([
             'body' => $request->validated('body'),
             'quantity' => $request->validated('quantity'),
+            'minutes' => $request->minutes(),
             'occurred_at' => $request->date('occurred_at'),
         ]);
 
@@ -53,7 +54,7 @@ class NarrationController extends Controller
         return response()->streamDownload(function () use ($narrations): void {
             $out = fopen('php://output', 'w');
 
-            fputcsv($out, ['Date', 'Activity', 'Author', 'Attendance', 'Quantity', 'Unit', 'Billable units']);
+            fputcsv($out, ['Date', 'Activity', 'Author', 'Attendance', 'Quantity', 'Unit', 'Billable units', 'Minutes on top']);
 
             foreach ($narrations as $narration) {
                 fputcsv($out, [
@@ -64,6 +65,7 @@ class NarrationController extends Controller
                     $narration->quantity,
                     $narration->activityType->measure->value,
                     $narration->billableUnits(),
+                    $narration->minutes,
                 ]);
             }
 

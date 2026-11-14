@@ -29,6 +29,7 @@ class NarrationResource extends ApiResource
             'body' => $this->body,
             'quantity' => (float) $this->quantity,
             'billable_units' => $this->billableUnits(),
+            'minutes' => $this->minutes,
             'occurred_at' => $this->occurred_at->toIso8601String(),
             'created_at' => $this->created_at?->toIso8601String(),
         ];

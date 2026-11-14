@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['body', 'quantity', 'occurred_at'])]
+#[Fillable(['body', 'quantity', 'minutes', 'occurred_at'])]
 class Narration extends Model
 {
     /** @use HasFactory<NarrationFactory> */
@@ -41,6 +41,7 @@ class Narration extends Model
     {
         return [
             'quantity' => 'decimal:2',
+            'minutes' => 'integer',
             'occurred_at' => 'datetime',
         ];
     }
@@ -63,6 +64,18 @@ class Narration extends Model
     public function billableUnits(): int
     {
         return $this->activityType->billableUnits((float) $this->quantity);
+    }
+
+    /** The blocks of time charged on top, at the increment of the kind of work the time is charged as. */
+    public function timeUnits(): int
+    {
+        $timeType = $this->activityType->timeActivityType;
+
+        if ($timeType === null || $this->minutes === null) {
+            return 0;
+        }
+
+        return $timeType->billableUnits((float) $this->minutes);
     }
 
     public function scopeForMatter(Builder $query, Matter $matter): void

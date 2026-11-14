@@ -66,6 +66,22 @@ class ActivityType extends Model
         return $this->time_activity_type_id !== null;
     }
 
+    /*
+     * Work that is offered when logging a narration. A kind that only carries
+     * the rate other work charges its time at, such as travelling time, is left
+     * out: its time is logged with the work it belongs to.
+     */
+    public function scopeNarratable(Builder $query): void
+    {
+        $query->whereNotIn('id', self::withTrashed()->whereNotNull('time_activity_type_id')->select('time_activity_type_id'));
+    }
+
+    /** Whether other work charges its time at this kind's rate, so it is not logged on its own. */
+    public function isTimeRate(): bool
+    {
+        return self::withTrashed()->where('time_activity_type_id', $this->getKey())->exists();
+    }
+
     public function narrations(): HasMany
     {
         return $this->hasMany(Narration::class);

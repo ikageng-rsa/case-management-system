@@ -63,6 +63,7 @@ class NarrationController extends Controller
             body: $request->validated('body'),
             quantity: (float) $request->validated('quantity'),
             occurredAt: $request->date('occurred_at'),
+            minutes: $request->minutes(),
         );
 
         return (new NarrationResource($narration->load(['activityType', 'author'])))
