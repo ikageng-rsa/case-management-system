@@ -208,11 +208,11 @@ $used = $type->matters_count > 0;
                 'sheet' => 'edit-matter-type-'.$type->getKey(), 'bag' => 'matter_type_'.$type->getKey(), 'title' => 'Edit matter type',
                 'action' => route('matter-type.update', $type), 'method' => 'PATCH',
                 'code' => $type->code, 'name' => $type->name, 'months' => $type->default_prescription_months,
-                'litigation' => $type->is_litigation, 'locked' => $type->matters_count > 0, 'submit' => 'Save matter type',
+                'litigation' => $type->is_litigation, 'fee' => $type->default_fee_kind->value, 'locked' => $type->matters_count > 0, 'submit' => 'Save matter type',
             ])->push([
                 'sheet' => 'new-matter-type', 'bag' => 'matter_type_new', 'title' => 'Add a matter type',
                 'action' => route('matter-type.store'), 'method' => 'POST',
-                'code' => '', 'name' => '', 'months' => null, 'litigation' => false, 'locked' => false, 'submit' => 'Add matter type',
+                'code' => '', 'name' => '', 'months' => null, 'litigation' => false, 'fee' => 'mandate', 'locked' => false, 'submit' => 'Add matter type',
             ]);
         @endphp
 
@@ -235,6 +235,14 @@ $used = $type->matters_count > 0;
                     <input class="form-check-input" type="checkbox" name="is_litigation" value="1" @checked($input($form['bag'], 'is_litigation', $form['litigation']))>
                     <span class="form-check-label">Before a court, so a court is required</span>
                 </label>
+
+                <x-ui.select label="Fee agreement" name="default_fee_kind" id="{{ $form['sheet'] }}_fee" wrapper="mt-3"
+                    hint="What a new matter of this type is suggested to be charged under. It can be changed on the matter."
+                    :error="$errors->getBag($form['bag'])->first('default_fee_kind')">
+                    @foreach ($feeKinds as $kind)
+                        <option value="{{ $kind->value }}" @selected($input($form['bag'], 'default_fee_kind', $form['fee']) === $kind->value)>{{ $kind->label() }}</option>
+                    @endforeach
+                </x-ui.select>
                 <p class="form-hint">Changes apply to matters opened from now on; matters already open keep what they have.</p>
 
                 <x-slot:footer>

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Reference;
 
 use App\Enums\Auth\Permission;
+use App\Enums\Billing\FeeAgreementKind;
 use App\Enums\Court\CourtTier;
 use App\Enums\Narration\ActivityMeasure;
 use App\Http\Controllers\Controller;
@@ -56,6 +57,7 @@ class ReferenceDataController extends Controller
                 : collect(),
             'tariffInForce' => $tab === 'tariffs' ? TariffSchedule::inForceOn(today()) : null,
             'tiers' => CourtTier::cases(),
+            'feeKinds' => FeeAgreementKind::cases(),
             'measures' => ActivityMeasure::cases(),
         ]);
     }
