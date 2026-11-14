@@ -64,6 +64,12 @@ class MatterPolicy
         return $matter->isOpen() && $matter->isAssignedTo($user);
     }
 
+    /** How the client is charged: recording, finalising or failing a fee agreement, for those who may see the file. */
+    public function manageFees(User $user, Matter $matter): bool
+    {
+        return $user->can(Permission::ManageFeeAgreements->value) && $this->view($user, $matter);
+    }
+
     public function deleteDocument(User $user, Matter $matter): bool
     {
         return $user->can(Permission::DeleteDocuments->value) && $this->view($user, $matter);

@@ -19,6 +19,7 @@ use App\Models\Reference\ActivityType;
 use App\Models\Reference\Court;
 use App\Models\Reference\MatterType;
 use App\Models\User\User;
+use App\Queries\Billing\MatterFeeAgreements;
 use App\Queries\Matters\MatterAuditTrail;
 use App\Queries\Matters\MatterDiary;
 use App\Queries\Matters\MatterDocuments;
@@ -87,6 +88,7 @@ class MatterController extends Controller
         MatterDiary $diary,
         MatterAuditTrail $auditTrail,
         MatterRecentReads $recentReads,
+        MatterFeeAgreements $feeAgreements,
     ): View {
         Gate::authorize('view', $matter);
 
@@ -94,6 +96,10 @@ class MatterController extends Controller
         $user = $request->user();
 
         $tabs = ['ledger', 'documents', 'parties', 'diary'];
+
+        if ($user->can('manageFees', $matter)) {
+            $tabs[] = 'billing';
+        }
 
         if ($user->can('viewAudit', $matter)) {
             $tabs[] = 'audit';
@@ -130,6 +136,7 @@ class MatterController extends Controller
             'documents' => $documents->for($matter, $request->documentKind()),
             'parties' => $parties->for($matter, $user),
             'diary' => $diary->for($matter, $user, $request->diaryShow()),
+            'billing' => $feeAgreements->for($matter),
             'audit' => ['activities' => $auditTrail->for($matter)],
         });
     }

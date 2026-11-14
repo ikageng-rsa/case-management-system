@@ -7,8 +7,12 @@ use App\Http\Controllers\Account\NotificationController;
 use App\Http\Controllers\Account\SignInCodeController;
 use App\Http\Controllers\Audit\AuditLogController;
 use App\Http\Controllers\Billing\BillingSettingsController;
+use App\Http\Controllers\Billing\DownloadFeeAgreementController;
 use App\Http\Controllers\Billing\DownloadTariffSourceController;
 use App\Http\Controllers\Billing\DownloadTariffTemplateController;
+use App\Http\Controllers\Billing\FeeAgreementsController;
+use App\Http\Controllers\Billing\FinaliseFeeAgreementController;
+use App\Http\Controllers\Billing\MarkFeeAgreementFailedController;
 use App\Http\Controllers\Billing\PublishTariffScheduleController;
 use App\Http\Controllers\Billing\TariffAdjustmentsController;
 use App\Http\Controllers\Billing\TariffScheduleController;
@@ -73,6 +77,11 @@ Route::middleware('auth')->group(function () {
     Route::delete('/matters/{matter}/assign', [MatterController::class, 'unassign'])->name('matter.unassign');
     Route::patch('/matters/{matter}', [MatterController::class, 'update'])->name('matter.update');
 
+    // How the client is charged on a matter.
+    Route::post('/matters/{matter}/fee-agreements', [FeeAgreementsController::class, 'store'])->name('matter.fee-agreements.store');
+    Route::post('/fee-agreements/{feeAgreement}/finalise', FinaliseFeeAgreementController::class)->name('fee-agreement.finalise');
+    Route::post('/fee-agreements/{feeAgreement}/fail', MarkFeeAgreementFailedController::class)->name('fee-agreement.fail');
+    Route::get('/fee-agreements/{feeAgreement}/signed-copy', DownloadFeeAgreementController::class)->name('fee-agreement.signed-copy');
     Route::get('/matters/{matter}', [MatterController::class, 'show'])->name('matter.show');
 
     Route::post('/matters/{matter}/parties', [MatterPartyController::class, 'store'])->name('matter.parties.store');

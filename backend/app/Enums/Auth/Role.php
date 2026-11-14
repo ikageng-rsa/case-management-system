@@ -21,6 +21,7 @@ enum Role: string
         return match ($this) {
             self::Director => Permission::cases(),
             self::Attorney => [
+                Permission::ManageFeeAgreements,
                 Permission::CreateMatters,
                 Permission::EditMatters,
                 Permission::EditMatterDetails,
@@ -43,6 +44,7 @@ enum Role: string
                 Permission::ViewPopiaConsents,
             ],
             self::Secretary => [
+                Permission::ManageFeeAgreements,
                 Permission::ViewAllMatters,
                 Permission::CreateMatters,
                 Permission::EditMatters,

@@ -165,7 +165,7 @@
     </div>
 
     @php
-        $tabLabels = ['ledger' => 'Ledger', 'documents' => 'Documents', 'parties' => 'Parties', 'diary' => 'Diary', 'audit' => 'Audit'];
+        $tabLabels = ['ledger' => 'Ledger', 'documents' => 'Documents', 'parties' => 'Parties', 'diary' => 'Diary', 'billing' => 'Billing', 'audit' => 'Audit'];
     @endphp
 
     <ul class="nav nav-underline mb-3">
