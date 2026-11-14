@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models\Narration;
 
 use App\Concerns\RecordsActivity;
+use App\Models\Billing\BillLine;
 use App\Models\Matter\Matter;
 use App\Models\Reference\ActivityType;
 use App\Models\User\User;
@@ -15,6 +16,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable(['body', 'quantity', 'minutes', 'occurred_at'])]
 class Narration extends Model
@@ -44,6 +46,11 @@ class Narration extends Model
             'minutes' => 'integer',
             'occurred_at' => 'datetime',
         ];
+    }
+
+    public function billLines(): HasMany
+    {
+        return $this->hasMany(BillLine::class);
     }
 
     public function matter(): BelongsTo

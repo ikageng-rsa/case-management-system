@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\UploadedFile;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -45,6 +46,11 @@ class Disbursement extends Model implements HasMedia
             'amount_cents' => 'integer',
             'paid_from' => FirmAccount::class,
         ];
+    }
+
+    public function billLines(): HasMany
+    {
+        return $this->hasMany(BillLine::class);
     }
 
     public function matter(): BelongsTo
