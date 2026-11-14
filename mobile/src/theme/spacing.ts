@@ -7,9 +7,10 @@ export const spacing = {
   xxl: 48,
 };
 
+// Matches the UI kit's control radii (kit radius.md = 7, radius.lg = 10).
 export const radius = {
-  sm: 6,
-  md: 10,
-  lg: 16,
+  sm: 4,
+  md: 7,
+  lg: 10,
   pill: 999,
 };
