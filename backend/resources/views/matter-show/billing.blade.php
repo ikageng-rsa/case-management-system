@@ -86,6 +86,29 @@
 
 <div class="card mb-3">
     <div class="card-body">
+        <h3 class="card-title text-meta text-uppercase mb-3">Work recorded</h3>
+
+        <div class="mb-0">{{ $rand($workValueCents) }}</div>
+        <div class="text-meta">
+            {{ $pricedCount }} billable {{ Str::plural('narration', $pricedCount) }} on the tariff{{ $matter->tariff_scale ? ', scale '.$matter->tariff_scale->value : '' }}.
+            The value of the work done, not an amount anyone owes yet.
+        </div>
+
+        @if ($unpricedWork->isNotEmpty())
+            <div class="alert alert-warning mt-3 mb-0">
+                <p class="mb-1">{{ $unpricedWork->count() }} {{ Str::plural('narration', $unpricedWork->count()) }} could not be priced:</p>
+                <ul class="mb-0">
+                    @foreach ($unpricedWork->groupBy('reason') as $reason => $group)
+                        <li>{{ $reason }}{{ $group->count() > 1 ? ' ('.$group->count().')' : '' }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
         <div class="d-flex align-items-center justify-content-between mb-3">
             <div>
                 <h3 class="card-title text-meta text-uppercase mb-0">Disbursements</h3>

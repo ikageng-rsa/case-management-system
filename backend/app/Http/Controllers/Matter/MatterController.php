@@ -21,6 +21,7 @@ use App\Models\Reference\MatterType;
 use App\Models\User\User;
 use App\Queries\Billing\MatterDisbursements;
 use App\Queries\Billing\MatterFeeAgreements;
+use App\Queries\Billing\MatterWorkValue;
 use App\Queries\Matters\MatterAuditTrail;
 use App\Queries\Matters\MatterDiary;
 use App\Queries\Matters\MatterDocuments;
@@ -91,6 +92,7 @@ class MatterController extends Controller
         MatterRecentReads $recentReads,
         MatterFeeAgreements $feeAgreements,
         MatterDisbursements $disbursements,
+        MatterWorkValue $workValue,
     ): View {
         Gate::authorize('view', $matter);
 
@@ -138,7 +140,7 @@ class MatterController extends Controller
             'documents' => $documents->for($matter, $request->documentKind()),
             'parties' => $parties->for($matter, $user),
             'diary' => $diary->for($matter, $user, $request->diaryShow()),
-            'billing' => $feeAgreements->for($matter) + $disbursements->for($matter),
+            'billing' => $feeAgreements->for($matter) + $disbursements->for($matter) + $workValue->for($matter),
             'audit' => ['activities' => $auditTrail->for($matter)],
         });
     }
