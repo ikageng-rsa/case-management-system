@@ -195,7 +195,8 @@
             @include('matter-show.'.$tab)
         </div>
 
-        <div class="col-lg-4">
+        {{-- The side column repeats what the tabs hold, so on a small screen it is left out. --}}
+        <div class="col-lg-4 d-none d-lg-block">
             @include('matter-show.sidebar')
         </div>
     </div>
