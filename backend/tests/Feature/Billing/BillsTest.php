@@ -127,6 +127,32 @@ class BillsTest extends TestCase
         $this->assertSame(15000, $bill->fresh()->fees_cents);
     }
 
+    public function test_unbilled_work_is_found_and_added_from_the_bill_page(): void
+    {
+        $this->actingAs($this->director)->post(route('matter.bills.store', $this->matter), [
+            'kind' => 'statement', 'addressee' => 'Client', 'time_rates' => [$this->attorney->id => '1760'],
+        ]);
+        $bill = Bill::sole();
+
+        $this->actingAs($this->director)->get(route('bill.show', $bill))
+            ->assertSee('Add work')
+            ->assertSee('Everything recorded on this matter is already on a statement of account.');
+
+        $late = Narration::factory()->for($this->matter)->for(ActivityType::where('code', 'TRAVEL')->sole())->for($this->attorney, 'author')
+            ->create(['quantity' => 20, 'minutes' => null, 'occurred_at' => '2026-06-09', 'body' => 'Collected the court order']);
+
+        $this->actingAs($this->director)->get(route('bill.show', $bill))
+            ->assertSee('Collected the court order')
+            ->assertSee('data-search="9 jun 2026 travelling travel collected the court order lerato khumalo"', false);
+
+        $this->actingAs($this->director)->post(route('bill.lines.store', $bill), [])->assertSessionHasErrorsIn('bill_add');
+        $this->actingAs($this->director)->post(route('bill.lines.store', $bill), ['narrations' => [$late->id]])
+            ->assertRedirect(route('bill.show', $bill))
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(1, $bill->lines()->where('narration_id', $late->id)->count());
+    }
+
     public function test_a_line_is_reached_only_through_its_own_bill(): void
     {
         $bill = Bill::factory()->for($this->matter)->create();

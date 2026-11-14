@@ -96,6 +96,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/matters/{matter}/bills', [BillsController::class, 'store'])->name('matter.bills.store');
     Route::get('/bills/{bill}', [BillsController::class, 'show'])->name('bill.show');
     Route::delete('/bills/{bill}', [BillsController::class, 'destroy'])->name('bill.destroy');
+    Route::post('/bills/{bill}/lines', [BillLinesController::class, 'store'])->name('bill.lines.store');
     Route::patch('/bills/{bill}/lines/{line}', [BillLinesController::class, 'update'])->scopeBindings()->name('bill.lines.update');
     Route::delete('/bills/{bill}/lines/{line}', [BillLinesController::class, 'destroy'])->scopeBindings()->name('bill.lines.destroy');
     Route::get('/matters/{matter}', [MatterController::class, 'show'])->name('matter.show');

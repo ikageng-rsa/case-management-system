@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Billing;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Billing\AddBillWorkRequest;
 use App\Http\Requests\Billing\ChangeBillLineAmountRequest;
 use App\Models\Billing\Bill;
 use App\Models\Billing\BillLine;
+use App\Services\Billing\AddWorkToBill;
 use App\Services\Billing\BillRefused;
 use App\Services\Billing\ChangeBillLineAmount;
 use App\Services\Billing\RemoveBillLine;
@@ -17,6 +19,19 @@ use Illuminate\Support\Facades\Gate;
 
 class BillLinesController extends Controller
 {
+    public function store(AddBillWorkRequest $request, Bill $bill, AddWorkToBill $addWork): RedirectResponse
+    {
+        Gate::authorize('draftBills', $bill->matter);
+
+        try {
+            $addWork->add($bill, $request->narrationIds(), $request->disbursementIds(), $request->user(), $request->timeRates());
+        } catch (BillRefused $e) {
+            return $this->back($bill)->withInput()->withErrors(['bill_add' => $e->problems], 'bill_add');
+        }
+
+        return $this->back($bill)->with('status', 'Work added to the draft.');
+    }
+
     public function update(ChangeBillLineAmountRequest $request, Bill $bill, BillLine $line, ChangeBillLineAmount $changeAmount): RedirectResponse
     {
         Gate::authorize('draftBills', $bill->matter);

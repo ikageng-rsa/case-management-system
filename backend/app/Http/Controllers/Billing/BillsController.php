@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Billing\StoreBillRequest;
 use App\Models\Billing\Bill;
 use App\Models\Matter\Matter;
+use App\Queries\Billing\UnbilledWork;
 use App\Services\Billing\BillRefused;
 use App\Services\Billing\DeleteDraftBill;
 use App\Services\Billing\DraftBill;
@@ -40,12 +41,16 @@ class BillsController extends Controller
         return redirect()->route('bill.show', $bill)->with('status', 'Draft drawn. Check it before it is issued.');
     }
 
-    public function show(Bill $bill): View
+    public function show(Bill $bill, UnbilledWork $unbilled): View
     {
         Gate::authorize('draftBills', $bill->matter);
 
+        $bill->load(['matter.client', 'lines.user', 'lines.overriddenBy', 'draftedBy']);
+
         return view('bill', [
-            'bill' => $bill->load(['matter.client', 'lines.user', 'lines.overriddenBy', 'draftedBy']),
+            'bill' => $bill,
+            // What a draft can still take: the matter's work and costs not yet billed on a bill of its kind.
+            'unbilled' => $bill->isDraft() ? $unbilled->for($bill->matter, $bill->kind) : null,
         ]);
     }
 

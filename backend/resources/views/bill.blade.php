@@ -28,6 +28,10 @@
         </div>
 
         @if ($bill->isDraft())
+            <div class="d-flex gap-2">
+            <x-ui.button variant="outline-secondary" icon="plus" size="sm"
+                x-data x-on:click="$dispatch('sheet-open', 'add-work')">Add work</x-ui.button>
+
             <form method="POST" action="{{ route('bill.destroy', $bill) }}"
                 data-confirm="Delete this draft? The work and disbursements on it become free to bill again."
                 data-confirm-title="Delete draft" data-confirm-action="Delete" data-confirm-tone="danger" data-confirm-icon="trash">
@@ -35,6 +39,7 @@
                 @method('DELETE')
                 <x-ui.button type="submit" variant="outline-danger" size="sm">Delete draft</x-ui.button>
             </form>
+            </div>
         @endif
     </div>
 
@@ -144,5 +149,89 @@
                 </x-slot:footer>
             </x-ui.sheet>
         @endforeach
+    @endif
+
+    @if ($bill->isDraft())
+        @php
+            $addErrors = $errors->getBag('bill_add');
+            $ratesOnBill = $bill->lines->where('kind', \App\Enums\Billing\BillLineKind::TimeOnTop)->pluck('rate_cents', 'user_id');
+            $timePeople = $unbilled['narrations']->filter(fn ($narration) => $narration->minutes > 0)->groupBy('author_id');
+            $searchText = fn (string ...$parts) => Str::lower(implode(' ', $parts));
+        @endphp
+
+        <x-ui.sheet name="add-work" title="Add work" lede="Work and disbursements recorded on the matter that are not yet on a {{ Str::lower($bill->kind->label()) }}."
+            bag="bill_add" :action="route('bill.lines.store', $bill)">
+            @if ($addErrors->any())
+                <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        @foreach ($addErrors->all() as $problem)
+                            <li>{{ $problem }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            @if ($unbilled['narrations']->isEmpty() && $unbilled['disbursements']->isEmpty())
+                <p class="text-secondary mb-0">Everything recorded on this matter is already on a {{ Str::lower($bill->kind->label()) }}.</p>
+            @else
+                <div x-data="{ q: '', picked: 0 }" x-on:change="picked = $el.querySelectorAll('input[data-pick]:checked').length">
+                    <x-ui.search-field placeholder="Search by date, work, description or person" :shortcut="null" wrapper="mb-2"
+                        x-model="q" aria-label="Search the unbilled work" />
+                    <div class="text-meta mb-2"><span x-text="picked"></span> chosen</div>
+
+                    <div class="border rounded" style="max-height: 50vh; overflow-y: auto;">
+                        @foreach ($unbilled['narrations'] as $narration)
+                            @php
+                                $search = $searchText($narration->occurred_at->format('j M Y'), $narration->activityType->name, $narration->activityType->code, $narration->body, $narration->author->name);
+                            @endphp
+                            <label class="d-flex gap-2 p-2 border-bottom" data-search="{{ $search }}" x-show="! q || $el.dataset.search.includes(q.toLowerCase())">
+                                <input type="checkbox" class="form-check-input mt-1" name="narrations[]" value="{{ $narration->getKey() }}" data-pick
+                                    @checked(in_array($narration->getKey(), old('narrations', []), true))>
+                                <span>
+                                    <span class="d-block">{{ $narration->body }}</span>
+                                    <span class="text-meta">
+                                        {{ $narration->occurred_at->format('j M Y') }} · {{ $narration->activityType->name }} · {{ $narration->author->name }}
+                                        @if ($narration->minutes) · + {{ $narration->minutes }} min @endif
+                                    </span>
+                                </span>
+                            </label>
+                        @endforeach
+
+                        @foreach ($unbilled['disbursements'] as $disbursement)
+                            @php
+                                $search = $searchText($disbursement->incurred_on->format('j M Y'), 'disbursement', $disbursement->description);
+                            @endphp
+                            <label class="d-flex gap-2 p-2 border-bottom" data-search="{{ $search }}" x-show="! q || $el.dataset.search.includes(q.toLowerCase())">
+                                <input type="checkbox" class="form-check-input mt-1" name="disbursements[]" value="{{ $disbursement->getKey() }}" data-pick
+                                    @checked(in_array((string) $disbursement->getKey(), old('disbursements', []), true))>
+                                <span>
+                                    <span class="d-block">{{ $disbursement->description }}</span>
+                                    <span class="text-meta">{{ $disbursement->incurred_on->format('j M Y') }} · Disbursement · {{ $rand($disbursement->amount_cents) }}</span>
+                                </span>
+                            </label>
+                        @endforeach
+                    </div>
+                </div>
+
+                @if ($timePeople->isNotEmpty())
+                    <h4 class="text-meta text-uppercase mt-3 mb-2">Time on top</h4>
+                    <p class="form-hint">The hourly rate for each person's time, if you add work with time on top. A rate already on this bill is used unless you change it.</p>
+
+                    @foreach ($timePeople as $authorId => $narrations)
+                        <x-ui.input :label="$narrations->first()->author->name.' — R an hour'" name="time_rates[{{ $authorId }}]" id="add_rate_{{ $loop->index }}"
+                            type="number" step="0.01" min="0"
+                            :value="old('time_rates.'.$authorId, isset($ratesOnBill[$authorId]) ? number_format($ratesOnBill[$authorId] / 100, 2, '.', '') : null)"
+                            :error="$addErrors->first('time_rates.'.$authorId)" />
+                    @endforeach
+                @endif
+            @endif
+
+            <x-slot:footer>
+                <div class="d-flex align-items-center justify-content-between">
+                    <x-ui.button variant="outline-secondary" size="sm" x-on:click="close()">Cancel</x-ui.button>
+                    <x-ui.button type="submit" variant="primary" size="sm">Add to the bill</x-ui.button>
+                </div>
+            </x-slot:footer>
+        </x-ui.sheet>
     @endif
 @endsection
