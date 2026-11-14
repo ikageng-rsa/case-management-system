@@ -57,6 +57,10 @@ enum Permission: string
     case ManageTariffs = 'manage_tariffs';
     case ManageBillingSettings = 'manage_billing_settings';
     case ManageFeeAgreements = 'manage_fee_agreements';
+    // Billing a client or the other side: drawing a bill, issuing it, and voiding one issued in error.
+    case DraftBills = 'draft_bills';
+    case IssueBills = 'issue_bills';
+    case VoidBills = 'void_bills';
     case ViewAuditLog = 'view_audit_log';
     case ExportAuditLog = 'export_audit_log';
 }
