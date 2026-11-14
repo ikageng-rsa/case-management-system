@@ -55,6 +55,7 @@ enum Permission: string
     case ManageActivityTypes = 'manage_activity_types';
     case ManageCourts = 'manage_courts';
     case ManageTariffs = 'manage_tariffs';
+    case ManageBillingSettings = 'manage_billing_settings';
     case ViewAuditLog = 'view_audit_log';
     case ExportAuditLog = 'export_audit_log';
 }

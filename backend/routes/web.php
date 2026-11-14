@@ -6,6 +6,7 @@ use App\Http\Controllers\Account\AccountController;
 use App\Http\Controllers\Account\NotificationController;
 use App\Http\Controllers\Account\SignInCodeController;
 use App\Http\Controllers\Audit\AuditLogController;
+use App\Http\Controllers\Billing\BillingSettingsController;
 use App\Http\Controllers\Billing\DownloadTariffSourceController;
 use App\Http\Controllers\Billing\DownloadTariffTemplateController;
 use App\Http\Controllers\Billing\PublishTariffScheduleController;
@@ -71,6 +72,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/matters/{matter}/assign', [MatterController::class, 'assign'])->name('matter.assign');
     Route::delete('/matters/{matter}/assign', [MatterController::class, 'unassign'])->name('matter.unassign');
     Route::patch('/matters/{matter}', [MatterController::class, 'update'])->name('matter.update');
+
     Route::get('/matters/{matter}', [MatterController::class, 'show'])->name('matter.show');
 
     Route::post('/matters/{matter}/parties', [MatterPartyController::class, 'store'])->name('matter.parties.store');
@@ -155,6 +157,12 @@ Route::middleware('auth')->group(function () {
         Route::patch('/activity-types/{activityType}', [ActivityTypeController::class, 'update'])->name('activity-type.update');
         Route::delete('/activity-types/{activityType}', [ActivityTypeController::class, 'destroy'])->name('activity-type.destroy');
         Route::post('/activity-types/{activityType}/restore', [ActivityTypeController::class, 'restore'])->withTrashed()->name('activity-type.restore');
+    });
+
+    // How the firm bills: the default percentages, the drawing fee and when statements are drawn.
+    Route::middleware('can:manage_billing_settings')->group(function () {
+        Route::get('/billing-settings', [BillingSettingsController::class, 'show'])->name('billing-settings');
+        Route::put('/billing-settings', [BillingSettingsController::class, 'update'])->name('billing-settings.update');
     });
 
     // The court tariffs bills are priced from, one schedule per date it starts,
