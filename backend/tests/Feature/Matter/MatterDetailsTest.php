@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Matter;
 
 use App\Enums\Auth\Role as RoleEnum;
+use App\Enums\Billing\TariffScale;
 use App\Enums\Matter\Assignment;
 use App\Models\Matter\Matter;
 use App\Models\Matter\MatterAssignment;
@@ -122,6 +123,37 @@ class MatterDetailsTest extends TestCase
         $plain = Matter::factory()->nonLitigation()->create(['court_id' => null]);
         $this->actingAs($this->carrying($plain))->patch(route('matter.update', $plain), ['court_id' => Court::factory()->create()->getKey()]);
         $this->assertNull($plain->fresh()->court_id);
+    }
+
+    public function test_the_tariff_scale_a_bill_of_cost_starts_on_is_set_in_place_and_logged(): void
+    {
+        $matter = Matter::factory()->create();
+        $user = $this->carrying($matter);
+        Activity::query()->delete();
+
+        $this->actingAs($user)->get(route('matter.show', $matter))->assertSee('Not set');
+
+        $this->actingAs($user)->patch(route('matter.update', $matter), ['tariff_scale' => 'B'])->assertSessionHasNoErrors();
+
+        $this->assertSame(TariffScale::B, $matter->fresh()->tariff_scale);
+        $this->assertSame(['tariff_scale' => 'B'], Activity::forSubject($matter)->where('event', 'updated')->sole()->attribute_changes['attributes']);
+        $this->actingAs($user)->get(route('matter.show', $matter))->assertSee('Scale B');
+
+        $this->actingAs($user)->patch(route('matter.update', $matter), ['tariff_scale' => '']);
+        $this->assertNull($matter->fresh()->tariff_scale);
+
+        $this->actingAs($user)->patch(route('matter.update', $matter), ['tariff_scale' => 'E'])->assertSessionHasErrors('tariff_scale');
+    }
+
+    public function test_a_matter_that_is_not_litigious_has_no_tariff_scale(): void
+    {
+        $plain = Matter::factory()->nonLitigation()->create(['court_id' => null]);
+        $user = $this->carrying($plain);
+
+        $this->actingAs($user)->patch(route('matter.update', $plain), ['tariff_scale' => 'A']);
+
+        $this->assertNull($plain->fresh()->tariff_scale);
+        $this->assertStringNotContainsString('aria-label="Tariff scale"', $this->actingAs($user)->get(route('matter.show', $plain))->getContent());
     }
 
     public function test_it_is_its_own_permission(): void

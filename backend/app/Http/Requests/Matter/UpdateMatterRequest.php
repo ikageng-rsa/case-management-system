@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Matter;
 
+use App\Enums\Billing\TariffScale;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -34,6 +35,7 @@ class UpdateMatterRequest extends FormRequest
             'title' => ['sometimes', 'nullable', 'string', 'max:255'],
             'instructed_at' => ['sometimes', 'nullable', 'date'],
             'court_id' => ['sometimes', 'nullable', 'integer', Rule::exists('courts', 'id')->withoutTrashed()],
+            'tariff_scale' => ['sometimes', 'nullable', Rule::enum(TariffScale::class)],
             'prescribes_at' => ['sometimes', 'nullable', 'date'],
             // The date a claim is lost on is not changed without saying why.
             'reason' => ['required_with:prescribes_at', 'nullable', 'string', 'max:500'],

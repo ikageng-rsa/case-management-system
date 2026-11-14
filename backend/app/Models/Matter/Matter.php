@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models\Matter;
 
 use App\Concerns\RecordsActivity;
+use App\Enums\Billing\TariffScale;
 use App\Enums\Document\DocumentKind;
 use App\Enums\Matter\Assignment;
 use App\Models\Billing\FeeAgreement;
@@ -32,7 +33,7 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Collections\MediaCollection;
 
-#[Fillable(['reference', 'sequence_number', 'opened_year', 'title', 'instructed_at', 'prescribes_at'])]
+#[Fillable(['reference', 'sequence_number', 'opened_year', 'title', 'instructed_at', 'prescribes_at', 'tariff_scale'])]
 #[RouteKey('reference')]
 class Matter extends Model implements HasMedia
 {
@@ -61,6 +62,7 @@ class Matter extends Model implements HasMedia
     protected function casts(): array
     {
         return [
+            'tariff_scale' => TariffScale::class,
             'sequence_number' => 'integer',
             'opened_year' => 'integer',
             'instructed_at' => 'datetime',
