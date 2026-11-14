@@ -40,6 +40,7 @@ class MatterAssigned extends PersonalNotification
             'type' => $this->type()->value,
             'message' => $this->message(),
             'url' => route('matter.show', $this->matter),
+            'matter_id' => $this->matter->getKey(),
         ];
     }
 

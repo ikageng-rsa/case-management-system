@@ -41,6 +41,7 @@ class DiaryEntryDueSoon extends PersonalNotification
             'message' => $this->message(),
             'url' => route('matter.show', [$this->entry->matter, 'tab' => 'diary']),
             'diary_entry_id' => $this->entry->getKey(),
+            'matter_id' => $this->entry->matter_id,
             'due_at' => $this->entry->due_at->toIso8601String(),
         ];
     }

@@ -153,11 +153,16 @@ class Matter extends Model implements HasMedia
         );
     }
 
-    public function addDocument(string|UploadedFile $file, DocumentKind $kind): Media
+    /** A name, when given, is how the document is listed; otherwise it is listed by its file's name. */
+    public function addDocument(string|UploadedFile $file, DocumentKind $kind, ?string $name = null): Media
     {
-        return $this->addMedia($file)
-            ->withCustomProperties(['kind' => $kind->value])
-            ->toMediaCollection(static::DOCUMENTS);
+        $adder = $this->addMedia($file)->withCustomProperties(['kind' => $kind->value]);
+
+        if ($name !== null) {
+            $adder->usingName($name);
+        }
+
+        return $adder->toMediaCollection(static::DOCUMENTS);
     }
 
     public function assignedUsers(): BelongsToMany
