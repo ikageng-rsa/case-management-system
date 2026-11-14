@@ -5,6 +5,7 @@
 @section('content')
     @php
         $rand = fn (int $cents) => 'R '.number_format($cents / 100, 2, '.', ' ');
+        $editable = $bill->isDraft() && auth()->user()->can('draftBills', $bill->matter);
         $percent = rtrim(rtrim(number_format($bill->drawing_fee_percent_hundredths / 100, 2, '.', ''), '0'), '.');
         $tones = ['draft' => 'accent', 'issued' => 'success', 'void' => 'neutral'];
         $units = fn ($line) => rtrim(rtrim((string) $line->units, '0'), '.');
@@ -24,24 +25,50 @@
                     · work {{ $bill->period_from ? 'from '.$bill->period_from->format('j M Y') : '' }} {{ $bill->period_to ? 'up to '.$bill->period_to->format('j M Y') : '' }}
                 @endif
                 · drawn {{ $bill->created_at->format('j M Y') }}{{ $bill->draftedBy ? ' by '.$bill->draftedBy->name : '' }}
+                @if ($bill->issued_at) · issued {{ $bill->issued_at->format('j M Y') }}{{ $bill->issuedBy ? ' by '.$bill->issuedBy->name : '' }} @endif
             </p>
         </div>
 
-        @if ($bill->isDraft())
-            <div class="d-flex gap-2">
-            <x-ui.button variant="outline-secondary" icon="plus" size="sm"
-                x-data x-on:click="$dispatch('sheet-open', 'add-work')">Add work</x-ui.button>
+        <div class="d-flex gap-2">
+            @if ($bill->isDraft())
+                @can('draftBills', $bill->matter)
+                    <x-ui.button variant="outline-secondary" icon="plus" size="sm"
+                        x-data x-on:click="$dispatch('sheet-open', 'add-work')">Add work</x-ui.button>
 
-            <form method="POST" action="{{ route('bill.destroy', $bill) }}"
-                data-confirm="Delete this draft? The work and disbursements on it become free to bill again."
-                data-confirm-title="Delete draft" data-confirm-action="Delete" data-confirm-tone="danger" data-confirm-icon="trash">
-                @csrf
-                @method('DELETE')
-                <x-ui.button type="submit" variant="outline-danger" size="sm">Delete draft</x-ui.button>
-            </form>
-            </div>
-        @endif
+                    <form method="POST" action="{{ route('bill.destroy', $bill) }}"
+                        data-confirm="Delete this draft? The work and disbursements on it become free to bill again."
+                        data-confirm-title="Delete draft" data-confirm-action="Delete" data-confirm-tone="danger" data-confirm-icon="trash">
+                        @csrf
+                        @method('DELETE')
+                        <x-ui.button type="submit" variant="outline-danger" size="sm">Delete draft</x-ui.button>
+                    </form>
+                @endcan
+
+                @can('issueBills', $bill->matter)
+                    <form method="POST" action="{{ route('bill.issue', $bill) }}"
+                        data-confirm="Issue this bill to {{ $bill->addressee }} for {{ $rand($bill->total_cents) }}? It is numbered and locked, and from then on it is owed."
+                        data-confirm-title="Issue bill" data-confirm-action="Issue" data-confirm-icon="check">
+                        @csrf
+                        <x-ui.button type="submit" variant="primary" icon="check" size="sm">Issue</x-ui.button>
+                    </form>
+                @endcan
+            @endif
+
+            @if ($bill->isIssued())
+                @can('voidBills', $bill->matter)
+                    <x-ui.button variant="outline-danger" size="sm"
+                        x-data x-on:click="$dispatch('sheet-open', 'void-bill')">Void</x-ui.button>
+                @endcan
+            @endif
+        </div>
     </div>
+
+    @if ($bill->isVoid())
+        <div class="alert alert-secondary">
+            Voided {{ $bill->voided_at->format('j M Y') }}{{ $bill->voidedBy ? ' by '.$bill->voidedBy->name : '' }}: {{ $bill->void_reason }}.
+            Nothing is owed on it, and its work can be billed again.
+        </div>
+    @endif
 
     @if ($errors->getBag('bill')->any())
         <div class="alert alert-danger">{{ $errors->getBag('bill')->first() }}</div>
@@ -61,7 +88,7 @@
                         <th>Description</th>
                         <th class="text-end">Fees</th>
                         <th class="text-end">Disbursements</th>
-                        @if ($bill->isDraft())
+                        @if ($editable)
                             <th></th>
                         @endif
                     </tr>
@@ -84,7 +111,7 @@
                             </td>
                             <td class="text-end text-nowrap">{{ $line->kind->isFee() ? $rand($line->fee_cents) : '' }}</td>
                             <td class="text-end text-nowrap">{{ $line->kind->isFee() ? '' : $rand($line->disbursement_cents) }}</td>
-                            @if ($bill->isDraft())
+                            @if ($editable)
                                 <td class="text-end text-nowrap">
                                     <x-ui.button variant="ghost-secondary" size="sm" icon="pencil" aria-label="Change the amount" title="Change the amount"
                                         x-data x-on:click="$dispatch('sheet-open', 'edit-line-{{ $line->getKey() }}')" />
@@ -105,31 +132,31 @@
                         <td colspan="3" class="text-end">Fees</td>
                         <td class="text-end text-nowrap">{{ $rand($bill->fees_cents) }}</td>
                         <td></td>
-                        @if ($bill->isDraft()) <td></td> @endif
+                        @if ($editable) <td></td> @endif
                     </tr>
                     <tr>
                         <td colspan="3" class="text-end">Drawing fee ({{ $percent }}%)</td>
                         <td class="text-end text-nowrap">{{ $rand($bill->drawing_fee_cents) }}</td>
                         <td></td>
-                        @if ($bill->isDraft()) <td></td> @endif
+                        @if ($editable) <td></td> @endif
                     </tr>
                     <tr>
                         <td colspan="3" class="text-end">Disbursements</td>
                         <td></td>
                         <td class="text-end text-nowrap">{{ $rand($bill->disbursements_cents) }}</td>
-                        @if ($bill->isDraft()) <td></td> @endif
+                        @if ($editable) <td></td> @endif
                     </tr>
                     <tr>
                         <td colspan="3" class="text-end"><strong>Total due</strong></td>
                         <td colspan="2" class="text-end text-nowrap"><strong>{{ $rand($bill->total_cents) }}</strong></td>
-                        @if ($bill->isDraft()) <td></td> @endif
+                        @if ($editable) <td></td> @endif
                     </tr>
                 </tfoot>
             </table>
         </div>
     </div>
 
-    @if ($bill->isDraft())
+    @if ($editable)
         @foreach ($bill->lines as $line)
             @php
                 $bag = 'bill_line_'.$line->getKey();
@@ -151,7 +178,7 @@
         @endforeach
     @endif
 
-    @if ($bill->isDraft())
+    @if ($editable)
         @php
             $addErrors = $errors->getBag('bill_add');
             $ratesOnBill = $bill->lines->where('kind', \App\Enums\Billing\BillLineKind::TimeOnTop)->pluck('rate_cents', 'user_id');
@@ -233,5 +260,27 @@
                 </div>
             </x-slot:footer>
         </x-ui.sheet>
+    @endif
+
+    @if ($bill->isIssued())
+        @can('voidBills', $bill->matter)
+            <x-ui.sheet name="void-bill" title="Void {{ $bill->number }}" lede="For a bill issued in error. It keeps its number and stays on record; nothing is owed on it, and its work can be billed again."
+                bag="bill_void" :action="route('bill.void', $bill)">
+                <div class="mb-3">
+                    <label class="form-label form-label-mono" for="void_reason">Reason</label>
+                    <textarea class="form-control @error('reason', 'bill_void') is-invalid @enderror" id="void_reason" name="reason" rows="3">{{ old('reason') }}</textarea>
+                    @error('reason', 'bill_void')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <x-slot:footer>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <x-ui.button variant="outline-secondary" size="sm" x-on:click="close()">Cancel</x-ui.button>
+                        <x-ui.button type="submit" variant="danger" size="sm">Void the bill</x-ui.button>
+                    </div>
+                </x-slot:footer>
+            </x-ui.sheet>
+        @endcan
     @endif
 @endsection

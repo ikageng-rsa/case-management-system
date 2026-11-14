@@ -103,7 +103,7 @@ class MatterController extends Controller
 
         $tabs = ['ledger', 'documents', 'parties', 'diary'];
 
-        if ($user->can('manageFees', $matter) || $user->can('draftBills', $matter)) {
+        if ($user->can('manageFees', $matter) || $user->can('viewBills', $matter)) {
             $tabs[] = 'billing';
         }
 

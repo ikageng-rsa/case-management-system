@@ -107,7 +107,7 @@
             <div @class(['d-flex align-items-center justify-content-between gap-2', 'mb-3' => ! $loop->last])>
                 <div>
                     <div class="mb-0">
-                        @can('draftBills', $matter)
+                        @can('viewBills', $matter)
                             <a href="{{ route('bill.show', $bill) }}">{{ $bill->number ?? 'Draft' }}</a>
                         @else
                             {{ $bill->number ?? 'Draft' }}

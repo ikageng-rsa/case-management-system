@@ -43,9 +43,9 @@ class BillsController extends Controller
 
     public function show(Bill $bill, UnbilledWork $unbilled): View
     {
-        Gate::authorize('draftBills', $bill->matter);
+        Gate::authorize('viewBills', $bill->matter);
 
-        $bill->load(['matter.client', 'lines.user', 'lines.overriddenBy', 'draftedBy']);
+        $bill->load(['matter.client', 'lines.user', 'lines.overriddenBy', 'draftedBy', 'issuedBy', 'voidedBy']);
 
         return view('bill', [
             'bill' => $bill,

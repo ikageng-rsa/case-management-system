@@ -153,6 +153,58 @@ class BillsTest extends TestCase
         $this->assertSame(1, $bill->lines()->where('narration_id', $late->id)->count());
     }
 
+    public function test_a_draft_is_issued_with_its_number_and_voided_with_a_reason(): void
+    {
+        $this->actingAs($this->director)->post(route('matter.bills.store', $this->matter), [
+            'kind' => 'statement', 'addressee' => 'Client', 'time_rates' => [$this->attorney->id => '1760'],
+        ]);
+        $bill = Bill::sole();
+
+        $this->actingAs($this->director)->get(route('bill.show', $bill))->assertSee('Issue');
+        $this->actingAs($this->director)->post(route('bill.issue', $bill))->assertRedirect(route('bill.show', $bill));
+
+        $bill->refresh();
+        $this->assertTrue($bill->isIssued());
+        $this->assertSame('INV/'.now()->year.'/0001', $bill->number);
+
+        $this->actingAs($this->director)->get(route('bill.show', $bill))
+            ->assertSee($bill->number)
+            ->assertSee('issued '.now()->format('j M Y').' by Thandiwe Mokoena')
+            ->assertDontSee('Add work')
+            ->assertDontSee('aria-label="Remove the line"', false);
+
+        $this->actingAs($this->director)->post(route('bill.void', $bill), ['reason' => ''])->assertSessionHasErrorsIn('bill_void', 'reason');
+        $this->actingAs($this->director)->post(route('bill.void', $bill), ['reason' => 'Sent to the wrong client'])->assertRedirect(route('bill.show', $bill));
+
+        $this->actingAs($this->director)->get(route('bill.show', $bill))->assertSee('Sent to the wrong client');
+
+        // Its work is free again, so a new statement can take it.
+        $this->actingAs($this->director)->post(route('matter.bills.store', $this->matter), [
+            'kind' => 'statement', 'addressee' => 'Client', 'time_rates' => [$this->attorney->id => '1760'],
+        ])->assertSessionHasNoErrors();
+        $this->assertSame(2, Bill::count());
+    }
+
+    public function test_issuing_and_voiding_are_their_own_permissions(): void
+    {
+        $secretary = tap(User::factory()->create())->assignRole(RoleEnum::Secretary->value);
+        $secretary->givePermissionTo('draft_bills');
+        $draft = BillLine::factory()->for(Bill::factory()->for($this->matter))->create()->bill;
+        $issued = Bill::factory()->for($this->matter)->issued()->create();
+
+        $this->actingAs($secretary)->get(route('bill.show', $draft))->assertOk()->assertDontSee('Issue this bill');
+        $this->actingAs($secretary)->post(route('bill.issue', $draft))->assertForbidden();
+        $this->actingAs($secretary)->post(route('bill.void', $issued), ['reason' => 'Wrong'])->assertForbidden();
+
+        // Someone who only issues sees the bills and the issue button, but cannot change a draft.
+        $issuer = tap(User::factory()->create())->assignRole(RoleEnum::Secretary->value);
+        $issuer->givePermissionTo('issue_bills');
+        $this->actingAs($issuer)->get(route('bill.show', $draft))->assertOk()->assertDontSee('Add work');
+        $this->actingAs($issuer)->delete(route('bill.destroy', $draft))->assertForbidden();
+        $this->actingAs($issuer)->post(route('bill.issue', $draft))->assertRedirect();
+        $this->assertTrue($draft->fresh()->isIssued());
+    }
+
     public function test_a_line_is_reached_only_through_its_own_bill(): void
     {
         $bill = Bill::factory()->for($this->matter)->create();

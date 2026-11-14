@@ -76,6 +76,24 @@ class MatterPolicy
         return $user->can(Permission::DraftBills->value) && $this->view($user, $matter);
     }
 
+    /** Issuing a checked draft, after which it is owed. */
+    public function issueBills(User $user, Matter $matter): bool
+    {
+        return $user->can(Permission::IssueBills->value) && $this->view($user, $matter);
+    }
+
+    /** Voiding a bill issued in error. */
+    public function voidBills(User $user, Matter $matter): bool
+    {
+        return $user->can(Permission::VoidBills->value) && $this->view($user, $matter);
+    }
+
+    /** Seeing the matter's bills, for anyone who drafts, issues or voids them. */
+    public function viewBills(User $user, Matter $matter): bool
+    {
+        return $this->draftBills($user, $matter) || $this->issueBills($user, $matter) || $this->voidBills($user, $matter);
+    }
+
     public function deleteDocument(User $user, Matter $matter): bool
     {
         return $user->can(Permission::DeleteDocuments->value) && $this->view($user, $matter);
