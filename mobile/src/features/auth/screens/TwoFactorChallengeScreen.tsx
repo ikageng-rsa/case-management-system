@@ -3,7 +3,7 @@ import { Alert, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
-import { resendTwoFactorCode } from '@/api/endpoint/auth.api';
+//import { resendTwoFactorCode } from '@/api/endpoint/auth.api';
 import { getApiErrorMessage } from '@/api/errors';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import { cancelTwoFactor, clearPendingLogin, completeTwoFactor } from '@/features/auth/store/authSlice';
@@ -49,7 +49,7 @@ export default function TwoFactorChallengeScreen() {
         }
         setLoading(true);
         try {
-            await resendTwoFactorCode(challenge.token);
+            //await resendTwoFactorCode(challenge.token);
             Alert.alert('Code sent', 'A new code is on its way.');
         } catch (e) {
             Alert.alert('Could not send', getApiErrorMessage(e, 'Try again in a moment.'));

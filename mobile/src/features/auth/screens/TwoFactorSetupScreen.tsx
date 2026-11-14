@@ -4,13 +4,13 @@ import QRCode from 'react-native-qrcode-svg';
 import Button from '@/components/Button';
 import Card from '@/components/Card';
 import Input from '@/components/Input';
-import {
+/*import {
     disableTwoFactor,
     enableSms,
     enableTotp,
     startSmsSetup,
     startTotpSetup,
-} from '@/api/endpoint/auth.api';
+} from '@/api/endpoint/auth.api';*/
 import { getApiErrorMessage } from '@/api/errors';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import { setUser } from '@/features/auth/store/authSlice';
@@ -70,21 +70,21 @@ export default function TwoFactorSetupScreen() {
 
     const startTotp = () =>
         run(async () => {
-            const s = await startTotpSetup();
-            setSecret(s.secret);
-            setUri(s.otpauthUri);
-            setCode('');
-            setStage('totp-confirm');
+            //const s = await startTotpSetup();
+            //setSecret(s.secret);
+            //setUri(s.otpauthUri);
+            //setCode('');
+            //setStage('totp-confirm');
         });
 
-    const confirmTotp = () => run(async () => done(await enableTotp(code.trim()), 'Your account now requires an authenticator code at sign-in.'));
+    /*const confirmTotp = () => run(async () => done(await enableTotp(code.trim()), 'Your account now requires an authenticator code at sign-in.'));
 
     const sendSms = () => run(async () => startSmsSetup(phone.trim()));
 
     const confirmSms = () => run(async () => done(await enableSms(code.trim()), 'Your account now requires an SMS code at sign-in.'));
 
     const turnOff = () => run(async () => done(await disableTwoFactor(password), 'Two-factor authentication is off.'));
-
+*/
     const toggleLock = async (value: boolean) => {
         await setAppLockEnabled(value);
         setLockOn(value);
@@ -100,7 +100,7 @@ export default function TwoFactorSetupScreen() {
                 <Text style={styles.label}>Can&apos;t scan? Enter this key manually:</Text>
                 <Text selectable style={styles.manualKey}>{secret}</Text>
                 <Input label="Code from app" value={code} onChangeText={setCode} keyboardType="number-pad" maxLength={6} />
-                <Button label="Confirm & enable" onPress={confirmTotp} loading={loading} />
+               {/**<!--<Button label="Confirm & enable" onPress={confirmTotp} loading={loading} />**/}
                 <Button label="Cancel" variant="secondary" onPress={() => setStage('choose')} style={styles.gap} />
             </ScrollView>
         );
@@ -111,9 +111,9 @@ export default function TwoFactorSetupScreen() {
             <ScrollView style={styles.container} contentContainerStyle={styles.content}>
                 <Text style={styles.title}>Set up SMS verification</Text>
                 <Input label="Phone number" value={phone} onChangeText={setPhone} keyboardType="phone-pad" placeholder="082 123 4567" />
-                <Button label="Send code" variant="secondary" onPress={sendSms} loading={loading} style={styles.gap} />
+                {/**<!--<Button label="Send code" variant="secondary" onPress={sendSms} loading={loading} style={styles.gap} />**/}
                 <Input label="Verification code" value={code} onChangeText={setCode} keyboardType="number-pad" maxLength={6} textContentType="oneTimeCode" />
-                <Button label="Confirm & enable" onPress={confirmSms} loading={loading} />
+                {/**<!--<Button label="Confirm & enable" onPress={confirmSms} loading={loading} />**/}
                 <Button label="Cancel" variant="secondary" onPress={() => setStage('choose')} style={styles.gap} />
             </ScrollView>
         );
@@ -125,7 +125,7 @@ export default function TwoFactorSetupScreen() {
                 <Text style={styles.title}>Turn off two-factor</Text>
                 <Text style={styles.subtitle}>Enter your password to confirm.</Text>
                 <Input label="Password" value={password} onChangeText={setPassword} secureTextEntry />
-                <Button label="Turn off" variant="danger" onPress={turnOff} loading={loading} />
+                {/**<!--<Button label="Turn off" variant="danger" onPress={turnOff} loading={loading} />**/}
                 <Button label="Cancel" variant="secondary" onPress={() => setStage('choose')} style={styles.gap} />
             </ScrollView>
         );

@@ -3,7 +3,7 @@ import { Alert, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
-import { confirmPasswordReset } from '@/api/endpoint/auth.api';
+//import { confirmPasswordReset } from '@/api/endpoint/auth.api';
 import { checkPasswordStrength } from '@/utils/validators';
 import { forgetOfflineCredential } from '@/features/auth/services/offlineAuth';
 import { setResetToken, takeResetToken } from '@/features/auth/services/resetSession'
@@ -36,7 +36,7 @@ export default function SetNewPasswordScreen() {
                 Alert.alert('Session expired', 'Please request a new verification code.', [{ text: 'OK', onPress: () => router.replace('/forgot-password') }]);
                 return;
             }
-            await confirmPasswordReset(resetToken, password);
+            //await confirmPasswordReset(resetToken, password);
             setResetToken(null);
             //The old password must stop working for offline sign-in too.
             if(email){
