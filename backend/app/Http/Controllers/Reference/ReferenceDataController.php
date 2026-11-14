@@ -8,6 +8,7 @@ use App\Enums\Auth\Permission;
 use App\Enums\Court\CourtTier;
 use App\Enums\Narration\ActivityMeasure;
 use App\Http\Controllers\Controller;
+use App\Models\Billing\TariffSchedule;
 use App\Models\Reference\ActivityType;
 use App\Models\Reference\Court;
 use App\Models\Reference\MatterType;
@@ -31,6 +32,7 @@ class ReferenceDataController extends Controller
             'courts' => $user->can(Permission::ManageCourts->value) ? 'Courts' : null,
             'matter-types' => $user->can(Permission::ManageMatterTypes->value) ? 'Matter types' : null,
             'activity-types' => $user->can(Permission::ManageActivityTypes->value) ? 'Kinds of work' : null,
+            'tariffs' => $user->can(Permission::ManageTariffs->value) ? 'Tariffs' : null,
         ]);
 
         abort_if($tabs === [], 403);
@@ -49,6 +51,10 @@ class ReferenceDataController extends Controller
             'activityTypes' => $tab === 'activity-types'
                 ? ActivityType::withTrashed()->withCount('narrations')->orderBy('name')->get()
                 : collect(),
+            'tariffSchedules' => $tab === 'tariffs'
+                ? TariffSchedule::query()->withCount('items')->latestFirst()->get()
+                : collect(),
+            'tariffInForce' => $tab === 'tariffs' ? TariffSchedule::inForceOn(today()) : null,
             'tiers' => CourtTier::cases(),
             'measures' => ActivityMeasure::cases(),
         ]);
