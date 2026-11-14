@@ -104,8 +104,7 @@ class NarrationPriceTest extends TestCase
 
     public function test_time_on_top_is_left_for_the_bill_and_only_the_work_is_priced(): void
     {
-        $travelTime = ActivityType::factory()->measuredIn(ActivityMeasure::Minutes, 15)->create(['name' => 'Travelling time']);
-        $travel = ActivityType::factory()->measuredIn(ActivityMeasure::Kilometre)->create(['name' => 'Travelling', 'time_activity_type_id' => $travelTime->getKey()]);
+        $travel = ActivityType::factory()->measuredIn(ActivityMeasure::Kilometre)->create(['name' => 'Travelling', 'charges_time_on_top' => true]);
         TariffItem::factory()->for($this->tariff, 'schedule')->create(['activity_type_id' => $travel->getKey(), 'scale_b_cents' => 750]);
 
         $narration = Narration::factory()

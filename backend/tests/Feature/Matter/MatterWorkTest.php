@@ -69,12 +69,10 @@ class MatterWorkTest extends TestCase
     {
         $matter = Matter::factory()->create();
         $user = $this->assignedAttorney($matter);
-        $travelTime = ActivityType::factory()->measuredIn(ActivityMeasure::Minutes, 15)->create(['code' => 'TRAVTIME']);
-        $travel = ActivityType::factory()->measuredIn(ActivityMeasure::Kilometre)->create(['code' => 'TRAVEL', 'time_activity_type_id' => $travelTime->getKey()]);
+        $travel = ActivityType::factory()->measuredIn(ActivityMeasure::Kilometre)->create(['code' => 'TRAVEL', 'charges_time_on_top' => true]);
         $call = ActivityType::factory()->create(['code' => 'CALL']);
 
-        $page = $this->actingAs($user)->get(route('matter.show', $matter))->assertSee('data-charges-time="1"', false)->assertSee('Time taken');
-        $this->assertStringNotContainsString('value="'.$travelTime->getKey().'" data-charges-time', $page->getContent(), 'the time rate is not offered as work');
+        $this->actingAs($user)->get(route('matter.show', $matter))->assertSee('data-charges-time="1"', false)->assertSee('Time taken');
 
         $this->actingAs($user)->post(route('matter.narrations.store', $matter), [
             'activity_type_id' => $travel->getKey(), 'quantity' => 80, 'body' => 'Travelled to court.',
@@ -90,15 +88,10 @@ class MatterWorkTest extends TestCase
 
         $travelled = $matter->narrations()->where('activity_type_id', $travel->getKey())->sole();
         $this->assertSame(90, $travelled->minutes);
-        $this->assertSame(6, $travelled->timeUnits(), '90 minutes in 15-minute blocks');
         $this->assertNull($matter->narrations()->where('activity_type_id', $call->getKey())->sole()->minutes);
 
         $this->actingAs($user)->get(route('matter.show', $matter))->assertSee('80 kilometre + 90 min');
 
-        // The time rate itself is not logged as work.
-        $this->actingAs($user)->post(route('matter.narrations.store', $matter), [
-            'activity_type_id' => $travelTime->getKey(), 'quantity' => 30, 'body' => 'Travelling time.',
-        ])->assertSessionHasErrorsIn('narration', 'activity_type_id');
     }
 
     public function test_an_appearance_needs_the_matter_to_have_a_court(): void

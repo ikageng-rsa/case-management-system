@@ -15,13 +15,12 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 #[Appends(['unit_label'])]
-#[Fillable(['code', 'name', 'measure', 'increment', 'default_billable', 'requires_court', 'time_activity_type_id'])]
+#[Fillable(['code', 'name', 'measure', 'increment', 'default_billable', 'requires_court', 'charges_time_on_top'])]
 #[RouteKey('code')]
 class ActivityType extends Model
 {
@@ -43,6 +42,7 @@ class ActivityType extends Model
             'increment' => 'integer',
             'default_billable' => 'boolean',
             'requires_court' => 'boolean',
+            'charges_time_on_top' => 'boolean',
         ];
     }
 
@@ -54,32 +54,14 @@ class ActivityType extends Model
         return in_array($this->code, self::SYSTEM_CODES, true);
     }
 
-    /** The kind of work counted in minutes whose rate the time spent on this work is charged at. */
-    public function timeActivityType(): BelongsTo
-    {
-        return $this->belongsTo(self::class, 'time_activity_type_id')->withTrashed();
-    }
-
-    /** Whether a narration of this work also records the time it took, charged on top. */
+    /**
+     * Whether a narration of this work also records the time it took, such as
+     * the time spent travelling with the kilometres. The time is rated when
+     * the bill is raised.
+     */
     public function chargesTimeOnTop(): bool
     {
-        return $this->time_activity_type_id !== null;
-    }
-
-    /*
-     * Work that is offered when logging a narration. A kind that only carries
-     * the rate other work charges its time at, such as travelling time, is left
-     * out: its time is logged with the work it belongs to.
-     */
-    public function scopeNarratable(Builder $query): void
-    {
-        $query->whereNotIn('id', self::withTrashed()->whereNotNull('time_activity_type_id')->select('time_activity_type_id'));
-    }
-
-    /** Whether other work charges its time at this kind's rate, so it is not logged on its own. */
-    public function isTimeRate(): bool
-    {
-        return self::withTrashed()->where('time_activity_type_id', $this->getKey())->exists();
+        return (bool) $this->charges_time_on_top;
     }
 
     public function narrations(): HasMany

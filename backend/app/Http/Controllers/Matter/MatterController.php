@@ -128,7 +128,7 @@ class MatterController extends Controller
             'nextDate' => $matter->diaryEntries()->pending()->orderBy('due_at')->first()?->due_at,
             'canWork' => $user->can('work', $matter),
             'defaultReminder' => $resolveLead->for($user),
-            'activityTypes' => ActivityType::query()->narratable()->orderBy('name')->get(),
+            'activityTypes' => ActivityType::query()->orderBy('name')->get(),
             'courts' => Court::query()->orderBy('name')->orderBy('seat')->get(),
             'assignable' => $user->can('assign', $matter) ? User::query()->orderBy('name')->get() : collect(),
             'capacities' => Assignment::cases(),

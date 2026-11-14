@@ -269,39 +269,28 @@ class ReferenceDataTest extends TestCase
         $this->assertFalse($type->requires_court);
     }
 
-    public function test_a_kind_of_work_can_charge_time_on_top_at_a_kind_counted_in_minutes(): void
+    public function test_a_kind_of_work_can_be_switched_to_charge_time_on_top(): void
     {
         $manager = $this->userWithRole(RoleEnum::Manager);
         $travel = ActivityType::factory()->measuredIn(ActivityMeasure::Kilometre)->create(['code' => 'TRAVEL', 'name' => 'Travelling']);
-        $travelTime = ActivityType::factory()->measuredIn(ActivityMeasure::Minutes, 15)->create(['code' => 'TRAVTIME', 'name' => 'Travelling time']);
 
-        $this->actingAs($manager)->patch(route('activity-type.update', $travel), [
-            'name' => 'Travelling', 'charges_time' => '1', 'time_activity_type_id' => $travelTime->getKey(),
-        ])->assertSessionHasNoErrors();
+        $this->actingAs($manager)->patch(route('activity-type.update', $travel), ['name' => 'Travelling', 'charges_time_on_top' => '1'])
+            ->assertSessionHasNoErrors();
+        $this->assertTrue($travel->fresh()->chargesTimeOnTop());
 
-        $this->assertTrue($travel->fresh()->timeActivityType->is($travelTime));
-        $this->actingAs($manager)->get(route('reference-data', ['tab' => 'activity-types']))->assertSee('Travelling time');
-
-        $this->actingAs($manager)->patch(route('activity-type.update', $travel), ['name' => 'Travelling', 'charges_time' => '0', 'time_activity_type_id' => $travelTime->getKey()]);
+        $this->actingAs($manager)->patch(route('activity-type.update', $travel), ['name' => 'Travelling', 'charges_time_on_top' => '0']);
         $this->assertFalse($travel->fresh()->chargesTimeOnTop());
     }
 
-    public function test_time_on_top_needs_a_kind_counted_in_minutes_and_none_for_work_counted_in_minutes(): void
+    public function test_work_counted_in_minutes_takes_no_time_on_top(): void
     {
-        $manager = $this->userWithRole(RoleEnum::Manager);
-        $travel = ActivityType::factory()->measuredIn(ActivityMeasure::Kilometre)->create(['code' => 'TRAVEL']);
-        $pages = ActivityType::factory()->measuredIn(ActivityMeasure::Page)->create(['code' => 'PERUSE']);
         $consultation = ActivityType::factory()->measuredIn(ActivityMeasure::Minutes, 15)->create(['code' => 'CONS']);
-        $bag = 'activity_type_'.$travel->getKey();
 
-        $this->actingAs($manager)->patch(route('activity-type.update', $travel), ['name' => 'Travelling', 'charges_time' => '1'])
-            ->assertSessionHasErrorsIn($bag, 'time_activity_type_id');
-        $this->actingAs($manager)->patch(route('activity-type.update', $travel), ['name' => 'Travelling', 'charges_time' => '1', 'time_activity_type_id' => $pages->getKey()])
-            ->assertSessionHasErrorsIn($bag, 'time_activity_type_id');
-        $this->actingAs($manager)->patch(route('activity-type.update', $consultation), ['name' => 'Consultation', 'charges_time' => '1', 'time_activity_type_id' => $consultation->getKey()])
-            ->assertSessionHasErrorsIn('activity_type_'.$consultation->getKey(), ['charges_time', 'time_activity_type_id']);
+        $this->actingAs($this->userWithRole(RoleEnum::Manager))
+            ->patch(route('activity-type.update', $consultation), ['name' => 'Consultation', 'charges_time_on_top' => '1'])
+            ->assertSessionHasErrorsIn('activity_type_'.$consultation->getKey(), 'charges_time_on_top');
 
-        $this->assertFalse($travel->fresh()->chargesTimeOnTop());
+        $this->assertFalse($consultation->fresh()->chargesTimeOnTop());
     }
 
     public function test_how_work_is_counted_is_fixed_once_a_narration_exists(): void

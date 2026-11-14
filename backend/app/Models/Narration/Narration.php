@@ -66,18 +66,6 @@ class Narration extends Model
         return $this->activityType->billableUnits((float) $this->quantity);
     }
 
-    /** The blocks of time charged on top, at the increment of the kind of work the time is charged as. */
-    public function timeUnits(): int
-    {
-        $timeType = $this->activityType->timeActivityType;
-
-        if ($timeType === null || $this->minutes === null) {
-            return 0;
-        }
-
-        return $timeType->billableUnits((float) $this->minutes);
-    }
-
     public function scopeForMatter(Builder $query, Matter $matter): void
     {
         $query->where('matter_id', $matter->getKey());

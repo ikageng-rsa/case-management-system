@@ -61,7 +61,7 @@ class StoreNarrationRequest extends FormRequest
 
     protected function chargesTime(): bool
     {
-        return ActivityType::query()->whereKey($this->input('activity_type_id'))->whereNotNull('time_activity_type_id')->exists();
+        return ActivityType::query()->whereKey($this->input('activity_type_id'))->where('charges_time_on_top', true)->exists();
     }
 
     public function after(): array
@@ -81,10 +81,6 @@ class StoreNarrationRequest extends FormRequest
 
             if ($this->chargesTime() && ($this->minutes() ?? 0) > 1440) {
                 $validator->errors()->add('time_value', 'The time taken cannot be more than a day.');
-            }
-
-            if (ActivityType::query()->whereKey($this->input('activity_type_id'))->first()?->isTimeRate()) {
-                $validator->errors()->add('activity_type_id', 'This is the rate other work charges its time at. Log the work itself, with the time it took.');
             }
         }];
     }

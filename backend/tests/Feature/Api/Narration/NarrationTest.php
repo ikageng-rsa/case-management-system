@@ -123,8 +123,7 @@ class NarrationTest extends ApiTestCase
     {
         $user = $this->signInAs(Role::CandidateAttorney);
         $matter = $this->carriedBy($user);
-        $travelTime = ActivityType::factory()->measuredIn(ActivityMeasure::Minutes, 15)->create();
-        $travel = ActivityType::factory()->measuredIn(ActivityMeasure::Kilometre)->create(['time_activity_type_id' => $travelTime->id]);
+        $travel = ActivityType::factory()->measuredIn(ActivityMeasure::Kilometre)->create(['charges_time_on_top' => true]);
         $payload = ['activity_type_id' => $travel->id, 'body' => 'Travelled to court', 'quantity' => 80];
 
         $this->postJson("/api/v1/matters/{$matter->id}/narrations", $payload)->assertJsonApiError(422, '/time_value');

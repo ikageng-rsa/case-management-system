@@ -37,16 +37,13 @@ class LookupTest extends ApiTestCase
             ->assertJsonPath('data.0.attributes.charges_time_on_top', false);
     }
 
-    public function test_a_kind_that_only_carries_a_time_rate_is_not_offered_as_work(): void
+    public function test_an_activity_type_says_whether_it_takes_time_on_top(): void
     {
         Sanctum::actingAs(User::factory()->create());
-        $travelTime = ActivityType::factory()->create(['code' => 'TRAVTIME', 'name' => 'Travelling time']);
-        ActivityType::factory()->create(['code' => 'TRAVEL', 'name' => 'Travelling', 'time_activity_type_id' => $travelTime->id]);
+        ActivityType::factory()->create(['code' => 'TRAVEL', 'name' => 'Travelling', 'charges_time_on_top' => true]);
 
         $this->getJson('/api/v1/activity-types')
             ->assertOk()
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.attributes.code', 'TRAVEL')
             ->assertJsonPath('data.0.attributes.charges_time_on_top', true);
     }
 
