@@ -94,6 +94,12 @@
             The value of the work done, not an amount anyone owes yet.
         </div>
 
+        @if ($timeOnTopMinutes > 0)
+            <div class="text-meta mt-2">
+                Plus {{ intdiv($timeOnTopMinutes, 60) > 0 ? intdiv($timeOnTopMinutes, 60).' h ' : '' }}{{ $timeOnTopMinutes % 60 > 0 ? ($timeOnTopMinutes % 60).' min ' : '' }}of time on top, rated when the bill is raised.
+            </div>
+        @endif
+
         @if ($unpricedWork->isNotEmpty())
             <div class="alert alert-warning mt-3 mb-0">
                 <p class="mb-1">{{ $unpricedWork->count() }} {{ Str::plural('narration', $unpricedWork->count()) }} could not be priced:</p>

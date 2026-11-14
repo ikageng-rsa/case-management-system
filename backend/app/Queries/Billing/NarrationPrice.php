@@ -16,9 +16,9 @@ use Illuminate\Support\Collection;
  * work was done, the matter's scale unless another is given, and the rate the
  * author charges. Someone with more than one role charges at whichever of them
  * gives the highest rate. The worth is the narration's billable units at that
- * rate, and for work that charges time on top, the time taken in blocks at the
- * rate of the kind of work the time is charged as, found the same way. Work
- * that cannot be priced in full says why, so it can be put right.
+ * rate. Time taken on top of the work is the firm's own charge, not the
+ * gazette's, so it is left out here and rated per person when the bill is
+ * raised. Work that cannot be priced says why, so it can be put right.
  *
  * The published tariffs are read once and kept for the life of the object, so
  * pricing every narration on a matter costs a handful of queries.
@@ -29,9 +29,8 @@ class NarrationPrice
     protected ?Collection $schedules = null;
 
     /**
-     * Either ['priced' => true, 'units', 'rateCents', 'workAmountCents', 'timeUnits', 'timeRateCents',
-     * 'timeAmountCents', 'amountCents', 'scale', 'role', 'schedule'] or ['priced' => false, 'reason'].
-     * The amount is the work and the time on top together.
+     * Either ['priced' => true, 'units', 'rateCents', 'amountCents', 'scale', 'role', 'schedule']
+     * or ['priced' => false, 'reason'].
      *
      * @return array<string, mixed>
      */
@@ -62,29 +61,11 @@ class NarrationPrice
         [$rate, $role] = $this->authorsRate($schedule, $item, $scale, $narration->author->roles);
         $units = $narration->billableUnits();
 
-        $timeUnits = $narration->timeUnits();
-        $timeRate = 0;
-
-        if ($timeUnits > 0) {
-            $timeType = $narration->activityType->timeActivityType;
-            $timeItem = $schedule->items->firstWhere('activity_type_id', $timeType->getKey());
-
-            if ($timeItem?->rate($scale) === null) {
-                return $this->unpriced("{$schedule->name} has no scale {$scale->value} rate for {$timeType->name}.");
-            }
-
-            [$timeRate] = $this->authorsRate($schedule, $timeItem, $scale, $narration->author->roles);
-        }
-
         return [
             'priced' => true,
             'units' => $units,
             'rateCents' => $rate,
-            'workAmountCents' => $units * $rate,
-            'timeUnits' => $timeUnits,
-            'timeRateCents' => $timeRate,
-            'timeAmountCents' => $timeUnits * $timeRate,
-            'amountCents' => $units * $rate + $timeUnits * $timeRate,
+            'amountCents' => $units * $rate,
             'scale' => $scale,
             'role' => $role,
             'schedule' => $schedule,

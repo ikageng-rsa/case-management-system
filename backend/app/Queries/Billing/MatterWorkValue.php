@@ -9,8 +9,9 @@ use App\Models\Narration\Narration;
 
 /*
  * What the billable work recorded on a matter comes to on the tariff, for its
- * billing tab, with the narrations that could not be priced and why. It is a
- * figure for the work done, not an amount anyone owes.
+ * billing tab, with the narrations that could not be priced and why, and the
+ * time taken on top of the work, which is rated when the bill is raised. It is
+ * a figure for the work done, not an amount anyone owes.
  */
 class MatterWorkValue
 {
@@ -23,7 +24,7 @@ class MatterWorkValue
     {
         $narrations = $matter->narrations()
             ->whereHas('activityType', fn ($query) => $query->billable())
-            ->with(['activityType.timeActivityType', 'author.roles'])
+            ->with(['activityType', 'author.roles'])
             ->latestFirst()
             ->get()
             ->each(fn (Narration $narration) => $narration->setRelation('matter', $matter));
@@ -35,6 +36,7 @@ class MatterWorkValue
             'workValueCents' => (int) $priced->sum('amountCents'),
             'pricedCount' => $priced->count(),
             'unpricedWork' => $unpriced->values(),
+            'timeOnTopMinutes' => (int) $narrations->sum('minutes'),
         ];
     }
 }

@@ -47,6 +47,13 @@ class WorkValueTest extends TestCase
             ->assertOk()
             ->assertSee('R 120.00')
             ->assertSee('1 billable narration on the tariff, scale A')
-            ->assertSee('Tariff 2026 has no scale A rate for Perusal.');
+            ->assertSee('Tariff 2026 has no scale A rate for Perusal.')
+            ->assertDontSee('of time on top');
+
+        Narration::factory()->for($matter)->for($drafting)->for($attorney, 'author')->create(['quantity' => 1, 'minutes' => 135, 'occurred_at' => '2026-06-02']);
+
+        $this->actingAs($director)->get(route('matter.show', [$matter, 'tab' => 'billing']))
+            ->assertSee('R 160.00')
+            ->assertSee('Plus 2 h 15 min of time on top, rated when the bill is raised.');
     }
 }
