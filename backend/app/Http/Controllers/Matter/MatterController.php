@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Matter;
 
+use App\Enums\Auth\Permission;
 use App\Enums\Matter\Assignment;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Matter\AssignUserRequest;
@@ -142,7 +143,7 @@ class MatterController extends Controller
             'documents' => $documents->for($matter, $request->documentKind()),
             'parties' => $parties->for($matter, $user),
             'diary' => $diary->for($matter, $user, $request->diaryShow()),
-            'billing' => $feeAgreements->for($matter) + $disbursements->for($matter) + $workValue->for($matter) + $bills->for($matter),
+            'billing' => $feeAgreements->for($matter) + $disbursements->for($matter) + $workValue->for($matter) + $bills->for($matter, $user->can(Permission::ViewUnmaskedClientData->value)),
             'audit' => ['activities' => $auditTrail->for($matter)],
         });
     }

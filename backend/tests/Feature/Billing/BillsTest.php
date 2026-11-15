@@ -4,14 +4,17 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Billing;
 
+use App\Enums\Auth\Permission;
 use App\Enums\Auth\Role as RoleEnum;
 use App\Enums\Billing\TariffScale;
+use App\Enums\Client\ContactKind;
 use App\Enums\Narration\ActivityMeasure;
 use App\Models\Billing\Bill;
 use App\Models\Billing\BillLine;
 use App\Models\Billing\FeeAgreement;
 use App\Models\Billing\TariffItem;
 use App\Models\Billing\TariffSchedule;
+use App\Models\Client\ClientContact;
 use App\Models\Matter\Matter;
 use App\Models\Matter\MatterAssignment;
 use App\Models\Narration\Narration;
@@ -20,6 +23,7 @@ use App\Models\User\User;
 use App\Settings\FirmSettings;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class BillsTest extends TestCase
@@ -222,6 +226,24 @@ class BillsTest extends TestCase
         $this->assertStringContainsString('Test Firm Inc.', $html);
         $this->assertStringContainsString('INV/2026/0007', $html);
         $this->assertStringNotContainsString('class="stamp"', $html);
+    }
+
+    public function test_the_raise_a_bill_sheet_starts_on_the_clients_address_only_for_those_cleared_to_see_it(): void
+    {
+        ClientContact::factory()->for($this->matter->client)->create(['kind' => ContactKind::Postal, 'value' => 'PO Box 77, Rustenburg']);
+
+        $this->actingAs($this->director)->get(route('matter.show', [$this->matter, 'tab' => 'billing']))
+            ->assertOk()
+            ->assertSee('PO Box 77, Rustenburg')
+            ->assertSee("Starts on the client's address on file.");
+
+        $this->director->roles->first()->revokePermissionTo(Permission::ViewUnmaskedClientData->value);
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+        $this->actingAs($this->director->fresh())->get(route('matter.show', [$this->matter, 'tab' => 'billing']))
+            ->assertOk()
+            ->assertDontSee('PO Box 77, Rustenburg')
+            ->assertSee("Leave empty to use the client's postal address on file.");
     }
 
     public function test_the_address_given_when_raising_a_bill_is_printed_under_attention_to(): void

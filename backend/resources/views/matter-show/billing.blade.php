@@ -299,11 +299,23 @@
 @can('draftBills', $matter)
     @php
         $billErrors = $errors->getBag('bill');
+        $billKind = old('kind', $billKinds[0]->value);
+        // A statement starts on the client's address on file, when the person may see it; a form sent back keeps what was typed.
+        $billForm = [
+            'kind' => $billKind,
+            'clientAddress' => (string) $clientAddress,
+            'address' => (string) ($billErrors->any() ? old('address') : ($billKind === 'statement' ? $clientAddress : '')),
+        ];
+        // Changing the bill swaps the client's address in or out, unless another address has been typed.
+        $billFormData = '{ ...'.\Illuminate\Support\Js::from($billForm).', init() { this.$watch("kind", kind => {'
+            .' if (kind === "statement" && this.address === "") this.address = this.clientAddress;'
+            .' if (kind !== "statement" && this.address === this.clientAddress) this.address = "";'
+            .' }) } }';
     @endphp
 
     <x-ui.sheet name="new-bill" title="Raise a bill" lede="Drawn as a draft from the work and disbursements not yet billed, to check before it is issued."
         bag="bill" :action="route('matter.bills.store', $matter)"
-        :form-data="'{ kind: '.\Illuminate\Support\Js::from(old('kind', $billKinds[0]->value)).' }'">
+        :form-data="$billFormData">
         @if ($billErrors->has('bill'))
             <div class="alert alert-danger">
                 <p class="mb-1">Nothing was drawn:</p>
@@ -333,11 +345,11 @@
         </div>
         <div class="mb-3">
             <label class="form-label form-label-mono" for="bill_address">Address</label>
-            <textarea class="form-control @error('address', 'bill') is-invalid @enderror" id="bill_address" name="address" rows="3">{{ old('address') }}</textarea>
+            <textarea class="form-control @error('address', 'bill') is-invalid @enderror" id="bill_address" name="address" rows="3" x-model="address"></textarea>
             @error('address', 'bill')
                 <div class="invalid-feedback">{{ $message }}</div>
             @else
-                <div class="form-hint" x-show="kind === 'statement'">One line per line. Leave empty to use the client's postal address on file.</div>
+                <div class="form-hint" x-show="kind === 'statement'">One line per line. {{ $clientAddress ? "Starts on the client's address on file." : "Leave empty to use the client's postal address on file." }}</div>
                 <div class="form-hint" x-show="kind === 'bill_of_cost'" x-cloak>One line per line.</div>
             @enderror
         </div>
