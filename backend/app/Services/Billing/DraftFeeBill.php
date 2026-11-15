@@ -25,7 +25,8 @@ class DraftFeeBill
      * Draw a draft fee bill from a finalised contingency or estate agreement.
      * It has one line: the firm's agreed share of what the claim paid out or
      * the estate came to. An agreement is billed once, unless its bill is
-     * voided or the draft deleted.
+     * voided or the draft deleted. It goes to the client, so without an
+     * address given it is sent to the one on file.
      */
     public function draft(FeeAgreement $agreement, string $addressee, User $draftedBy, ?string $address = null): Bill
     {
@@ -57,7 +58,7 @@ class DraftFeeBill
             'kind' => BillKind::AgreementFee,
             'status' => BillStatus::Draft,
             'addressee' => trim($addressee),
-            'addressee_address' => filled($address) ? trim($address) : null,
+            'addressee_address' => filled($address) ? trim($address) : $agreement->matter->client->addressOnFile(),
         ]);
         $bill->forceFill(['drafted_by' => $draftedBy->getKey()])->save();
 

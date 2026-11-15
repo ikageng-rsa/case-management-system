@@ -4,7 +4,9 @@
     $invoices = app(\App\Settings\InvoiceSettings::class);
     $theme = $invoices->theme->value;
     $accent = $invoices->accentColour;
-    $isStatement = $bill->kind === \App\Enums\Billing\BillKind::Statement;
+    $isFeeBill = $bill->kind === \App\Enums\Billing\BillKind::AgreementFee;
+    // A statement and a fee bill ask the client to pay; a bill of cost goes to the other side for taxation.
+    $asksForPayment = $bill->kind !== \App\Enums\Billing\BillKind::BillOfCost;
     $rand = fn (int $cents) => 'R '.number_format($cents / 100, 2, '.', ' ');
     $percent = rtrim(rtrim(number_format($bill->drawing_fee_percent_hundredths / 100, 2, '.', ''), '0'), '.');
 @endphp
@@ -150,12 +152,14 @@
         </tbody>
         <tbody class="totals">
             <tr><td colspan="3" class="money">Fees</td><td class="money">{{ $rand($bill->fees_cents) }}</td><td></td></tr>
-            <tr><td colspan="3" class="money">Drawing fee ({{ $percent }}%)</td><td class="money">{{ $rand($bill->drawing_fee_cents) }}</td><td></td></tr>
+            @unless ($isFeeBill)
+                <tr><td colspan="3" class="money">Drawing fee ({{ $percent }}%)</td><td class="money">{{ $rand($bill->drawing_fee_cents) }}</td><td></td></tr>
+            @endunless
             <tr><td colspan="3" class="money">Disbursements</td><td></td><td class="money">{{ $rand($bill->disbursements_cents) }}</td></tr>
             <tr class="grand"><td colspan="3" class="money">Total due</td><td colspan="2" class="money">{{ $rand($bill->total_cents) }}</td></tr>
         </tbody>
     </table>
-    @if ($isStatement)
+    @if ($asksForPayment)
         <div class="payment">
             <h2>Payment</h2>
             @if ($invoices->paymentTerms)

@@ -11,6 +11,8 @@ use App\Models\Billing\FeeAgreement;
 use App\Models\Matter\Matter;
 use App\Models\Matter\MatterAssignment;
 use App\Models\User\User;
+use App\Services\Billing\DraftFeeBill;
+use App\Settings\InvoiceSettings;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -68,6 +70,26 @@ class FeeBillsTest extends TestCase
             ->assertOk()
             ->assertSee('Fee bill (draft)')
             ->assertDontSee('Raise fee bill');
+    }
+
+    public function test_a_fee_bill_prints_how_to_pay_and_no_drawing_fee(): void
+    {
+        $settings = app(InvoiceSettings::class);
+        $settings->paymentTerms = 'Payable within 30 days.';
+        $settings->save();
+
+        $bill = app(DraftFeeBill::class)->draft($this->agreement, 'Mrs A Client', $this->director, "12 Main Street\nRustenburg");
+
+        $html = view('pdf.bill', ['bill' => $bill->load(['matter', 'lines'])])->render();
+
+        $this->assertStringContainsString('under the fee agreement', $html);
+        $this->assertStringContainsString('25% of R 480 000.00 received, under the contingency fee agreement', $html);
+        $this->assertStringContainsString('12 Main Street<br />', $html);
+        $this->assertStringContainsString('<h2>Payment</h2>', $html);
+        $this->assertStringContainsString('Payable within 30 days.', $html);
+        $this->assertStringNotContainsString('Drawing fee', $html);
+
+        $this->actingAs($this->director)->get(route('bill.pdf', $bill))->assertOk()->assertHeader('content-type', 'application/pdf');
     }
 
     public function test_an_agreement_with_a_fee_bill_is_not_billed_again_and_the_reason_is_shown(): void

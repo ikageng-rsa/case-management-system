@@ -430,11 +430,11 @@
 
             <div class="mb-3">
                 <label class="form-label form-label-mono" for="fee_bill_address_{{ $agreement->getKey() }}">Address</label>
-                <textarea @class(['form-control', 'is-invalid' => $feeBillErrors->has('address')]) id="fee_bill_address_{{ $agreement->getKey() }}" name="address" rows="3">{{ $feeBillOld('address') }}</textarea>
+                <textarea @class(['form-control', 'is-invalid' => $feeBillErrors->has('address')]) id="fee_bill_address_{{ $agreement->getKey() }}" name="address" rows="3">{{ $feeBillOld('address', $clientAddress) }}</textarea>
                 @if ($feeBillErrors->has('address'))
                     <div class="invalid-feedback">{{ $feeBillErrors->first('address') }}</div>
                 @else
-                    <div class="form-hint">One line per line.</div>
+                    <div class="form-hint">One line per line. {{ $clientAddress ? "Starts on the client's address on file." : "Leave empty to use the client's postal address on file." }}</div>
                 @endif
             </div>
 

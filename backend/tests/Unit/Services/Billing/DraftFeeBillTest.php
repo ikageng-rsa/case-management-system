@@ -6,8 +6,10 @@ namespace Tests\Unit\Services\Billing;
 
 use App\Enums\Billing\BillKind;
 use App\Enums\Billing\BillLineKind;
+use App\Enums\Client\ContactKind;
 use App\Models\Billing\Bill;
 use App\Models\Billing\FeeAgreement;
+use App\Models\Client\ClientContact;
 use App\Models\User\User;
 use App\Services\Billing\AddWorkToBill;
 use App\Services\Billing\BillRefused;
@@ -73,6 +75,18 @@ class DraftFeeBillTest extends TestCase
 
         $this->assertSame(12000000, $bill->fees_cents);
         $this->assertSame(12000000, $bill->total_cents);
+    }
+
+    public function test_a_fee_bill_goes_to_the_clients_address_on_file_unless_another_is_given(): void
+    {
+        $agreement = FeeAgreement::factory()->contingency()->finalised()->create();
+        ClientContact::factory()->for($agreement->matter->client)->create(['kind' => ContactKind::Postal, 'value' => "PO Box 1\nRustenburg"]);
+
+        $draft = $this->draft($agreement);
+        $this->assertSame("PO Box 1\nRustenburg", $draft->addressee_address);
+
+        app(DeleteDraftBill::class)->delete($draft);
+        $this->assertSame('12 Other Street', $this->draft($agreement, ' 12 Other Street ')->addressee_address);
     }
 
     public function test_an_estate_fee_bill_says_it_is_a_share_of_the_estate_funds(): void
