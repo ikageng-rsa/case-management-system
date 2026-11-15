@@ -51,7 +51,7 @@
         </div>
 
         <div>
-            <div class="mb-0">The statement's number, e.g. INV/{{ now()->year }}/0001</div>
+            <div class="mb-0">The matter's case number, e.g. LK/CRM/0001/{{ now()->year }}</div>
             <div class="text-meta">Payment reference</div>
         </div>
     </div>
@@ -119,7 +119,7 @@
     <x-ui.input label="Account type" name="account_type" id="invoice_account_type" :value="$value('account_type', $invoices->accountType)"
         hint="e.g. Business cheque" :error="$errors->getBag($bag)->first('account_type')" />
 
-    <p class="form-hint">Clients are asked to quote the statement's number as the payment reference.</p>
+    <p class="form-hint">Clients are asked to quote the matter's case number as the payment reference.</p>
 
     <x-slot:footer>
         <div class="d-flex align-items-center justify-content-between">

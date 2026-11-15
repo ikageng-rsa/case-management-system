@@ -31,6 +31,10 @@
         .stamp { position: fixed; top: 40%; left: 15%; font-size: 72pt; color: #d64545; opacity: 0.15; transform: rotate(-30deg); }
         .letterhead { width: 100%; margin-bottom: 10pt; }
         .attention { font-weight: bold; text-transform: uppercase; }
+        table.refs { width: 100%; border-collapse: collapse; }
+        table.refs th, table.refs td { border: 1px solid #1f2933; padding: 2pt 5pt; text-align: left; font-weight: normal; }
+        table.refs th { text-transform: uppercase; width: 45%; }
+        .heading { border-top: 1px solid #1f2933; margin: 14pt 0 6pt; padding-top: 10pt; text-align: center; text-transform: uppercase; font-size: 11pt; }
         .address { text-transform: uppercase; }
         .payment { margin-top: 22pt; padding-top: 8pt; border-top: 1px solid #e4e7eb; }
         .payment h2 { font-size: 10pt; margin: 0 0 4pt; }
@@ -43,7 +47,7 @@
         @elseif ($theme === 'modern')
             .band { background: {{ $accent }}; color: #fff; margin: -28mm -18mm 18pt; padding: 16mm 18mm 8mm; }
             .band .meta { color: rgba(255, 255, 255, 0.85); }
-            .band .head { margin-bottom: 0; }
+            .heading { color: {{ $accent }}; border-top-color: {{ $accent }}; }
             table.lines th { color: {{ $accent }}; border-bottom: 1.5pt solid {{ $accent }}; }
             .grand td { border-top: 1.5pt solid {{ $accent }}; color: {{ $accent }}; }
             .payment h2 { color: {{ $accent }}; }
@@ -67,42 +71,21 @@
     @if ($letterhead)
         {{-- The firm's own letterhead, in place of its details set as text. --}}
         <img src="{{ $letterhead }}" alt="" class="letterhead">
-        <table class="head" role="presentation">
-            <tr>
-                <td></td>
-                <td style="text-align: right;">
-                    <h1>{{ $bill->kind->label() }}</h1>
-                    <div>{{ $bill->number ?? 'Draft, not issued' }}</div>
-                    <div class="meta">{{ ($bill->issued_at ?? $bill->created_at)->format('j F Y') }}</div>
-                </td>
-            </tr>
-        </table>
     @else
         <div class="{{ $theme === 'modern' ? 'band' : '' }}">
-        <table class="head" role="presentation">
-            <tr>
-                <td>
-                    <div class="firm">{{ $firm->name }}</div>
-                    @foreach ($firm->addressLines as $line)
-                        <div class="meta">{{ $line }}</div>
-                    @endforeach
-                    @if ($firm->phone || $firm->email)
-                        <div class="meta">{{ collect([$firm->phone, $firm->email])->filter()->implode(' · ') }}</div>
-                    @endif
-                    @if ($firm->website)
-                        <div class="meta">{{ $firm->website }}</div>
-                    @endif
-                    @if ($firm->registrationNumber)
-                        <div class="meta">Company reg. {{ $firm->registrationNumber }}</div>
-                    @endif
-                </td>
-                <td style="text-align: right;">
-                    <h1>{{ $bill->kind->label() }}</h1>
-                    <div>{{ $bill->number ?? 'Draft, not issued' }}</div>
-                    <div class="meta">{{ ($bill->issued_at ?? $bill->created_at)->format('j F Y') }}</div>
-                </td>
-            </tr>
-        </table>
+            <div class="firm">{{ $firm->name }}</div>
+            @foreach ($firm->addressLines as $line)
+                <div class="meta">{{ $line }}</div>
+            @endforeach
+            @if ($firm->phone || $firm->email)
+                <div class="meta">{{ collect([$firm->phone, $firm->email])->filter()->implode(' · ') }}</div>
+            @endif
+            @if ($firm->website)
+                <div class="meta">{{ $firm->website }}</div>
+            @endif
+            @if ($firm->registrationNumber)
+                <div class="meta">Company reg. {{ $firm->registrationNumber }}</div>
+            @endif
         </div>
     @endif
 
@@ -114,18 +97,17 @@
                     <div class="address">{!! nl2br(e($bill->addressee_address)) !!}</div>
                 @endif
             </td>
-            <td style="text-align: right;">
-                <div class="meta">Matter</div>
-                <div>{{ $bill->matter->reference }}</div>
-                @if ($bill->matter->title)
-                    <div class="meta">{{ $bill->matter->title }}</div>
-                @endif
-                @if ($bill->scale)
-                    <div class="meta">Tariff scale {{ $bill->scale->value }}</div>
-                @endif
+            <td style="width: 42%;">
+                <table class="refs">
+                    <tr><th scope="row">Ref</th><td>{{ $bill->matter->reference }}</td></tr>
+                    <tr><th scope="row">Invoice no.</th><td>{{ $bill->shortNumber() ?? 'Draft' }}</td></tr>
+                    <tr><th scope="row">Date</th><td>{{ ($bill->issued_at ?? $bill->created_at)->format('d/m/y') }}</td></tr>
+                </table>
             </td>
         </tr>
     </table>
+
+    <div class="heading">{{ $bill->heading($firm->name) }}</div>
 
     <table class="lines">
         <thead>
@@ -168,7 +150,7 @@
                     @if ($invoices->branchCode) · Branch code {{ $invoices->branchCode }} @endif
                 </div>
             @endif
-            <div style="margin-top: 4pt;">Reference: <strong>{{ $bill->number ?? 'given when the statement is issued' }}</strong></div>
+            <div style="margin-top: 4pt;">Reference: <strong>{{ $bill->matter->reference }}</strong></div>
         </div>
     @endif
 </body>

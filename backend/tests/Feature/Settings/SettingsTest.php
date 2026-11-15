@@ -121,7 +121,7 @@ class SettingsTest extends TestCase
 
         $statement = BillLine::factory()->for(Bill::factory()->issued('INV/2026/0007'))->create()->bill->load(['matter', 'lines']);
         $html = view('pdf.bill', ['bill' => $statement])->render();
-        $this->assertStringContainsString('Reference: <strong>INV/2026/0007</strong>', $html);
+        $this->assertStringContainsString('Reference: <strong>'.$statement->matter->reference.'</strong>', $html);
         $this->assertStringContainsString('Example Bank', $html);
         $this->assertStringContainsString('background: #1F4E79', $html);
         $this->assertStringContainsString('<div class="band">', $html);

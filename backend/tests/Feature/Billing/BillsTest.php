@@ -239,6 +239,27 @@ class BillsTest extends TestCase
         $this->assertStringContainsString('12 Main Street<br />', $html);
     }
 
+    public function test_the_pdf_quotes_the_case_number_the_invoice_number_and_date_under_a_heading_for_its_kind(): void
+    {
+        $firm = app(FirmSettings::class);
+        $firm->name = 'Example Attorneys';
+        $firm->save();
+        $this->travelTo('2026-03-20 10:00');
+
+        $statement = BillLine::factory()->for(Bill::factory()->for($this->matter)->issued('INV/2026/0018'))->create()->bill->load(['matter', 'lines']);
+        $html = view('pdf.bill', ['bill' => $statement])->render();
+
+        $this->assertStringContainsString('<th scope="row">Ref</th><td>'.$this->matter->reference.'</td>', $html);
+        $this->assertStringContainsString('<th scope="row">Invoice no.</th><td>0018</td>', $html);
+        $this->assertStringContainsString('<th scope="row">Date</th><td>20/03/26</td>', $html);
+        $this->assertStringContainsString('Statement of account for fees due to Example Attorneys on attorney and own client scale', $html);
+
+        $billOfCost = Bill::factory()->for($this->matter)->issued('INV/2026/0019')->create(['kind' => 'bill_of_cost', 'scale' => 'B']);
+        $this->assertSame('Bill of cost of Example Attorneys on the party and party scale (scale B)', $billOfCost->heading('Example Attorneys'));
+        $this->assertSame('0019', $billOfCost->shortNumber());
+        $this->assertNull(Bill::factory()->make()->shortNumber());
+    }
+
     public function test_a_draft_or_void_pdf_is_stamped_so_it_is_not_mistaken_for_an_owed_bill(): void
     {
         $draft = BillLine::factory()->for(Bill::factory()->for($this->matter))->create()->bill->load(['matter', 'lines']);
