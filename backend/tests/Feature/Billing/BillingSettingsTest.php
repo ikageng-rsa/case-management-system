@@ -63,7 +63,8 @@ class BillingSettingsTest extends TestCase
 
         $activity = Activity::query()->where('log_name', 'billing')->sole();
         $this->assertSame('Thandi Director changed the billing settings', $activity->description);
-        $this->assertSame(['contingencyPercent' => '25', 'drawingFeeBase' => 'fees', 'billingTiming' => 'manual'], $activity->properties['old']);
+        // Compared by key, not order: MySQL keeps JSON keys in an order of its own.
+        $this->assertEquals(['contingencyPercent' => '25', 'drawingFeeBase' => 'fees', 'billingTiming' => 'manual'], $activity->properties['old']);
     }
 
     public function test_a_percentage_cannot_go_above_a_hundred(): void

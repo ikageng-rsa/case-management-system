@@ -53,7 +53,8 @@ class BillLineChangesTest extends TestCase
         $this->assertSame(750, $bill->drawing_fee_cents);
         $this->assertSame(60750, $bill->total_cents);
 
-        $this->assertSame(['description' => 'Drafted the summons', 'from_cents' => 20000, 'to_cents' => 15000],
+        // Compared by key, not order: MySQL keeps JSON keys in an order of its own.
+        $this->assertEquals(['description' => 'Drafted the summons', 'from_cents' => 20000, 'to_cents' => 15000],
             Activity::query()->where('event', 'line_changed')->sole()->properties->all());
     }
 
