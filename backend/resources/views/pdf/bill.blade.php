@@ -32,7 +32,7 @@
         <div class="stamp">VOID</div>
     @endif
 
-    <table class="head">
+    <table class="head" role="presentation">
         <tr>
             <td>
                 <div class="firm">{{ config('firm.name') }}</div>
@@ -51,7 +51,7 @@
         </tr>
     </table>
 
-    <table class="head">
+    <table class="head" role="presentation">
         <tr>
             <td>
                 <div class="meta">To</div>

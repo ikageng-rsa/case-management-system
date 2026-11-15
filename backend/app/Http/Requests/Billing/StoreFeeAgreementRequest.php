@@ -32,7 +32,8 @@ class StoreFeeAgreementRequest extends FormRequest
             'kind' => ['required', Rule::enum(FeeAgreementKind::class)],
             'percent' => ['nullable', 'numeric', 'decimal:0,2', 'min:0', 'max:100'],
             'signed_on' => ['nullable', 'date', 'before_or_equal:today'],
-            'signed_copy' => ['nullable', 'file', 'max:'.config('documents.max_kilobytes'), new AllowedDocument],
+            // A scanned page or two, so far below the limit for documents filed on a matter.
+            'signed_copy' => ['nullable', 'file', 'max:8192', new AllowedDocument],
         ];
     }
 
