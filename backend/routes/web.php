@@ -15,6 +15,7 @@ use App\Http\Controllers\Billing\DownloadDisbursementReceiptController;
 use App\Http\Controllers\Billing\DownloadFeeAgreementController;
 use App\Http\Controllers\Billing\DownloadTariffSourceController;
 use App\Http\Controllers\Billing\DownloadTariffTemplateController;
+use App\Http\Controllers\Billing\DraftFeeBillController;
 use App\Http\Controllers\Billing\FeeAgreementsController;
 use App\Http\Controllers\Billing\FinaliseFeeAgreementController;
 use App\Http\Controllers\Billing\IssueBillController;
@@ -91,6 +92,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/matters/{matter}/fee-agreements', [FeeAgreementsController::class, 'store'])->name('matter.fee-agreements.store');
     Route::post('/fee-agreements/{feeAgreement}/finalise', FinaliseFeeAgreementController::class)->name('fee-agreement.finalise');
     Route::post('/fee-agreements/{feeAgreement}/fail', MarkFeeAgreementFailedController::class)->name('fee-agreement.fail');
+    Route::post('/fee-agreements/{feeAgreement}/bill', DraftFeeBillController::class)->name('fee-agreement.bill');
     Route::get('/fee-agreements/{feeAgreement}/signed-copy', DownloadFeeAgreementController::class)->name('fee-agreement.signed-copy');
 
     // Money paid out on a matter for the client.

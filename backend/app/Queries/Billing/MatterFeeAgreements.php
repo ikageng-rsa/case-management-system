@@ -5,13 +5,15 @@ declare(strict_types=1);
 namespace App\Queries\Billing;
 
 use App\Enums\Billing\FeeAgreementKind;
+use App\Models\Billing\BillLine;
 use App\Models\Matter\Matter;
 use App\Settings\BillingSettings;
 
 /*
  * A matter's fee agreements for its billing tab, newest first, the one in
- * place, and what a new one would start from: the matter type's kind and the
- * firm's default share for each kind.
+ * place, the fee bill each finalised one has while that bill is not void, and
+ * what a new one would start from: the matter type's kind and the firm's
+ * default share for each kind.
  */
 class MatterFeeAgreements
 {
@@ -27,6 +29,9 @@ class MatterFeeAgreements
         return [
             'feeAgreements' => $agreements,
             'activeAgreement' => $agreements->first->isActive(),
+            // A live line still holds its claim; a voided bill's line has given it up.
+            'feeBills' => BillLine::query()->whereIn('fee_agreement_id', $agreements->modelKeys())->whereNotNull('claim')
+                ->with('bill')->get()->mapWithKeys(fn (BillLine $line) => [$line->fee_agreement_id => $line->bill]),
             'suggestedFeeKind' => $matter->matterType->default_fee_kind,
             'defaultPercents' => [
                 FeeAgreementKind::Contingency->value => $this->settings->contingencyPercent,

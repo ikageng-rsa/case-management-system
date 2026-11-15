@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Billing;
 
+use App\Enums\Billing\BillKind;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Billing\StoreBillRequest;
 use App\Models\Billing\Bill;
@@ -65,6 +66,8 @@ class BillsController extends Controller
             return redirect()->route('bill.show', $bill)->withErrors(['bill' => $e->problems], 'bill');
         }
 
-        return redirect()->route('matter.show', [$bill->matter, 'tab' => 'billing'])->with('status', 'Draft deleted. Its work is free to bill again.');
+        return redirect()->route('matter.show', [$bill->matter, 'tab' => 'billing'])->with('status', $bill->kind === BillKind::AgreementFee
+            ? 'Draft deleted. The fee can be billed again from the agreement.'
+            : 'Draft deleted. Its work is free to bill again.');
     }
 }

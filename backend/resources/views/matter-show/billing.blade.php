@@ -79,9 +79,24 @@
                         </div>
                     </div>
 
-                    @if ($agreement->signedCopy())
-                        <a href="{{ route('fee-agreement.signed-copy', $agreement) }}" class="text-meta">Signed copy</a>
-                    @endif
+                    <div class="d-flex align-items-center gap-3 text-nowrap">
+                        @if ($agreement->signedCopy())
+                            <a href="{{ route('fee-agreement.signed-copy', $agreement) }}" class="text-meta">Signed copy</a>
+                        @endif
+
+                        @if ($feeBills->has($agreement->getKey()))
+                            @can('viewBills', $matter)
+                                <a href="{{ route('bill.show', $feeBills[$agreement->getKey()]) }}" class="text-meta">Fee bill {{ $feeBills[$agreement->getKey()]->number ?? '(draft)' }}</a>
+                            @else
+                                <span class="text-meta">Fee bill {{ $feeBills[$agreement->getKey()]->number ?? '(draft)' }}</span>
+                            @endcan
+                        @elseif ($agreement->isFinalised() && $agreement->fee())
+                            @can('draftBills', $matter)
+                                <x-ui.button variant="outline-secondary" size="sm"
+                                    x-data x-on:click="$dispatch('sheet-open', 'fee-bill-{{ $agreement->getKey() }}')">Raise fee bill</x-ui.button>
+                            @endcan
+                        @endif
+                    </div>
                 </div>
             @endforeach
         </div>
@@ -353,4 +368,53 @@
             </div>
         </x-slot:footer>
     </x-ui.sheet>
+
+    @foreach ($feeAgreements->filter(fn ($agreement) => $agreement->isFinalised() && $agreement->fee() && ! $feeBills->has($agreement->getKey())) as $agreement)
+        @php
+            $feeBillBag = \App\Http\Requests\Billing\DraftFeeBillRequest::bagFor($agreement->getKey());
+            $feeBillErrors = $errors->getBag($feeBillBag);
+            $feeBillOld = fn (string $field, ?string $default = null) => $feeBillErrors->any() ? old($field, $default) : $default;
+        @endphp
+
+        <x-ui.sheet name="fee-bill-{{ $agreement->getKey() }}" title="Raise a fee bill"
+            lede="Drawn as a draft with one line, the firm's agreed share, to check before it is issued."
+            :bag="$feeBillBag" :action="route('fee-agreement.bill', $agreement)">
+            @if ($feeBillErrors->has('fee_bill'))
+                <div class="alert alert-danger">
+                    <p class="mb-1">Nothing was drawn:</p>
+                    <ul class="mb-0">
+                        @foreach ($feeBillErrors->get('fee_bill') as $problem)
+                            <li>{{ $problem }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            <div class="mb-3">
+                <div class="mb-0">{{ $rand($agreement->fee()) }}</div>
+                <div class="text-meta">{{ $percent($agreement->percent()) }}% of the {{ $rand($agreement->amount_received_cents) }} received, under the {{ strtolower($agreement->kind->label()) }} agreement</div>
+            </div>
+
+            <x-ui.input label="Addressed to" name="addressee" id="fee_bill_addressee_{{ $agreement->getKey() }}"
+                :value="$feeBillOld('addressee', $matter->client->full_name)"
+                :error="$feeBillErrors->first('addressee')" />
+
+            <div class="mb-3">
+                <label class="form-label form-label-mono" for="fee_bill_address_{{ $agreement->getKey() }}">Address</label>
+                <textarea @class(['form-control', 'is-invalid' => $feeBillErrors->has('address')]) id="fee_bill_address_{{ $agreement->getKey() }}" name="address" rows="3">{{ $feeBillOld('address') }}</textarea>
+                @if ($feeBillErrors->has('address'))
+                    <div class="invalid-feedback">{{ $feeBillErrors->first('address') }}</div>
+                @else
+                    <div class="form-hint">One line per line.</div>
+                @endif
+            </div>
+
+            <x-slot:footer>
+                <div class="d-flex align-items-center justify-content-between">
+                    <x-ui.button variant="outline-secondary" size="sm" x-on:click="close()">Cancel</x-ui.button>
+                    <x-ui.button type="submit" variant="primary" size="sm">Draw the fee bill</x-ui.button>
+                </div>
+            </x-slot:footer>
+        </x-ui.sheet>
+    @endforeach
 @endcan

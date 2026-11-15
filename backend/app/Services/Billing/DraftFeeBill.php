@@ -8,7 +8,6 @@ use App\Enums\Billing\BillKind;
 use App\Enums\Billing\BillLineKind;
 use App\Enums\Billing\BillStatus;
 use App\Enums\Billing\FeeAgreementKind;
-use App\Enums\Billing\FeeAgreementStatus;
 use App\Models\Billing\Bill;
 use App\Models\Billing\BillLine;
 use App\Models\Billing\FeeAgreement;
@@ -30,7 +29,7 @@ class DraftFeeBill
      */
     public function draft(FeeAgreement $agreement, string $addressee, User $draftedBy, ?string $address = null): Bill
     {
-        if ($agreement->status !== FeeAgreementStatus::Finalised) {
+        if (! $agreement->isFinalised()) {
             throw new BillRefused(['Finalise the agreement with the amount received before billing the fee.']);
         }
 
