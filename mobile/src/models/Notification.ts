@@ -6,19 +6,19 @@ export type NotificationChannelKey = 'push' | 'sms' | 'email';
  * according to the user's preferences); the app only displays the inbox and marks items as read.
  */
 export interface AppNotification {
-    id: string;
-    type: NotificationType;
-    title: string;
-    body: string;
-    data: { caseId?: string; darzationId?: string };
-    createdAt: string;
-    readAt: string | null;
+  id: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  data: { caseId?: string; darzationId?: string };
+  createdAt: string;
+  readAt: string | null;
 }
 
 export type NotificationChannelPrefs = Record<NotificationChannelKey, boolean>;
 
 export interface NotificationPreferences {
-    types: Record<NotificationType, NotificationChannelPrefs>;
-    /** The backend sends no SMS/push between these times (SAST); the inbox item is still created. */
-    quietHours: { enabled: boolean; start: string; end: string };
+  types: Record<NotificationType, NotificationChannelPrefs>;
+  /** The backend sends no SMS/push between these times (SAST); the inbox item is still created. */
+  quietHours: { enabled: boolean; start: string; end: string };
 }
