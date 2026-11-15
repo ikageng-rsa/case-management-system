@@ -31,6 +31,8 @@ class StoreBillRequest extends FormRequest
         return [
             'kind' => ['required', Rule::in([BillKind::Statement->value, BillKind::BillOfCost->value])],
             'addressee' => ['required', 'string', 'max:255'],
+            // Left empty, a statement goes to the client's address on file.
+            'address' => ['nullable', 'string', 'max:1000'],
             'scale' => ['nullable', Rule::enum(TariffScale::class)],
             'from' => ['nullable', 'date'],
             'to' => ['nullable', 'date', 'after_or_equal:from'],

@@ -30,6 +30,8 @@
         .grand td { border-top: 1px solid #1f2933; font-weight: bold; }
         .stamp { position: fixed; top: 40%; left: 15%; font-size: 72pt; color: #d64545; opacity: 0.15; transform: rotate(-30deg); }
         .letterhead { width: 100%; margin-bottom: 10pt; }
+        .attention { font-weight: bold; text-transform: uppercase; }
+        .address { text-transform: uppercase; }
         .payment { margin-top: 22pt; padding-top: 8pt; border-top: 1px solid #e4e7eb; }
         .payment h2 { font-size: 10pt; margin: 0 0 4pt; }
 
@@ -107,8 +109,10 @@
     <table class="head" role="presentation">
         <tr>
             <td>
-                <div class="meta">To</div>
-                <div>{{ $bill->addressee }}</div>
+                <div class="attention">Attention to: {{ $bill->addressee }}</div>
+                @if ($bill->addressee_address)
+                    <div class="address">{!! nl2br(e($bill->addressee_address)) !!}</div>
+                @endif
             </td>
             <td style="text-align: right;">
                 <div class="meta">Matter</div>

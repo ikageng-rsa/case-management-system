@@ -224,6 +224,21 @@ class BillsTest extends TestCase
         $this->assertStringNotContainsString('class="stamp"', $html);
     }
 
+    public function test_the_address_given_when_raising_a_bill_is_printed_under_attention_to(): void
+    {
+        $this->actingAs($this->director)->post(route('matter.bills.store', $this->matter), [
+            'kind' => 'statement', 'addressee' => 'Mrs A Client', 'address' => "12 Main Street\nRustenburg",
+            'time_rates' => [$this->attorney->id => '1760'],
+        ])->assertSessionHasNoErrors();
+
+        $bill = Bill::sole()->load(['matter', 'lines']);
+        $this->actingAs($this->director)->get(route('bill.show', $bill))->assertSee('To Mrs A Client, 12 Main Street, Rustenburg');
+
+        $html = view('pdf.bill', ['bill' => $bill])->render();
+        $this->assertStringContainsString('<div class="attention">Attention to: Mrs A Client</div>', $html);
+        $this->assertStringContainsString('12 Main Street<br />', $html);
+    }
+
     public function test_a_draft_or_void_pdf_is_stamped_so_it_is_not_mistaken_for_an_owed_bill(): void
     {
         $draft = BillLine::factory()->for(Bill::factory()->for($this->matter))->create()->bill->load(['matter', 'lines']);

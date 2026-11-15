@@ -32,6 +32,7 @@ class BillsController extends Controller
                 from: $request->from(),
                 to: $request->to(),
                 timeRates: $request->timeRates(),
+                address: $request->validated('address'),
             );
         } catch (BillRefused $e) {
             return redirect()->route('matter.show', [$matter, 'tab' => 'billing'])

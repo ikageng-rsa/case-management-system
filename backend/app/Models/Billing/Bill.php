@@ -25,7 +25,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * to the tariff, the narrations or the settings afterwards.
  */
 #[Fillable([
-    'kind', 'status', 'number', 'addressee', 'scale', 'period_from', 'period_to',
+    'kind', 'status', 'number', 'addressee', 'addressee_address', 'scale', 'period_from', 'period_to',
     'fees_cents', 'drawing_fee_percent_hundredths', 'drawing_fee_cents', 'disbursements_cents', 'total_cents',
     'issued_at', 'voided_at', 'void_reason',
 ])]
