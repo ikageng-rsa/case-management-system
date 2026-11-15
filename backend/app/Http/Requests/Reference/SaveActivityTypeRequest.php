@@ -8,6 +8,7 @@ use App\Enums\Narration\ActivityMeasure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class SaveActivityTypeRequest extends FormRequest
 {
@@ -50,12 +51,27 @@ class SaveActivityTypeRequest extends FormRequest
             'increment' => [$presence, 'integer', 'min:1', 'max:1000'],
             'default_billable' => ['sometimes', 'boolean'],
             'requires_court' => ['sometimes', 'boolean'],
+            'charges_time_on_top' => ['sometimes', 'boolean'],
         ];
     }
 
     /** @return array<string, string> */
     public function messages(): array
     {
-        return ['code.regex' => 'A code is two to ten capital letters.'];
+        return [
+            'code.regex' => 'A code is two to ten capital letters.',
+        ];
+    }
+
+    /** Work that is itself counted in minutes is charged by its time already, so it takes none on top. */
+    public function after(): array
+    {
+        return [function (Validator $validator): void {
+            $measure = $this->input('measure') ?? $this->route('activityType')?->measure->value;
+
+            if ($this->boolean('charges_time_on_top') && $measure === ActivityMeasure::Minutes->value) {
+                $validator->errors()->add('charges_time_on_top', 'This kind of work is counted in minutes, so its time is already charged.');
+            }
+        }];
     }
 }

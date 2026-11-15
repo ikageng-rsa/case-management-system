@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Api\Narration;
 
 use App\Enums\Auth\Role;
+use App\Enums\Narration\ActivityMeasure;
 use App\Models\Matter\Matter;
 use App\Models\Matter\MatterAssignment;
 use App\Models\Narration\Narration;
@@ -116,6 +117,21 @@ class NarrationTest extends ApiTestCase
         $this->assertTrue($narration->matter->is($matter));
         $this->assertTrue($narration->author->is($user));
         $this->assertTrue($narration->activityType->is($type));
+    }
+
+    public function test_work_that_charges_time_on_top_is_logged_with_its_minutes(): void
+    {
+        $user = $this->signInAs(Role::CandidateAttorney);
+        $matter = $this->carriedBy($user);
+        $travel = ActivityType::factory()->measuredIn(ActivityMeasure::Kilometre)->create(['charges_time_on_top' => true]);
+        $payload = ['activity_type_id' => $travel->id, 'body' => 'Travelled to court', 'quantity' => 80];
+
+        $this->postJson("/api/v1/matters/{$matter->id}/narrations", $payload)->assertJsonApiError(422, '/time_value');
+
+        $this->postJson("/api/v1/matters/{$matter->id}/narrations", $payload + ['time_value' => 50, 'time_unit' => 'minutes'])
+            ->assertCreated()
+            ->assertJsonPath('data.attributes.minutes', 50)
+            ->assertJsonPath('data.relationships.activityType.data.id', (string) $travel->id);
     }
 
     public function test_work_logged_without_a_time_is_dated_now(): void

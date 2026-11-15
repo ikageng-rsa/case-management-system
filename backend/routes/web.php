@@ -6,11 +6,23 @@ use App\Http\Controllers\Account\AccountController;
 use App\Http\Controllers\Account\NotificationController;
 use App\Http\Controllers\Account\SignInCodeController;
 use App\Http\Controllers\Audit\AuditLogController;
+use App\Http\Controllers\Billing\BillingSettingsController;
+use App\Http\Controllers\Billing\BillLinesController;
+use App\Http\Controllers\Billing\BillsController;
+use App\Http\Controllers\Billing\DisbursementsController;
+use App\Http\Controllers\Billing\DownloadBillPdfController;
+use App\Http\Controllers\Billing\DownloadDisbursementReceiptController;
+use App\Http\Controllers\Billing\DownloadFeeAgreementController;
 use App\Http\Controllers\Billing\DownloadTariffSourceController;
 use App\Http\Controllers\Billing\DownloadTariffTemplateController;
+use App\Http\Controllers\Billing\FeeAgreementsController;
+use App\Http\Controllers\Billing\FinaliseFeeAgreementController;
+use App\Http\Controllers\Billing\IssueBillController;
+use App\Http\Controllers\Billing\MarkFeeAgreementFailedController;
 use App\Http\Controllers\Billing\PublishTariffScheduleController;
 use App\Http\Controllers\Billing\TariffAdjustmentsController;
 use App\Http\Controllers\Billing\TariffScheduleController;
+use App\Http\Controllers\Billing\VoidBillController;
 use App\Http\Controllers\Client\ClientContactController;
 use App\Http\Controllers\Client\ClientController;
 use App\Http\Controllers\Client\ClientFicaDocumentController;
@@ -71,6 +83,28 @@ Route::middleware('auth')->group(function () {
     Route::post('/matters/{matter}/assign', [MatterController::class, 'assign'])->name('matter.assign');
     Route::delete('/matters/{matter}/assign', [MatterController::class, 'unassign'])->name('matter.unassign');
     Route::patch('/matters/{matter}', [MatterController::class, 'update'])->name('matter.update');
+
+    // How the client is charged on a matter.
+    Route::post('/matters/{matter}/fee-agreements', [FeeAgreementsController::class, 'store'])->name('matter.fee-agreements.store');
+    Route::post('/fee-agreements/{feeAgreement}/finalise', FinaliseFeeAgreementController::class)->name('fee-agreement.finalise');
+    Route::post('/fee-agreements/{feeAgreement}/fail', MarkFeeAgreementFailedController::class)->name('fee-agreement.fail');
+    Route::get('/fee-agreements/{feeAgreement}/signed-copy', DownloadFeeAgreementController::class)->name('fee-agreement.signed-copy');
+
+    // Money paid out on a matter for the client.
+    Route::post('/matters/{matter}/disbursements', [DisbursementsController::class, 'store'])->name('matter.disbursements.store');
+    Route::delete('/disbursements/{disbursement}', [DisbursementsController::class, 'destroy'])->name('disbursement.destroy');
+    Route::get('/disbursements/{disbursement}/receipt', DownloadDisbursementReceiptController::class)->name('disbursement.receipt');
+
+    // Statements of account and bills of cost on a matter.
+    Route::post('/matters/{matter}/bills', [BillsController::class, 'store'])->name('matter.bills.store');
+    Route::get('/bills/{bill}', [BillsController::class, 'show'])->name('bill.show');
+    Route::delete('/bills/{bill}', [BillsController::class, 'destroy'])->name('bill.destroy');
+    Route::get('/bills/{bill}/pdf', DownloadBillPdfController::class)->name('bill.pdf');
+    Route::post('/bills/{bill}/issue', IssueBillController::class)->name('bill.issue');
+    Route::post('/bills/{bill}/void', VoidBillController::class)->name('bill.void');
+    Route::post('/bills/{bill}/lines', [BillLinesController::class, 'store'])->name('bill.lines.store');
+    Route::patch('/bills/{bill}/lines/{line}', [BillLinesController::class, 'update'])->scopeBindings()->name('bill.lines.update');
+    Route::delete('/bills/{bill}/lines/{line}', [BillLinesController::class, 'destroy'])->scopeBindings()->name('bill.lines.destroy');
     Route::get('/matters/{matter}', [MatterController::class, 'show'])->name('matter.show');
 
     Route::post('/matters/{matter}/parties', [MatterPartyController::class, 'store'])->name('matter.parties.store');
@@ -155,6 +189,12 @@ Route::middleware('auth')->group(function () {
         Route::patch('/activity-types/{activityType}', [ActivityTypeController::class, 'update'])->name('activity-type.update');
         Route::delete('/activity-types/{activityType}', [ActivityTypeController::class, 'destroy'])->name('activity-type.destroy');
         Route::post('/activity-types/{activityType}/restore', [ActivityTypeController::class, 'restore'])->withTrashed()->name('activity-type.restore');
+    });
+
+    // How the firm bills: the default percentages, the drawing fee and when statements are drawn.
+    Route::middleware('can:manage_billing_settings')->group(function () {
+        Route::get('/billing-settings', [BillingSettingsController::class, 'show'])->name('billing-settings');
+        Route::put('/billing-settings', [BillingSettingsController::class, 'update'])->name('billing-settings.update');
     });
 
     // The court tariffs bills are priced from, one schedule per date it starts,

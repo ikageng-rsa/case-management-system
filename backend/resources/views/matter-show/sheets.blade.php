@@ -1,14 +1,32 @@
 @can('work', $matter)
 <x-ui.sheet name="new-narration" title="Add a narration" lede="Record the work done on this matter." bag="narration" action="{{ route('matter.narrations.store', $matter) }}">
-    <x-ui.select label="Activity" name="activity_type_id" :error="$errors->narration->first('activity_type_id')">
-        @foreach ($activityTypes as $type)
-            <option value="{{ $type->getKey() }}" @selected((int) old('activity_type_id') === $type->getKey())>{{ $type->name }} ({{ $type->unit_label }})</option>
-        @endforeach
-    </x-ui.select>
+    <div x-data="{ chargesTime: false }" x-init="chargesTime = $refs.activity.selectedOptions[0]?.dataset.chargesTime === '1'">
+        <x-ui.select label="Activity" name="activity_type_id" :error="$errors->narration->first('activity_type_id')"
+            x-ref="activity" x-on:change="chargesTime = $event.target.selectedOptions[0]?.dataset.chargesTime === '1'">
+            @foreach ($activityTypes as $type)
+                <option value="{{ $type->getKey() }}" data-charges-time="{{ $type->chargesTimeOnTop() ? '1' : '0' }}"
+                    @selected((int) old('activity_type_id') === $type->getKey())>{{ $type->name }} ({{ $type->unit_label }})</option>
+            @endforeach
+        </x-ui.select>
 
-    <x-ui.input label="Quantity" name="quantity" type="number" step="0.01" min="0" :value="old('quantity')"
-        hint="Minutes for timed work; otherwise pages, kilometres or items."
-        :error="$errors->narration->first('quantity')" />
+        <x-ui.input label="Quantity" name="quantity" type="number" step="0.01" min="0" :value="old('quantity')"
+            hint="Minutes for timed work; otherwise pages, kilometres or items."
+            :error="$errors->narration->first('quantity')" />
+
+        <div x-show="chargesTime" x-cloak class="row g-2">
+            <div class="col-7">
+                <x-ui.input label="Time taken" name="time_value" type="number" step="0.01" min="0" :value="old('time_value')"
+                    hint="Charged on top of the quantity."
+                    :error="$errors->narration->first('time_value')" />
+            </div>
+            <div class="col-5">
+                <x-ui.select label="Unit" name="time_unit" :error="$errors->narration->first('time_unit')">
+                    <option value="minutes" @selected(old('time_unit', 'minutes') === 'minutes')>Minutes</option>
+                    <option value="hours" @selected(old('time_unit') === 'hours')>Hours</option>
+                </x-ui.select>
+            </div>
+        </div>
+    </div>
 
     <x-ui.input label="When" name="occurred_at" type="datetime-local" :value="old('occurred_at')"
         hint="Leave empty for now." :error="$errors->narration->first('occurred_at')" />

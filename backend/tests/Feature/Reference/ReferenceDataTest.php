@@ -6,6 +6,7 @@ namespace Tests\Feature\Reference;
 
 use App\Enums\Auth\Role as RoleEnum;
 use App\Enums\Matter\Assignment;
+use App\Enums\Narration\ActivityMeasure;
 use App\Models\Client\Client;
 use App\Models\Matter\Matter;
 use App\Models\Matter\MatterAssignment;
@@ -266,6 +267,30 @@ class ReferenceDataTest extends TestCase
         $this->assertSame(15, $type->increment);
         $this->assertTrue($type->default_billable);
         $this->assertFalse($type->requires_court);
+    }
+
+    public function test_a_kind_of_work_can_be_switched_to_charge_time_on_top(): void
+    {
+        $manager = $this->userWithRole(RoleEnum::Manager);
+        $travel = ActivityType::factory()->measuredIn(ActivityMeasure::Kilometre)->create(['code' => 'TRAVEL', 'name' => 'Travelling']);
+
+        $this->actingAs($manager)->patch(route('activity-type.update', $travel), ['name' => 'Travelling', 'charges_time_on_top' => '1'])
+            ->assertSessionHasNoErrors();
+        $this->assertTrue($travel->fresh()->chargesTimeOnTop());
+
+        $this->actingAs($manager)->patch(route('activity-type.update', $travel), ['name' => 'Travelling', 'charges_time_on_top' => '0']);
+        $this->assertFalse($travel->fresh()->chargesTimeOnTop());
+    }
+
+    public function test_work_counted_in_minutes_takes_no_time_on_top(): void
+    {
+        $consultation = ActivityType::factory()->measuredIn(ActivityMeasure::Minutes, 15)->create(['code' => 'CONS']);
+
+        $this->actingAs($this->userWithRole(RoleEnum::Manager))
+            ->patch(route('activity-type.update', $consultation), ['name' => 'Consultation', 'charges_time_on_top' => '1'])
+            ->assertSessionHasErrorsIn('activity_type_'.$consultation->getKey(), 'charges_time_on_top');
+
+        $this->assertFalse($consultation->fresh()->chargesTimeOnTop());
     }
 
     public function test_how_work_is_counted_is_fixed_once_a_narration_exists(): void

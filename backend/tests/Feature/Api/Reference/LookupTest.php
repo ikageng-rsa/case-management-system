@@ -33,7 +33,18 @@ class LookupTest extends ApiTestCase
             ->assertJsonPath('data.0.id', (string) $consultation->id)
             ->assertJsonPath('data.0.attributes.code', 'CONS')
             ->assertJsonPath('data.0.attributes.measure', $consultation->measure->value)
-            ->assertJsonPath('data.0.attributes.requires_court', false);
+            ->assertJsonPath('data.0.attributes.requires_court', false)
+            ->assertJsonPath('data.0.attributes.charges_time_on_top', false);
+    }
+
+    public function test_an_activity_type_says_whether_it_takes_time_on_top(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+        ActivityType::factory()->create(['code' => 'TRAVEL', 'name' => 'Travelling', 'charges_time_on_top' => true]);
+
+        $this->getJson('/api/v1/activity-types')
+            ->assertOk()
+            ->assertJsonPath('data.0.attributes.charges_time_on_top', true);
     }
 
     public function test_assignment_capacities_say_which_are_held_by_one_person(): void

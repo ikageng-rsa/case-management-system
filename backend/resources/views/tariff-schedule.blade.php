@@ -112,48 +112,62 @@
         </div>
 
         <div class="col-lg-4">
-            <form method="POST" action="{{ route('tariff-adjustments.update', $schedule) }}" class="card">
-                @csrf
-                @method('PUT')
-
-                <div class="card-header">
+            <div class="card">
+                <div class="card-header d-flex align-items-start justify-content-between gap-2">
                     <div>
                         <h3 class="card-title mb-0">What each role charges</h3>
-                        <p class="text-meta mb-0">A markup on the gazette rate, as a percentage or in rand per unit. Use a minus for less, e.g. −50% for half.</p>
+                        <p class="text-meta mb-0">A markup on the gazette rate. A role without one charges the gazette rate.</p>
                     </div>
+
+                    <x-ui.button variant="ghost-secondary" size="sm"
+                        x-data x-on:click="$dispatch('sheet-open', 'edit-tariff-markups')">Edit</x-ui.button>
                 </div>
 
                 <div class="card-body">
-                    @if ($errors->getBag('tariff_adjustments')->any())
-                        <div class="alert alert-danger">{{ $errors->getBag('tariff_adjustments')->first() }}</div>
-                    @endif
-
                     @foreach ($roles as $role)
-                        @php
-                            $adjustment = $adjustmentFor($role);
-                            $kind = $markups !== null ? ($markups[$role->getKey()]['kind'] ?? '') : ($adjustment?->kind->value ?? '');
-                            $value = $markups !== null ? ($markups[$role->getKey()]['value'] ?? '') : ($adjustment ? $adjustment->value / 100 : '');
-                        @endphp
-
-                        <div class="mb-3">
-                            <label class="form-label form-label-mono" for="markup_{{ $role->getKey() }}">{{ $roleName($role) }}</label>
-                            <div class="input-group">
-                                <select name="adjustments[{{ $role->getKey() }}][kind]" class="form-select" aria-label="How {{ $roleName($role) }}'s markup is given" style="max-width: 9rem;">
-                                    <option value="">No markup</option>
-                                    <option value="percent" @selected($kind === 'percent')>%</option>
-                                    <option value="amount" @selected($kind === 'amount')>R per unit</option>
-                                </select>
-                                <input type="number" step="0.01" name="adjustments[{{ $role->getKey() }}][value]" id="markup_{{ $role->getKey() }}"
-                                    class="form-control text-end" value="{{ $value }}" placeholder="0">
-                            </div>
+                        <div @class(['d-flex align-items-center justify-content-between', 'mb-2' => ! $loop->last])>
+                            <span>{{ $roleName($role) }}</span>
+                            <span @class(['text-secondary' => ! $adjustmentFor($role)])>{{ $adjustmentFor($role)?->label() ?? 'Gazette rate' }}</span>
                         </div>
                     @endforeach
                 </div>
-
-                <div class="card-footer text-end">
-                    <x-ui.button type="submit" variant="primary" size="sm">Save markups</x-ui.button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
+
+    <x-ui.sheet name="edit-tariff-markups" title="What each role charges" bag="tariff_adjustments"
+        lede="A markup on the gazette rate, as a percentage or in rand per unit. Use a minus for less, e.g. −50% for half."
+        :action="route('tariff-adjustments.update', $schedule)" method="PUT">
+        @if ($errors->getBag('tariff_adjustments')->any())
+            <div class="alert alert-danger">{{ $errors->getBag('tariff_adjustments')->first() }}</div>
+        @endif
+
+        @foreach ($roles as $role)
+            @php
+                $adjustment = $adjustmentFor($role);
+                $kind = $markups !== null ? ($markups[$role->getKey()]['kind'] ?? '') : ($adjustment?->kind->value ?? '');
+                $value = $markups !== null ? ($markups[$role->getKey()]['value'] ?? '') : ($adjustment ? $adjustment->value / 100 : '');
+            @endphp
+
+            <div class="mb-3">
+                <label class="form-label form-label-mono" for="markup_{{ $role->getKey() }}">{{ $roleName($role) }}</label>
+                <div class="input-group">
+                    <select name="adjustments[{{ $role->getKey() }}][kind]" class="form-select" aria-label="How {{ $roleName($role) }}'s markup is given" style="max-width: 9rem;">
+                        <option value="">No markup</option>
+                        <option value="percent" @selected($kind === 'percent')>%</option>
+                        <option value="amount" @selected($kind === 'amount')>R per unit</option>
+                    </select>
+                    <input type="number" step="0.01" name="adjustments[{{ $role->getKey() }}][value]" id="markup_{{ $role->getKey() }}"
+                        class="form-control text-end" value="{{ $value }}" placeholder="0">
+                </div>
+            </div>
+        @endforeach
+
+        <x-slot:footer>
+            <div class="d-flex align-items-center justify-content-between">
+                <x-ui.button variant="outline-secondary" size="sm" x-on:click="close()">Cancel</x-ui.button>
+                <x-ui.button type="submit" variant="primary" size="sm">Save markups</x-ui.button>
+            </div>
+        </x-slot:footer>
+    </x-ui.sheet>
 @endsection

@@ -208,11 +208,11 @@ $used = $type->matters_count > 0;
                 'sheet' => 'edit-matter-type-'.$type->getKey(), 'bag' => 'matter_type_'.$type->getKey(), 'title' => 'Edit matter type',
                 'action' => route('matter-type.update', $type), 'method' => 'PATCH',
                 'code' => $type->code, 'name' => $type->name, 'months' => $type->default_prescription_months,
-                'litigation' => $type->is_litigation, 'locked' => $type->matters_count > 0, 'submit' => 'Save matter type',
+                'litigation' => $type->is_litigation, 'fee' => $type->default_fee_kind->value, 'locked' => $type->matters_count > 0, 'submit' => 'Save matter type',
             ])->push([
                 'sheet' => 'new-matter-type', 'bag' => 'matter_type_new', 'title' => 'Add a matter type',
                 'action' => route('matter-type.store'), 'method' => 'POST',
-                'code' => '', 'name' => '', 'months' => null, 'litigation' => false, 'locked' => false, 'submit' => 'Add matter type',
+                'code' => '', 'name' => '', 'months' => null, 'litigation' => false, 'fee' => 'mandate', 'locked' => false, 'submit' => 'Add matter type',
             ]);
         @endphp
 
@@ -235,6 +235,14 @@ $used = $type->matters_count > 0;
                     <input class="form-check-input" type="checkbox" name="is_litigation" value="1" @checked($input($form['bag'], 'is_litigation', $form['litigation']))>
                     <span class="form-check-label">Before a court, so a court is required</span>
                 </label>
+
+                <x-ui.select label="Fee agreement" name="default_fee_kind" id="{{ $form['sheet'] }}_fee" wrapper="mt-3"
+                    hint="What a new matter of this type is suggested to be charged under. It can be changed on the matter."
+                    :error="$errors->getBag($form['bag'])->first('default_fee_kind')">
+                    @foreach ($feeKinds as $kind)
+                        <option value="{{ $kind->value }}" @selected($input($form['bag'], 'default_fee_kind', $form['fee']) === $kind->value)>{{ $kind->label() }}</option>
+                    @endforeach
+                </x-ui.select>
                 <p class="form-hint">Changes apply to matters opened from now on; matters already open keep what they have.</p>
 
                 <x-slot:footer>
@@ -269,6 +277,7 @@ $used = $type->matters_count > 0;
                             <th>Counted in</th>
                             <th>Billable</th>
                             <th>Needs a court</th>
+                            <th>Time on top</th>
                             <th class="text-center">Narrations</th>
                             <th></th>
                         </tr>
@@ -289,6 +298,7 @@ $used = $type->matters_count > 0;
                                 <td>{{ $type->unit_label }}</td>
                                 <td>{{ $type->default_billable ? 'Yes' : 'No' }}</td>
                                 <td>{{ $type->requires_court ? 'Yes' : 'No' }}</td>
+                                <td>{{ $type->charges_time_on_top ? 'Yes' : 'No' }}</td>
                                 <td class="text-center">{{ $type->narrations_count }}</td>
                                 <td class="text-end text-nowrap">
                                     @if ($type->trashed())
@@ -317,7 +327,7 @@ $used = $type->narrations_count > 0;
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="7" class="text-center text-secondary py-4">No kinds of work yet.</td></tr>
+                            <tr><td colspan="8" class="text-center text-secondary py-4">No kinds of work yet.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -329,13 +339,13 @@ $used = $type->narrations_count > 0;
                 'sheet' => 'edit-activity-type-'.$type->getKey(), 'bag' => 'activity_type_'.$type->getKey(), 'title' => 'Edit kind of work',
                 'action' => route('activity-type.update', $type), 'method' => 'PATCH',
                 'code' => $type->code, 'name' => $type->name, 'measure' => $type->measure->value, 'increment' => $type->increment,
-                'billable' => $type->default_billable, 'court' => $type->requires_court,
+                'billable' => $type->default_billable, 'court' => $type->requires_court, 'time' => $type->charges_time_on_top,
                 'counting_locked' => $type->narrations_count > 0, 'code_locked' => $type->narrations_count > 0 || $type->isSystem(),
                 'submit' => 'Save kind of work',
             ])->push([
                 'sheet' => 'new-activity-type', 'bag' => 'activity_type_new', 'title' => 'Add a kind of work',
                 'action' => route('activity-type.store'), 'method' => 'POST',
-                'code' => '', 'name' => '', 'measure' => 'minutes', 'increment' => 6, 'billable' => true, 'court' => false,
+                'code' => '', 'name' => '', 'measure' => 'minutes', 'increment' => 6, 'billable' => true, 'court' => false, 'time' => false,
                 'counting_locked' => false, 'code_locked' => false, 'submit' => 'Add kind of work',
             ]);
         @endphp
@@ -374,6 +384,16 @@ $used = $type->narrations_count > 0;
                     <input class="form-check-input" type="checkbox" name="requires_court" value="1" @checked($input($form['bag'], 'requires_court', $form['court']))>
                     <span class="form-check-label">Needs a court (for appearances)</span>
                 </label>
+
+                <input type="hidden" name="charges_time_on_top" value="0">
+                <label class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" name="charges_time_on_top" value="1" @checked($input($form['bag'], 'charges_time_on_top', $form['time']))>
+                    <span class="form-check-label">Charge time on top, e.g. travelling time with the kilometres</span>
+                </label>
+                <p class="form-hint">Narrations of this work also ask for the time taken. The time is rated when the bill is raised.</p>
+                @if ($errors->getBag($form['bag'])->has('charges_time_on_top'))
+                    <div class="text-danger small mb-2">{{ $errors->getBag($form['bag'])->first('charges_time_on_top') }}</div>
+                @endif
 
                 <x-slot:footer>
                     <div class="d-flex align-items-center justify-content-between">

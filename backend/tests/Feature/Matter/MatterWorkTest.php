@@ -7,6 +7,7 @@ namespace Tests\Feature\Matter;
 use App\Enums\Auth\Role as RoleEnum;
 use App\Enums\Document\DocumentKind;
 use App\Enums\Matter\Assignment;
+use App\Enums\Narration\ActivityMeasure;
 use App\Models\Diary\DiaryEntry;
 use App\Models\Matter\Matter;
 use App\Models\Matter\MatterAssignment;
@@ -62,6 +63,35 @@ class MatterWorkTest extends TestCase
             'author_id' => $user->getKey(),
             'activity_type_id' => $type->getKey(),
         ]);
+    }
+
+    public function test_work_that_charges_time_on_top_takes_the_time_and_other_work_ignores_it(): void
+    {
+        $matter = Matter::factory()->create();
+        $user = $this->assignedAttorney($matter);
+        $travel = ActivityType::factory()->measuredIn(ActivityMeasure::Kilometre)->create(['code' => 'TRAVEL', 'charges_time_on_top' => true]);
+        $call = ActivityType::factory()->create(['code' => 'CALL']);
+
+        $this->actingAs($user)->get(route('matter.show', $matter))->assertSee('data-charges-time="1"', false)->assertSee('Time taken');
+
+        $this->actingAs($user)->post(route('matter.narrations.store', $matter), [
+            'activity_type_id' => $travel->getKey(), 'quantity' => 80, 'body' => 'Travelled to court.',
+        ])->assertSessionHasErrorsIn('narration', 'time_value');
+
+        $this->actingAs($user)->post(route('matter.narrations.store', $matter), [
+            'activity_type_id' => $travel->getKey(), 'quantity' => 80, 'time_value' => '1.5', 'time_unit' => 'hours', 'body' => 'Travelled to court.',
+        ])->assertSessionHasNoErrors();
+
+        $this->actingAs($user)->post(route('matter.narrations.store', $matter), [
+            'activity_type_id' => $call->getKey(), 'quantity' => 12, 'time_value' => '50', 'time_unit' => 'minutes', 'body' => 'Called the client.',
+        ])->assertSessionHasNoErrors();
+
+        $travelled = $matter->narrations()->where('activity_type_id', $travel->getKey())->sole();
+        $this->assertSame(90, $travelled->minutes);
+        $this->assertNull($matter->narrations()->where('activity_type_id', $call->getKey())->sole()->minutes);
+
+        $this->actingAs($user)->get(route('matter.show', $matter))->assertSee('80 kilometre + 90 min');
+
     }
 
     public function test_an_appearance_needs_the_matter_to_have_a_court(): void

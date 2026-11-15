@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Reference;
 
+use App\Enums\Billing\FeeAgreementKind;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -51,6 +52,7 @@ class SaveMatterTypeRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'default_prescription_months' => ['nullable', 'integer', 'min:1', 'max:600'],
             'is_litigation' => ['sometimes', 'boolean'],
+            'default_fee_kind' => ['sometimes', Rule::enum(FeeAgreementKind::class)],
         ];
     }
 

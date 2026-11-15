@@ -151,6 +151,20 @@
                     </x-slot:options>
                 </x-matter.inline-field>
             </div>
+
+            <div class="col-6 col-md-2">
+                <div class="text-meta text-uppercase mb-1">Tariff scale</div>
+                <x-matter.inline-field :matter="$matter" field="tariff_scale" label="tariff scale" :can-edit="$canEditDetails">
+                    <span>{{ $matter->tariff_scale ? 'Scale '.$matter->tariff_scale->value : 'Not set' }}</span>
+
+                    <x-slot:options>
+                        <option value="">Not set</option>
+                        @foreach (\App\Enums\Billing\TariffScale::cases() as $scale)
+                            <option value="{{ $scale->value }}" @selected($matter->tariff_scale === $scale)>Scale {{ $scale->value }}</option>
+                        @endforeach
+                    </x-slot:options>
+                </x-matter.inline-field>
+            </div>
         @endif
 
         <div class="col-6 col-md-4">
@@ -165,7 +179,7 @@
     </div>
 
     @php
-        $tabLabels = ['ledger' => 'Ledger', 'documents' => 'Documents', 'parties' => 'Parties', 'diary' => 'Diary', 'audit' => 'Audit'];
+        $tabLabels = ['ledger' => 'Ledger', 'documents' => 'Documents', 'parties' => 'Parties', 'diary' => 'Diary', 'billing' => 'Billing', 'audit' => 'Audit'];
     @endphp
 
     <ul class="nav nav-underline mb-3">
@@ -181,7 +195,8 @@
             @include('matter-show.'.$tab)
         </div>
 
-        <div class="col-lg-4">
+        {{-- The side column repeats what the tabs hold, so on a small screen it is left out. --}}
+        <div class="col-lg-4 d-none d-lg-block">
             @include('matter-show.sidebar')
         </div>
     </div>
