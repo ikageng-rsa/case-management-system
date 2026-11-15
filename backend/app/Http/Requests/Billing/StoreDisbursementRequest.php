@@ -33,7 +33,7 @@ class StoreDisbursementRequest extends FormRequest
             'amount' => ['required', 'numeric', 'decimal:0,2', 'min:0.01', 'max:99999999'],
             'paid_from' => ['required', Rule::enum(FirmAccount::class)],
             // A scanned page or two, so far below the limit for documents filed on a matter.
-            'receipt' => ['nullable', 'file', 'max:8192', new AllowedDocument],
+            'receipt' => ['nullable', 'file', 'max:5120', new AllowedDocument],
         ];
     }
 

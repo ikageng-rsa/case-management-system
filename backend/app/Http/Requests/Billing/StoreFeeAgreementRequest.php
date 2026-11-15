@@ -33,7 +33,7 @@ class StoreFeeAgreementRequest extends FormRequest
             'percent' => ['nullable', 'numeric', 'decimal:0,2', 'min:0', 'max:100'],
             'signed_on' => ['nullable', 'date', 'before_or_equal:today'],
             // A scanned page or two, so far below the limit for documents filed on a matter.
-            'signed_copy' => ['nullable', 'file', 'max:8192', new AllowedDocument],
+            'signed_copy' => ['nullable', 'file', 'max:5120', new AllowedDocument],
         ];
     }
 
