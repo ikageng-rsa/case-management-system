@@ -216,16 +216,25 @@
 </div>
 
 <x-ui.sheet name="new-fee-agreement" title="Record a fee agreement" lede="How the client agreed to be charged on this matter."
-    bag="fee_agreement" :action="route('matter.fee-agreements.store', $matter)" enctype="multipart/form-data">
-    <x-ui.select label="Agreement" name="kind" id="fee_kind" :error="$agreementErrors->first('kind')">
+    bag="fee_agreement" :action="route('matter.fee-agreements.store', $matter)" enctype="multipart/form-data"
+    :form-data="'{ kind: '.\Illuminate\Support\Js::from(old('kind', $suggestedFeeKind->value)).' }'">
+    <x-ui.select label="Agreement" name="kind" id="fee_kind" x-model="kind" :error="$agreementErrors->first('kind')">
         @foreach ($feeKinds as $kind)
             <option value="{{ $kind->value }}" @selected(old('kind', $suggestedFeeKind->value) === $kind->value)>{{ $kind->label() }}</option>
         @endforeach
     </x-ui.select>
 
-    <x-ui.input label="Share (%)" name="percent" id="fee_percent" type="number" step="0.01" min="0" max="100" :value="old('percent')"
-        hint="Leave empty for the firm's default: contingency {{ $percent($defaultPercents['contingency']) }}%, estate {{ $percent($defaultPercents['estate']) }}%. A mandate has no share."
-        :error="$agreementErrors->first('percent')" />
+    {{-- A mandate has no share, so the field shows, and is sent, only for an agreement that takes one. --}}
+    <div x-show="kind !== 'mandate'" x-cloak>
+        <x-ui.input label="Share (%)" name="percent" id="fee_percent" type="number" step="0.01" min="0" max="100" :value="old('percent')"
+            x-bind:disabled="kind === 'mandate'" :error="$agreementErrors->first('percent')" />
+
+        @unless ($agreementErrors->has('percent'))
+            @foreach ($defaultPercents as $feeKind => $default)
+                <div class="form-hint mt-n2 mb-3" x-show="kind === '{{ $feeKind }}'" x-cloak>Leave empty for the firm's default of {{ $percent($default) }}%.</div>
+            @endforeach
+        @endunless
+    </div>
 
     <x-ui.input label="Signed on" name="signed_on" id="fee_signed_on" type="date" :value="old('signed_on')"
         :error="$agreementErrors->first('signed_on')" />
@@ -293,7 +302,8 @@
     @endphp
 
     <x-ui.sheet name="new-bill" title="Raise a bill" lede="Drawn as a draft from the work and disbursements not yet billed, to check before it is issued."
-        bag="bill" :action="route('matter.bills.store', $matter)">
+        bag="bill" :action="route('matter.bills.store', $matter)"
+        :form-data="'{ kind: '.\Illuminate\Support\Js::from(old('kind', $billKinds[0]->value)).' }'">
         @if ($billErrors->has('bill'))
             <div class="alert alert-danger">
                 <p class="mb-1">Nothing was drawn:</p>
@@ -305,23 +315,30 @@
             </div>
         @endif
 
-        <x-ui.select label="Bill" name="kind" id="bill_kind" :error="$billErrors->first('kind')">
+        <x-ui.select label="Bill" name="kind" id="bill_kind" x-model="kind" :error="$billErrors->first('kind')">
             @foreach ($billKinds as $kind)
                 <option value="{{ $kind->value }}" @selected(old('kind') === $kind->value)>{{ $kind->label() }}</option>
             @endforeach
         </x-ui.select>
 
-        <x-ui.input label="Addressed to" name="addressee" id="bill_addressee" list="bill_addressees"
-            :value="old('addressee', $addressees->first())"
-            hint="The client for a statement; the other side, such as the Minister of Police, for a bill of cost."
-            :error="$billErrors->first('addressee')" />
+        <div>
+            <x-ui.input label="Addressed to" name="addressee" id="bill_addressee" list="bill_addressees"
+                :value="old('addressee', $addressees->first())"
+                :error="$billErrors->first('addressee')" />
+
+            @unless ($billErrors->has('addressee'))
+                <div class="form-hint mt-n2 mb-3" x-show="kind === 'statement'">The client.</div>
+                <div class="form-hint mt-n2 mb-3" x-show="kind === 'bill_of_cost'" x-cloak>The other side, such as the Minister of Police.</div>
+            @endunless
+        </div>
         <div class="mb-3">
             <label class="form-label form-label-mono" for="bill_address">Address</label>
             <textarea class="form-control @error('address', 'bill') is-invalid @enderror" id="bill_address" name="address" rows="3">{{ old('address') }}</textarea>
             @error('address', 'bill')
                 <div class="invalid-feedback">{{ $message }}</div>
             @else
-                <div class="form-hint">One line per line. Leave empty on a statement to use the client's postal address on file.</div>
+                <div class="form-hint" x-show="kind === 'statement'">One line per line. Leave empty to use the client's postal address on file.</div>
+                <div class="form-hint" x-show="kind === 'bill_of_cost'" x-cloak>One line per line.</div>
             @enderror
         </div>
 
