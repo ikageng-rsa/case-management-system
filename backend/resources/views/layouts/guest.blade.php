@@ -4,7 +4,8 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title>@yield('title', config('app.name', 'Laravel'))</title>
+        {{-- Each page names itself; the firm's name, from its settings, follows. --}}
+        <title>@hasSection('title')@yield('title') — @endif{{ app(\App\Settings\FirmSettings::class)->name }}</title>
 
         @fonts
 

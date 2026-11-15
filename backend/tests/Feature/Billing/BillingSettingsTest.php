@@ -46,7 +46,7 @@ class BillingSettingsTest extends TestCase
     {
         $director = $this->userWithRole(RoleEnum::Director);
 
-        $this->actingAs($director)->get(route('billing-settings'))->assertOk()->assertSee('25%')->assertSee('Contingency fee (%)');
+        $this->actingAs($director)->get(route('settings', ['tab' => 'billing']))->assertOk()->assertSee('25%')->assertSee('Contingency fee (%)');
 
         $this->actingAs($director)->put(route('billing-settings.update'), [
             'contingency_percent' => '20',
@@ -54,7 +54,7 @@ class BillingSettingsTest extends TestCase
             'drawing_fee_percent' => '5',
             'drawing_fee_base' => 'fees_and_disbursements',
             'billing_timing' => 'monthly',
-        ])->assertRedirect(route('billing-settings'));
+        ])->assertRedirect(route('settings', ['tab' => 'billing']));
 
         $settings = app(BillingSettings::class)->refresh();
         $this->assertSame(20.0, $settings->contingencyPercent);
@@ -84,7 +84,7 @@ class BillingSettingsTest extends TestCase
     {
         $manager = $this->userWithRole(RoleEnum::Manager);
 
-        $this->actingAs($manager)->get(route('billing-settings'))->assertForbidden();
+        $this->actingAs($manager)->get(route('settings'))->assertForbidden();
         $this->actingAs($manager)->put(route('billing-settings.update'), [])->assertForbidden();
     }
 }

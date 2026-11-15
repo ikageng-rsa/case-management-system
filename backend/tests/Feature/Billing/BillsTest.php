@@ -17,6 +17,7 @@ use App\Models\Matter\MatterAssignment;
 use App\Models\Narration\Narration;
 use App\Models\Reference\ActivityType;
 use App\Models\User\User;
+use App\Settings\FirmSettings;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -207,7 +208,9 @@ class BillsTest extends TestCase
 
     public function test_a_bill_downloads_as_a_pdf_named_by_its_number(): void
     {
-        config(['firm.name' => 'Test Firm Inc.']);
+        $firm = app(FirmSettings::class);
+        $firm->name = 'Test Firm Inc.';
+        $firm->save();
         $bill = BillLine::factory()->for(Bill::factory()->for($this->matter)->issued('INV/2026/0007'))->create()->bill;
 
         $response = $this->actingAs($this->director)->get(route('bill.pdf', $bill));
@@ -219,6 +222,42 @@ class BillsTest extends TestCase
         $this->assertStringContainsString('Test Firm Inc.', $html);
         $this->assertStringContainsString('INV/2026/0007', $html);
         $this->assertStringNotContainsString('class="stamp"', $html);
+    }
+
+    public function test_the_address_given_when_raising_a_bill_is_printed_under_attention_to(): void
+    {
+        $this->actingAs($this->director)->post(route('matter.bills.store', $this->matter), [
+            'kind' => 'statement', 'addressee' => 'Mrs A Client', 'address' => "12 Main Street\nRustenburg",
+            'time_rates' => [$this->attorney->id => '1760'],
+        ])->assertSessionHasNoErrors();
+
+        $bill = Bill::sole()->load(['matter', 'lines']);
+        $this->actingAs($this->director)->get(route('bill.show', $bill))->assertSee('To Mrs A Client, 12 Main Street, Rustenburg');
+
+        $html = view('pdf.bill', ['bill' => $bill])->render();
+        $this->assertStringContainsString('<div class="attention">Attention to: Mrs A Client</div>', $html);
+        $this->assertStringContainsString('12 Main Street<br />', $html);
+    }
+
+    public function test_the_pdf_quotes_the_case_number_the_invoice_number_and_date_under_a_heading_for_its_kind(): void
+    {
+        $firm = app(FirmSettings::class);
+        $firm->name = 'Example Attorneys';
+        $firm->save();
+        $this->travelTo('2026-03-20 10:00');
+
+        $statement = BillLine::factory()->for(Bill::factory()->for($this->matter)->issued('INV/2026/0018'))->create()->bill->load(['matter', 'lines']);
+        $html = view('pdf.bill', ['bill' => $statement])->render();
+
+        $this->assertStringContainsString('<th scope="row">Ref</th><td>'.$this->matter->reference.'</td>', $html);
+        $this->assertStringContainsString('<th scope="row">Invoice no.</th><td>0018</td>', $html);
+        $this->assertStringContainsString('<th scope="row">Date</th><td>20/03/26</td>', $html);
+        $this->assertStringContainsString('Statement of account for fees due to Example Attorneys on attorney and own client scale', $html);
+
+        $billOfCost = Bill::factory()->for($this->matter)->issued('INV/2026/0019')->create(['kind' => 'bill_of_cost', 'scale' => 'B']);
+        $this->assertSame('Bill of cost of Example Attorneys on the party and party scale (scale B)', $billOfCost->heading('Example Attorneys'));
+        $this->assertSame('0019', $billOfCost->shortNumber());
+        $this->assertNull(Bill::factory()->make()->shortNumber());
     }
 
     public function test_a_draft_or_void_pdf_is_stamped_so_it_is_not_mistaken_for_an_owed_bill(): void

@@ -42,6 +42,9 @@ use App\Http\Controllers\Reference\ActivityTypeController;
 use App\Http\Controllers\Reference\CourtController;
 use App\Http\Controllers\Reference\MatterTypeController;
 use App\Http\Controllers\Reference\ReferenceDataController;
+use App\Http\Controllers\Settings\FirmSettingsController;
+use App\Http\Controllers\Settings\InvoiceSettingsController;
+use App\Http\Controllers\Settings\SettingsController;
 use App\Http\Controllers\User\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -191,11 +194,19 @@ Route::middleware('auth')->group(function () {
         Route::post('/activity-types/{activityType}/restore', [ActivityTypeController::class, 'restore'])->withTrashed()->name('activity-type.restore');
     });
 
+    // The firm's own settings, a tab per area, each under its own permission.
+    Route::get('/settings', [SettingsController::class, 'show'])->name('settings');
+    // The billing settings had a page of their own before they became a tab.
+    Route::redirect('/billing-settings', '/settings?tab=billing')->name('billing-settings');
+
     // How the firm bills: the default percentages, the drawing fee and when statements are drawn.
-    Route::middleware('can:manage_billing_settings')->group(function () {
-        Route::get('/billing-settings', [BillingSettingsController::class, 'show'])->name('billing-settings');
-        Route::put('/billing-settings', [BillingSettingsController::class, 'update'])->name('billing-settings.update');
-    });
+    Route::put('/billing-settings', [BillingSettingsController::class, 'update'])->middleware('can:manage_billing_settings')->name('billing-settings.update');
+
+    // The firm's name, address and contact details, as printed on its bills.
+    Route::put('/settings/firm', [FirmSettingsController::class, 'update'])->middleware('can:manage_firm_settings')->name('settings.firm.update');
+
+    // How bills look when printed, and how statements ask to be paid.
+    Route::put('/settings/invoices', [InvoiceSettingsController::class, 'update'])->middleware('can:manage_billing_settings')->name('settings.invoices.update');
 
     // The court tariffs bills are priced from, one schedule per date it starts,
     // with what each role charges against it.

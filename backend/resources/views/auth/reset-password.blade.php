@@ -1,6 +1,6 @@
 @extends('layouts.guest')
 
-@section('title', 'Choose a new password — Example Firm')
+@section('title', 'Choose a new password')
 
 @section('content')
     <div class="row g-0 min-vh-100 bg-dark">

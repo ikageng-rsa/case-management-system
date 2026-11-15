@@ -8,6 +8,7 @@ use App\Enums\Billing\BillKind;
 use App\Enums\Billing\BillLineKind;
 use App\Enums\Billing\DrawingFeeBase;
 use App\Enums\Billing\TariffScale;
+use App\Enums\Client\ContactKind;
 use App\Enums\Narration\ActivityMeasure;
 use App\Models\Billing\Bill;
 use App\Models\Billing\BillLine;
@@ -15,6 +16,7 @@ use App\Models\Billing\Disbursement;
 use App\Models\Billing\FeeAgreement;
 use App\Models\Billing\TariffItem;
 use App\Models\Billing\TariffSchedule;
+use App\Models\Client\ClientContact;
 use App\Models\Matter\Matter;
 use App\Models\Narration\Narration;
 use App\Models\Reference\ActivityType;
@@ -191,6 +193,27 @@ class DraftBillTest extends TestCase
         $this->matter->update(['tariff_scale' => null]);
         $this->work($this->drafting, 4);
         $this->assertSame(['Choose the tariff scale to bill on. The matter has none set.'], $this->refusal(fn () => $this->draft()));
+    }
+
+    public function test_a_statement_goes_to_the_clients_postal_address_unless_another_is_given(): void
+    {
+        $this->work($this->drafting, 4);
+        $client = $this->matter->client;
+        ClientContact::factory()->for($client)->create(['kind' => ContactKind::Physical, 'value' => '1 Physical Road', 'is_primary' => true]);
+        ClientContact::factory()->for($client)->create(['kind' => ContactKind::Postal, 'value' => "PO Box 1\nRustenburg\n0300"]);
+
+        $this->assertSame("PO Box 1\nRustenburg\n0300", $this->draft()->addressee_address);
+
+        $this->work($this->drafting, 1, '2026-06-02');
+        $this->assertSame('12 Other Street', $this->draft(address: '  12 Other Street ')->addressee_address);
+    }
+
+    public function test_a_bill_of_cost_carries_only_the_address_given(): void
+    {
+        $this->work($this->drafting, 4);
+        ClientContact::factory()->for($this->matter->client)->create(['kind' => ContactKind::Postal, 'value' => 'PO Box 1']);
+
+        $this->assertNull($this->draft(BillKind::BillOfCost)->addressee_address);
     }
 
     public function test_non_billable_work_is_not_billed(): void

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', ($bill->number ?? 'Draft bill').' — Example Firm')
+@section('title', ($bill->number ?? 'Draft bill').'')
 
 @section('content')
     @php
@@ -19,7 +19,7 @@
                 <x-ui.stage-badge :tone="$tones[$bill->status->value]" class="ms-2">{{ $bill->status->label() }}</x-ui.stage-badge>
             </h1>
             <p class="text-secondary mb-0">
-                To {{ $bill->addressee }}
+                To {{ $bill->addressee }}{{ $bill->addressee_address ? ', '.Str::of($bill->addressee_address)->replaceMatches('/\R+/', ', ') : '' }}
                 @if ($bill->scale) · scale {{ $bill->scale->value }} @endif
                 @if ($bill->period_from || $bill->period_to)
                     · work {{ $bill->period_from ? 'from '.$bill->period_from->format('j M Y') : '' }} {{ $bill->period_to ? 'up to '.$bill->period_to->format('j M Y') : '' }}

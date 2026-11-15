@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 /*
  * A statement of account, a bill of cost or a fee bill on a matter. Its lines
@@ -25,7 +26,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * to the tariff, the narrations or the settings afterwards.
  */
 #[Fillable([
-    'kind', 'status', 'number', 'addressee', 'scale', 'period_from', 'period_to',
+    'kind', 'status', 'number', 'addressee', 'addressee_address', 'scale', 'period_from', 'period_to',
     'fees_cents', 'drawing_fee_percent_hundredths', 'drawing_fee_cents', 'disbursements_cents', 'total_cents',
     'issued_at', 'voided_at', 'void_reason',
 ])]
@@ -98,6 +99,22 @@ class Bill extends Model
     public function isVoid(): bool
     {
         return $this->status === BillStatus::Void;
+    }
+
+    /** The running part of the bill's number, e.g. 0001 of INV/2026/0001, as it is quoted on the bill. */
+    public function shortNumber(): ?string
+    {
+        return $this->number === null ? null : Str::afterLast($this->number, '/');
+    }
+
+    /** The line printed above a bill's lines, saying what it is and on which scale. */
+    public function heading(string $firm): string
+    {
+        return match ($this->kind) {
+            BillKind::Statement => "Statement of account for fees due to {$firm} on attorney and own client scale",
+            BillKind::BillOfCost => "Bill of cost of {$firm} on the party and party scale".($this->scale ? " (scale {$this->scale->value})" : ''),
+            BillKind::AgreementFee => "Account for fees due to {$firm} under the fee agreement",
+        };
     }
 
     /** Bills that are not void: drafts and issued bills hold on to the work on them. */

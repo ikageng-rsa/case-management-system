@@ -300,6 +300,16 @@
             :value="old('addressee', $addressees->first())"
             hint="The client for a statement; the other side, such as the Minister of Police, for a bill of cost."
             :error="$billErrors->first('addressee')" />
+        <div class="mb-3">
+            <label class="form-label form-label-mono" for="bill_address">Address</label>
+            <textarea class="form-control @error('address', 'bill') is-invalid @enderror" id="bill_address" name="address" rows="3">{{ old('address') }}</textarea>
+            @error('address', 'bill')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @else
+                <div class="form-hint">One line per line. Leave empty on a statement to use the client's postal address on file.</div>
+            @enderror
+        </div>
+
         <datalist id="bill_addressees">
             @foreach ($addressees as $addressee)
                 <option value="{{ $addressee }}"></option>

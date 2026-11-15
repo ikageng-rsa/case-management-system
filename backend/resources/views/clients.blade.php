@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', ($client ? $client->full_name.' — ' : '').'Clients — Example Firm')
+@section('title', ($client ? $client->full_name.' — ' : '').'Clients')
 
 @section('content')
     @php

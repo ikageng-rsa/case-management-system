@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Matters — Example Firm')
+@section('title', 'Matters')
 
 @section('content')
     <div class="d-flex align-items-start justify-content-between mb-1">

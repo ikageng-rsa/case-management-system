@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', $schedule->name.' — Example Firm')
+@section('title', $schedule->name.'')
 
 @section('content')
     @php

@@ -1,4 +1,10 @@
 @php
+    $firm = app(\App\Settings\FirmSettings::class);
+    $letterhead = $firm->letterheadDataUri();
+    $invoices = app(\App\Settings\InvoiceSettings::class);
+    $theme = $invoices->theme->value;
+    $accent = $invoices->accentColour;
+    $isStatement = $bill->kind === \App\Enums\Billing\BillKind::Statement;
     $rand = fn (int $cents) => 'R '.number_format($cents / 100, 2, '.', ' ');
     $percent = rtrim(rtrim(number_format($bill->drawing_fee_percent_hundredths / 100, 2, '.', ''), '0'), '.');
 @endphp
@@ -23,6 +29,54 @@
         .totals td { border-bottom: none; padding: 3pt 4pt; }
         .grand td { border-top: 1px solid #1f2933; font-weight: bold; }
         .stamp { position: fixed; top: 40%; left: 15%; font-size: 72pt; color: #d64545; opacity: 0.15; transform: rotate(-30deg); }
+        .letterhead { width: 100%; margin-bottom: 10pt; }
+        .attention { font-weight: bold; text-transform: uppercase; }
+        table.refs { width: 100%; border-collapse: collapse; }
+        table.refs th, table.refs td { border: 1px solid #1f2933; padding: 2pt 5pt; text-align: left; font-weight: normal; }
+        table.refs th { text-transform: uppercase; width: 45%; }
+        .heading { border-top: 1px solid #1f2933; margin: 14pt 0 6pt; padding-top: 10pt; text-align: center; text-transform: uppercase; font-size: 11pt; }
+        .address { text-transform: uppercase; }
+        .payment { margin-top: 22pt; padding-top: 8pt; border-top: 1px solid #e4e7eb; }
+        .payment h2 { font-size: 10pt; margin: 0 0 4pt; }
+
+        {{--
+            A theme styles everything under the letterhead: the address and reference
+            box, the heading, the lines and the totals. The letterhead keeps its own
+            colours. Modern also puts the firm's details in a band of the accent
+            colour when there is no letterhead to print.
+        --}}
+        @if ($theme === 'classic')
+            body { font-family: DejaVu Serif, serif; color: #111; }
+            table.refs th, table.refs td { border: 1px solid #111; }
+            table.refs th { font-weight: bold; font-size: 9pt; }
+            .heading { border-top: 1.5pt solid #111; border-bottom: 1.5pt solid #111; padding: 6pt 0; letter-spacing: 0.5pt; }
+            table.lines th { border-bottom: 1.5pt solid #111; }
+            .grand td { border-top: 1.5pt double #111; }
+            .payment { border-top: 1px solid #111; }
+        @elseif ($theme === 'modern')
+            .band { background: {{ $accent }}; color: #fff; margin: -28mm -18mm 18pt; padding: 16mm 18mm 8mm; }
+            .band .meta { color: rgba(255, 255, 255, 0.85); }
+            .attention { color: {{ $accent }}; }
+            table.refs th, table.refs td { border: 1px solid {{ $accent }}; }
+            table.refs th { background: {{ $accent }}; color: #fff; font-size: 9pt; }
+            .heading { background: {{ $accent }}; color: #fff; border-top: none; padding: 6pt 0; font-weight: bold; }
+            table.lines th { background: {{ $accent }}; color: #fff; border-bottom: none; }
+            .grand td { border-top: 1.5pt solid {{ $accent }}; color: {{ $accent }}; }
+            .payment { border-top: 1.5pt solid {{ $accent }}; }
+            .payment h2 { color: {{ $accent }}; }
+        @else
+            body { color: #3e4c59; }
+            .firm { font-weight: normal; letter-spacing: 0.5pt; }
+            .attention { font-weight: normal; letter-spacing: 0.5pt; }
+            table.refs th, table.refs td { border: none; border-bottom: 1px solid #e4e7eb; }
+            table.refs th { color: #7b8794; font-size: 8pt; }
+            .heading { border-top: none; color: #52606d; font-size: 10pt; letter-spacing: 1pt; }
+            table.lines th { border-bottom: 1px solid #e4e7eb; color: #7b8794; font-weight: normal; text-transform: uppercase; font-size: 8pt; }
+            table.lines td { border-bottom: 1px solid #f5f7fa; }
+            .grand td { border-top: 1px solid {{ $accent }}; }
+            .payment { border-top: 1px solid #f5f7fa; }
+            .payment h2 { font-weight: normal; text-transform: uppercase; color: #7b8794; font-size: 8pt; letter-spacing: 1pt; }
+        @endif
     </style>
 </head>
 <body>
@@ -32,43 +86,46 @@
         <div class="stamp">VOID</div>
     @endif
 
-    <table class="head" role="presentation">
-        <tr>
-            <td>
-                <div class="firm">{{ config('firm.name') }}</div>
-                @foreach (config('firm.address') as $line)
-                    <div class="meta">{{ $line }}</div>
-                @endforeach
-                @if (config('firm.phone') || config('firm.email'))
-                    <div class="meta">{{ collect([config('firm.phone'), config('firm.email')])->filter()->implode(' · ') }}</div>
-                @endif
-            </td>
-            <td style="text-align: right;">
-                <h1>{{ $bill->kind->label() }}</h1>
-                <div>{{ $bill->number ?? 'Draft, not issued' }}</div>
-                <div class="meta">{{ ($bill->issued_at ?? $bill->created_at)->format('j F Y') }}</div>
-            </td>
-        </tr>
-    </table>
+    @if ($letterhead)
+        {{-- The firm's own letterhead, in place of its details set as text. --}}
+        <img src="{{ $letterhead }}" alt="" class="letterhead">
+    @else
+        <div class="{{ $theme === 'modern' ? 'band' : '' }}">
+            <div class="firm">{{ $firm->name }}</div>
+            @foreach ($firm->addressLines as $line)
+                <div class="meta">{{ $line }}</div>
+            @endforeach
+            @if ($firm->phone || $firm->email)
+                <div class="meta">{{ collect([$firm->phone, $firm->email])->filter()->implode(' · ') }}</div>
+            @endif
+            @if ($firm->website)
+                <div class="meta">{{ $firm->website }}</div>
+            @endif
+            @if ($firm->registrationNumber)
+                <div class="meta">Company reg. {{ $firm->registrationNumber }}</div>
+            @endif
+        </div>
+    @endif
 
     <table class="head" role="presentation">
         <tr>
             <td>
-                <div class="meta">To</div>
-                <div>{{ $bill->addressee }}</div>
+                <div class="attention">Attention to: {{ $bill->addressee }}</div>
+                @if ($bill->addressee_address)
+                    <div class="address">{!! nl2br(e($bill->addressee_address)) !!}</div>
+                @endif
             </td>
-            <td style="text-align: right;">
-                <div class="meta">Matter</div>
-                <div>{{ $bill->matter->reference }}</div>
-                @if ($bill->matter->title)
-                    <div class="meta">{{ $bill->matter->title }}</div>
-                @endif
-                @if ($bill->scale)
-                    <div class="meta">Tariff scale {{ $bill->scale->value }}</div>
-                @endif
+            <td style="width: 42%;">
+                <table class="refs">
+                    <tr><th scope="row">Ref</th><td>{{ $bill->matter->reference }}</td></tr>
+                    <tr><th scope="row">Invoice no.</th><td>{{ $bill->shortNumber() ?? 'Draft' }}</td></tr>
+                    <tr><th scope="row">Date</th><td>{{ ($bill->issued_at ?? $bill->created_at)->format('d/m/y') }}</td></tr>
+                </table>
             </td>
         </tr>
     </table>
+
+    <div class="heading">{{ $bill->heading($firm->name) }}</div>
 
     <table class="lines">
         <thead>
@@ -98,5 +155,21 @@
             <tr class="grand"><td colspan="3" class="money">Total due</td><td colspan="2" class="money">{{ $rand($bill->total_cents) }}</td></tr>
         </tbody>
     </table>
+    @if ($isStatement)
+        <div class="payment">
+            <h2>Payment</h2>
+            @if ($invoices->paymentTerms)
+                <div>{{ $invoices->paymentTerms }}</div>
+            @endif
+            @if ($invoices->hasBankAccount())
+                <div class="meta" style="margin-top: 4pt;">
+                    {{ $invoices->accountName ?? $firm->name }} · {{ $invoices->bankName }}
+                    · {{ $invoices->accountType ?? 'Account' }} {{ $invoices->accountNumber }}
+                    @if ($invoices->branchCode) · Branch code {{ $invoices->branchCode }} @endif
+                </div>
+            @endif
+            <div style="margin-top: 4pt;">Reference: <strong>{{ $bill->matter->reference }}</strong></div>
+        </div>
+    @endif
 </body>
 </html>

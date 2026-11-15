@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', $matter->client->full_name.' — '.$matter->reference.' — Example Firm')
+@section('title', $matter->client->full_name.' — '.$matter->reference.'')
 
 @section('content')
     @php

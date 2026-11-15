@@ -8,6 +8,7 @@ use App\Enums\Billing\BillKind;
 use App\Enums\Billing\BillStatus;
 use App\Enums\Billing\FeeAgreementKind;
 use App\Enums\Billing\TariffScale;
+use App\Enums\Client\ContactKind;
 use App\Models\Billing\Bill;
 use App\Models\Matter\Matter;
 use App\Models\User\User;
@@ -43,6 +44,7 @@ class DraftBill
         ?CarbonInterface $from = null,
         ?CarbonInterface $to = null,
         array $timeRates = [],
+        ?string $address = null,
     ): Bill {
         $this->guardKind($matter, $kind);
 
@@ -56,7 +58,9 @@ class DraftBill
         $lines = $this->billLines->for($kind, $narrations, $disbursements, $scale, $timeRates);
 
         try {
-            return DB::transaction(fn (): Bill => $this->save($matter, $kind, $addressee, $draftedBy, $scale, $from, $to, $lines));
+            $address = filled($address) ? trim($address) : $this->clientAddress($matter, $kind);
+
+            return DB::transaction(fn (): Bill => $this->save($matter, $kind, $addressee, $address, $draftedBy, $scale, $from, $to, $lines));
         } catch (QueryException $e) {
             // Two bills drawn at once: the claim on the work is unique, so the second loses.
             throw new BillRefused(['Some of this work was billed by someone else a moment ago. Draw the bill again.']);
@@ -88,12 +92,32 @@ class DraftBill
     }
 
     /** @param  list<array<string, mixed>>  $lines */
-    protected function save(Matter $matter, BillKind $kind, string $addressee, User $draftedBy, ?TariffScale $scale, ?CarbonInterface $from, ?CarbonInterface $to, array $lines): Bill
+    /*
+     * A statement goes to the client, so without an address given it is sent to
+     * the one on file: the postal address, or else the physical one, primary
+     * first. Read here rather than shown on the form, so drawing a bill does not
+     * reveal an address to someone who may only see it masked.
+     */
+    protected function clientAddress(Matter $matter, BillKind $kind): ?string
+    {
+        if ($kind !== BillKind::Statement) {
+            return null;
+        }
+
+        return $matter->client->contacts()
+            ->whereIn('kind', [ContactKind::Postal, ContactKind::Physical])
+            ->get()
+            ->sortBy(fn ($contact) => [$contact->kind === ContactKind::Postal ? 0 : 1, $contact->is_primary ? 0 : 1])
+            ->first()?->value;
+    }
+
+    protected function save(Matter $matter, BillKind $kind, string $addressee, ?string $address, User $draftedBy, ?TariffScale $scale, ?CarbonInterface $from, ?CarbonInterface $to, array $lines): Bill
     {
         $bill = $matter->bills()->make([
             'kind' => $kind,
             'status' => BillStatus::Draft,
             'addressee' => trim($addressee),
+            'addressee_address' => $address,
             'scale' => $scale,
             'period_from' => $from?->toDateString(),
             'period_to' => $to?->toDateString(),

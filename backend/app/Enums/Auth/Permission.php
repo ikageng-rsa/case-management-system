@@ -56,6 +56,7 @@ enum Permission: string
     case ManageCourts = 'manage_courts';
     case ManageTariffs = 'manage_tariffs';
     case ManageBillingSettings = 'manage_billing_settings';
+    case ManageFirmSettings = 'manage_firm_settings';
     case ManageFeeAgreements = 'manage_fee_agreements';
     // Billing a client or the other side: drawing a bill, issuing it, and voiding one issued in error.
     case DraftBills = 'draft_bills';
