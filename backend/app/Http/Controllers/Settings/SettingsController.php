@@ -7,10 +7,12 @@ namespace App\Http\Controllers\Settings;
 use App\Enums\Auth\Permission;
 use App\Enums\Billing\BillingTiming;
 use App\Enums\Billing\DrawingFeeBase;
+use App\Enums\Billing\InvoiceTheme;
 use App\Http\Controllers\Controller;
 use App\Models\User\User;
 use App\Settings\BillingSettings;
 use App\Settings\FirmSettings;
+use App\Settings\InvoiceSettings;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 
@@ -20,13 +22,14 @@ use Illuminate\Http\Request;
  */
 class SettingsController extends Controller
 {
-    public function show(Request $request, BillingSettings $billing, FirmSettings $firm): View
+    public function show(Request $request, BillingSettings $billing, FirmSettings $firm, InvoiceSettings $invoices): View
     {
         /** @var User $user */
         $user = $request->user();
 
         $tabs = array_filter([
             'billing' => $user->can(Permission::ManageBillingSettings->value) ? 'Billing' : null,
+            'invoices' => $user->can(Permission::ManageBillingSettings->value) ? 'Invoices' : null,
             'firm' => $user->can(Permission::ManageFirmSettings->value) ? 'Firm' : null,
         ]);
 
@@ -39,6 +42,8 @@ class SettingsController extends Controller
             'tab' => $tab,
             'billing' => $billing,
             'firm' => $firm,
+            'invoices' => $invoices,
+            'themes' => InvoiceTheme::cases(),
             'bases' => DrawingFeeBase::cases(),
             'timings' => BillingTiming::cases(),
         ]);

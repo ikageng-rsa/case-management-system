@@ -1,5 +1,9 @@
 @php
     $firm = app(\App\Settings\FirmSettings::class);
+    $invoices = app(\App\Settings\InvoiceSettings::class);
+    $theme = $invoices->theme->value;
+    $accent = $invoices->accentColour;
+    $isStatement = $bill->kind === \App\Enums\Billing\BillKind::Statement;
     $rand = fn (int $cents) => 'R '.number_format($cents / 100, 2, '.', ' ');
     $percent = rtrim(rtrim(number_format($bill->drawing_fee_percent_hundredths / 100, 2, '.', ''), '0'), '.');
 @endphp
@@ -24,6 +28,29 @@
         .totals td { border-bottom: none; padding: 3pt 4pt; }
         .grand td { border-top: 1px solid #1f2933; font-weight: bold; }
         .stamp { position: fixed; top: 40%; left: 15%; font-size: 72pt; color: #d64545; opacity: 0.15; transform: rotate(-30deg); }
+        .payment { margin-top: 22pt; padding-top: 8pt; border-top: 1px solid #e4e7eb; }
+        .payment h2 { font-size: 10pt; margin: 0 0 4pt; }
+
+        @if ($theme === 'classic')
+            body { font-family: DejaVu Serif, serif; color: #111; }
+            h1 { text-transform: uppercase; letter-spacing: 1pt; font-size: 14pt; }
+            table.lines th { border-bottom: 1.5pt solid #111; }
+            .grand td { border-top: 1.5pt double #111; }
+        @elseif ($theme === 'modern')
+            .band { background: {{ $accent }}; color: #fff; margin: -28mm -18mm 18pt; padding: 16mm 18mm 8mm; }
+            .band .meta { color: rgba(255, 255, 255, 0.85); }
+            .band .head { margin-bottom: 0; }
+            table.lines th { color: {{ $accent }}; border-bottom: 1.5pt solid {{ $accent }}; }
+            .grand td { border-top: 1.5pt solid {{ $accent }}; color: {{ $accent }}; }
+            .payment h2 { color: {{ $accent }}; }
+        @else
+            body { color: #3e4c59; }
+            .firm { font-weight: normal; letter-spacing: 0.5pt; }
+            h1 { font-weight: normal; }
+            table.lines th { border-bottom: 1px solid #e4e7eb; color: #7b8794; font-weight: normal; text-transform: uppercase; font-size: 8pt; }
+            table.lines td { border-bottom: 1px solid #f5f7fa; }
+            .grand td { border-top: 1px solid {{ $accent }}; }
+        @endif
     </style>
 </head>
 <body>
@@ -33,6 +60,7 @@
         <div class="stamp">VOID</div>
     @endif
 
+    <div class="{{ $theme === 'modern' ? 'band' : '' }}">
     <table class="head" role="presentation">
         <tr>
             <td>
@@ -51,6 +79,7 @@
             </td>
         </tr>
     </table>
+    </div>
 
     <table class="head" role="presentation">
         <tr>
@@ -99,5 +128,21 @@
             <tr class="grand"><td colspan="3" class="money">Total due</td><td colspan="2" class="money">{{ $rand($bill->total_cents) }}</td></tr>
         </tbody>
     </table>
+    @if ($isStatement)
+        <div class="payment">
+            <h2>Payment</h2>
+            @if ($invoices->paymentTerms)
+                <div>{{ $invoices->paymentTerms }}</div>
+            @endif
+            @if ($invoices->hasBankAccount())
+                <div class="meta" style="margin-top: 4pt;">
+                    {{ $invoices->accountName ?? $firm->name }} · {{ $invoices->bankName }}
+                    · {{ $invoices->accountType ?? 'Account' }} {{ $invoices->accountNumber }}
+                    @if ($invoices->branchCode) · Branch code {{ $invoices->branchCode }} @endif
+                </div>
+            @endif
+            <div style="margin-top: 4pt;">Reference: <strong>{{ $bill->number ?? 'given when the statement is issued' }}</strong></div>
+        </div>
+    @endif
 </body>
 </html>

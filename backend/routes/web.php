@@ -43,6 +43,7 @@ use App\Http\Controllers\Reference\CourtController;
 use App\Http\Controllers\Reference\MatterTypeController;
 use App\Http\Controllers\Reference\ReferenceDataController;
 use App\Http\Controllers\Settings\FirmSettingsController;
+use App\Http\Controllers\Settings\InvoiceSettingsController;
 use App\Http\Controllers\Settings\SettingsController;
 use App\Http\Controllers\User\UserController;
 use Illuminate\Support\Facades\Route;
@@ -203,6 +204,9 @@ Route::middleware('auth')->group(function () {
 
     // The firm's name, address and contact details, as printed on its bills.
     Route::put('/settings/firm', [FirmSettingsController::class, 'update'])->middleware('can:manage_firm_settings')->name('settings.firm.update');
+
+    // How bills look when printed, and how statements ask to be paid.
+    Route::put('/settings/invoices', [InvoiceSettingsController::class, 'update'])->middleware('can:manage_billing_settings')->name('settings.invoices.update');
 
     // The court tariffs bills are priced from, one schedule per date it starts,
     // with what each role charges against it.
