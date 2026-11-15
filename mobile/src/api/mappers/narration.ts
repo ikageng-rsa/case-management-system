@@ -1,4 +1,4 @@
-import { includedGet, Included, indexIncluded, relOne, Resource } from '../jsonapi';
+import { includedGet, Included, indexIncluded, relOne, Resource } from '@/api/jsonapi';
 import { ActivityType, Narration } from '@/models/index';
 
 export function mapActivityType(resource: Resource): ActivityType {
