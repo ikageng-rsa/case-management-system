@@ -10,6 +10,7 @@ use App\Http\Controllers\Billing\BillingSettingsController;
 use App\Http\Controllers\Billing\BillLinesController;
 use App\Http\Controllers\Billing\BillsController;
 use App\Http\Controllers\Billing\DisbursementsController;
+use App\Http\Controllers\Billing\DownloadBillPdfController;
 use App\Http\Controllers\Billing\DownloadDisbursementReceiptController;
 use App\Http\Controllers\Billing\DownloadFeeAgreementController;
 use App\Http\Controllers\Billing\DownloadTariffSourceController;
@@ -98,6 +99,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/matters/{matter}/bills', [BillsController::class, 'store'])->name('matter.bills.store');
     Route::get('/bills/{bill}', [BillsController::class, 'show'])->name('bill.show');
     Route::delete('/bills/{bill}', [BillsController::class, 'destroy'])->name('bill.destroy');
+    Route::get('/bills/{bill}/pdf', DownloadBillPdfController::class)->name('bill.pdf');
     Route::post('/bills/{bill}/issue', IssueBillController::class)->name('bill.issue');
     Route::post('/bills/{bill}/void', VoidBillController::class)->name('bill.void');
     Route::post('/bills/{bill}/lines', [BillLinesController::class, 'store'])->name('bill.lines.store');

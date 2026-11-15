@@ -30,6 +30,8 @@
         </div>
 
         <div class="d-flex gap-2">
+            <x-ui.button :href="route('bill.pdf', $bill)" variant="outline-secondary" icon="download" size="sm">PDF</x-ui.button>
+
             @if ($bill->isDraft())
                 @can('draftBills', $bill->matter)
                     <x-ui.button variant="outline-secondary" icon="plus" size="sm"

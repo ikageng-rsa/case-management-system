@@ -205,6 +205,35 @@ class BillsTest extends TestCase
         $this->assertTrue($draft->fresh()->isIssued());
     }
 
+    public function test_a_bill_downloads_as_a_pdf_named_by_its_number(): void
+    {
+        config(['firm.name' => 'Test Firm Inc.']);
+        $bill = BillLine::factory()->for(Bill::factory()->for($this->matter)->issued('INV/2026/0007'))->create()->bill;
+
+        $response = $this->actingAs($this->director)->get(route('bill.pdf', $bill));
+
+        $response->assertOk()->assertHeader('content-type', 'application/pdf')->assertDownload('INV-2026-0007.pdf');
+        $this->assertStringStartsWith('%PDF', $response->getContent());
+
+        $html = view('pdf.bill', ['bill' => $bill->load(['matter', 'lines'])])->render();
+        $this->assertStringContainsString('Test Firm Inc.', $html);
+        $this->assertStringContainsString('INV/2026/0007', $html);
+        $this->assertStringNotContainsString('class="stamp"', $html);
+    }
+
+    public function test_a_draft_or_void_pdf_is_stamped_so_it_is_not_mistaken_for_an_owed_bill(): void
+    {
+        $draft = BillLine::factory()->for(Bill::factory()->for($this->matter))->create()->bill->load(['matter', 'lines']);
+        $void = BillLine::factory()->for(Bill::factory()->for($this->matter)->void())->create()->bill->load(['matter', 'lines']);
+
+        $this->assertStringContainsString('<div class="stamp">DRAFT</div>', view('pdf.bill', ['bill' => $draft])->render());
+        $this->assertStringContainsString('<div class="stamp">VOID</div>', view('pdf.bill', ['bill' => $void])->render());
+        $this->actingAs($this->director)->get(route('bill.pdf', $draft))->assertDownload('draft-'.substr($draft->id, 0, 8).'.pdf');
+
+        MatterAssignment::factory()->for($this->matter)->for($this->attorney)->create();
+        $this->actingAs($this->attorney)->get(route('bill.pdf', $draft))->assertForbidden();
+    }
+
     public function test_a_line_is_reached_only_through_its_own_bill(): void
     {
         $bill = Bill::factory()->for($this->matter)->create();
