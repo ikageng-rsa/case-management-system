@@ -128,6 +128,23 @@ class SettingsTest extends TestCase
         $this->assertStringNotContainsString('Reference:', view('pdf.bill', ['bill' => $billOfCost])->render());
     }
 
+    public function test_the_firms_name_and_line_under_it_reach_every_page_title_the_sidebar_and_sign_in(): void
+    {
+        $user = $this->userWith('manage_firm_settings');
+
+        $this->actingAs($user)->put(route('settings.firm.update'), ['name' => 'Example Attorneys', 'tagline' => 'Attorneys Inc.']);
+
+        $this->actingAs($user)->get(route('settings', ['tab' => 'firm']))
+            ->assertSee('<title>Settings — Example Attorneys</title>', false)
+            ->assertSee('Attorneys Inc.');
+        $this->actingAs($user)->get(route('dashboard'))->assertSee('<title>Dashboard — Example Attorneys</title>', false);
+
+        auth()->logout();
+        $this->get(route('login'))
+            ->assertSee('<title>Sign in — Example Attorneys</title>', false)
+            ->assertSee('Example Attorneys Attorneys Inc. · staff access only');
+    }
+
     public function test_a_name_is_needed_and_an_email_must_be_one(): void
     {
         $this->actingAs($this->userWith('manage_firm_settings'))

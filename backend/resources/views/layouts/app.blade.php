@@ -9,7 +9,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>@yield('title', config('app.name', 'Laravel'))</title>
+        {{-- Each page names itself; the firm's name, from its settings, follows. --}}
+        <title>@hasSection('title')@yield('title') — @endif{{ app(\App\Settings\FirmSettings::class)->name }}</title>
 
         @fonts
 
@@ -19,7 +20,7 @@
         <div class="page">
             <x-ui.sidebar
                 :firm="app(\App\Settings\FirmSettings::class)->name"
-                tagline="Attorneys Inc."
+                :tagline="app(\App\Settings\FirmSettings::class)->tagline"
                 :user="$user->name"
                 :role="Str::headline($user->getRoleNames()->first() ?? '')"
                 :initials="Str::initials($user->name, capitalize: true)"

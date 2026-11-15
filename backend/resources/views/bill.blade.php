@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', ($bill->number ?? 'Draft bill').' — Example Firm')
+@section('title', ($bill->number ?? 'Draft bill').'')
 
 @section('content')
     @php

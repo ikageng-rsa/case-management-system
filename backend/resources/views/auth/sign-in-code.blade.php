@@ -1,6 +1,6 @@
 @extends('layouts.guest')
 
-@section('title', 'Enter your code — Example Firm')
+@section('title', 'Enter your code')
 
 @section('content')
     <div class="row g-0 min-vh-100 bg-dark">

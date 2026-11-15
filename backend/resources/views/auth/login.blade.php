@@ -1,6 +1,6 @@
 @extends('layouts.guest')
 
-@section('title', 'Sign in — Example Firm')
+@section('title', 'Sign in')
 
 @php
     // What the session is actually set to, so the page cannot say one thing and do another.
@@ -14,13 +14,16 @@
         {{-- Left panel: the actual sign-in form --}}
         <div class="col-lg-6 d-flex align-items-center">
             <div class="w-100 px-4 mx-auto" style="max-width: 380px;">
-                <x-ui.logo-mark initial="E" class="mb-3" />
+                @php
+                    $firm = app(\App\Settings\FirmSettings::class);
+                @endphp
+                <x-ui.logo-mark :initial="Str::substr($firm->name, 0, 1)" class="mb-3" />
 
                 <h1 class="mb-1 text-white">
                     Case management
                 </h1>
                 <p class="mb-4" style="color: var(--cms-on-ink-caption);">
-                    Example Firm Attorneys Inc. · staff access only
+                    {{ trim($firm->name.' '.$firm->tagline) }} · staff access only
                 </p>
 
                 @if (session('status'))

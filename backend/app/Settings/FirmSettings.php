@@ -14,6 +14,9 @@ class FirmSettings extends Settings
 {
     public string $name;
 
+    /** A line shown under the name in the app, such as "Attorneys Inc.". */
+    public ?string $tagline;
+
     /** @var list<string> */
     public array $addressLines;
 

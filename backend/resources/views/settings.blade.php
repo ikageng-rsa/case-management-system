@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Settings — '.$firm->name)
+@section('title', 'Settings')
 
 @section('content')
     <div class="mb-3">

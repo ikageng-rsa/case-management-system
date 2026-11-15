@@ -22,6 +22,11 @@
         </div>
 
         <div class="mb-3">
+            <div class="mb-0">{{ $firm->tagline ?? '—' }}</div>
+            <div class="text-meta">Line under the name</div>
+        </div>
+
+        <div class="mb-3">
             @forelse ($firm->addressLines as $line)
                 <div class="mb-0">{{ $line }}</div>
             @empty
@@ -45,7 +50,10 @@
 <x-ui.sheet name="edit-firm-settings" title="Edit firm details" :bag="$bag"
     :action="route('settings.firm.update')" method="PUT">
     <x-ui.input label="Name" name="name" id="firm_name" :value="$value('name', $firm->name)"
-        hint="As it should read on bills." :error="$errors->getBag($bag)->first('name')" />
+        hint="As it should read on bills and in the app." :error="$errors->getBag($bag)->first('name')" />
+
+    <x-ui.input label="Line under the name" name="tagline" id="firm_tagline" :value="$value('tagline', $firm->tagline)"
+        hint="Optional, e.g. Attorneys Inc. Shown under the name in the app." :error="$errors->getBag($bag)->first('tagline')" />
 
     <div class="mb-3">
         <label class="form-label form-label-mono" for="firm_address">Address</label>
