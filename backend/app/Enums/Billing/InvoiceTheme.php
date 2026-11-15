@@ -23,9 +23,9 @@ enum InvoiceTheme: string
     public function description(): string
     {
         return match ($this) {
-            self::Classic => 'Serif type and black rules. Formal, like a letterhead.',
-            self::Modern => 'A band of the accent colour across the top, and accented headings.',
-            self::Minimal => 'Plain type, light grey rules and plenty of white space.',
+            self::Classic => 'Serif type, a black-ruled reference box and the heading between black rules. Formal, like a letterhead.',
+            self::Modern => 'The reference box, heading and column titles filled with the accent colour.',
+            self::Minimal => 'Plain type, light grey rules and no boxes, with plenty of white space.',
         };
     }
 }

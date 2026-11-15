@@ -125,6 +125,7 @@ class SettingsTest extends TestCase
         $this->assertStringContainsString('Example Bank', $html);
         $this->assertStringContainsString('background: #1F4E79', $html);
         $this->assertStringContainsString('<div class="band">', $html);
+        $this->assertStringContainsString('table.refs th { background: #1F4E79; color: #fff;', $html, 'the theme styles the reference box');
 
         $billOfCost = BillLine::factory()->for(Bill::factory()->issued('INV/2026/0008')->state(['kind' => BillKind::BillOfCost]))->create()->bill->load(['matter', 'lines']);
         $this->assertStringNotContainsString('Reference:', view('pdf.bill', ['bill' => $billOfCost])->render());

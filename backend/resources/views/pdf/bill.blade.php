@@ -39,25 +39,43 @@
         .payment { margin-top: 22pt; padding-top: 8pt; border-top: 1px solid #e4e7eb; }
         .payment h2 { font-size: 10pt; margin: 0 0 4pt; }
 
+        {{--
+            A theme styles everything under the letterhead: the address and reference
+            box, the heading, the lines and the totals. The letterhead keeps its own
+            colours. Modern also puts the firm's details in a band of the accent
+            colour when there is no letterhead to print.
+        --}}
         @if ($theme === 'classic')
             body { font-family: DejaVu Serif, serif; color: #111; }
-            h1 { text-transform: uppercase; letter-spacing: 1pt; font-size: 14pt; }
+            table.refs th, table.refs td { border: 1px solid #111; }
+            table.refs th { font-weight: bold; font-size: 9pt; }
+            .heading { border-top: 1.5pt solid #111; border-bottom: 1.5pt solid #111; padding: 6pt 0; letter-spacing: 0.5pt; }
             table.lines th { border-bottom: 1.5pt solid #111; }
             .grand td { border-top: 1.5pt double #111; }
+            .payment { border-top: 1px solid #111; }
         @elseif ($theme === 'modern')
             .band { background: {{ $accent }}; color: #fff; margin: -28mm -18mm 18pt; padding: 16mm 18mm 8mm; }
             .band .meta { color: rgba(255, 255, 255, 0.85); }
-            .heading { color: {{ $accent }}; border-top-color: {{ $accent }}; }
-            table.lines th { color: {{ $accent }}; border-bottom: 1.5pt solid {{ $accent }}; }
+            .attention { color: {{ $accent }}; }
+            table.refs th, table.refs td { border: 1px solid {{ $accent }}; }
+            table.refs th { background: {{ $accent }}; color: #fff; font-size: 9pt; }
+            .heading { background: {{ $accent }}; color: #fff; border-top: none; padding: 6pt 0; font-weight: bold; }
+            table.lines th { background: {{ $accent }}; color: #fff; border-bottom: none; }
             .grand td { border-top: 1.5pt solid {{ $accent }}; color: {{ $accent }}; }
+            .payment { border-top: 1.5pt solid {{ $accent }}; }
             .payment h2 { color: {{ $accent }}; }
         @else
             body { color: #3e4c59; }
             .firm { font-weight: normal; letter-spacing: 0.5pt; }
-            h1 { font-weight: normal; }
+            .attention { font-weight: normal; letter-spacing: 0.5pt; }
+            table.refs th, table.refs td { border: none; border-bottom: 1px solid #e4e7eb; }
+            table.refs th { color: #7b8794; font-size: 8pt; }
+            .heading { border-top: none; color: #52606d; font-size: 10pt; letter-spacing: 1pt; }
             table.lines th { border-bottom: 1px solid #e4e7eb; color: #7b8794; font-weight: normal; text-transform: uppercase; font-size: 8pt; }
             table.lines td { border-bottom: 1px solid #f5f7fa; }
             .grand td { border-top: 1px solid {{ $accent }}; }
+            .payment { border-top: 1px solid #f5f7fa; }
+            .payment h2 { font-weight: normal; text-transform: uppercase; color: #7b8794; font-size: 8pt; letter-spacing: 1pt; }
         @endif
     </style>
 </head>

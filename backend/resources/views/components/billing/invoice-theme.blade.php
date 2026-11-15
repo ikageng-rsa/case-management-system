@@ -3,46 +3,66 @@
 ])
 
 {{--
-    A drawing of how a theme lays a bill out, not a preview of a real one: bars
-    for text, a rule or a band where the theme has one, and the accent colour
-    where it uses it. The accent is read from --invoice-accent on a parent, so a
-    colour picker can change every drawing at once.
+    A drawing of how a theme lays a bill out, not a preview of a real one. The
+    strip across the top stands for the firm's letterhead, which keeps its own
+    colours in every theme; what the theme changes is drawn under it: the
+    reference box, the heading, the lines and the total. The accent is read from
+    --invoice-accent on a parent, so a colour picker can change every drawing.
 --}}
 @php
     $value = $theme instanceof \App\Enums\Billing\InvoiceTheme ? $theme->value : $theme;
-    $bar = fn (string $width, string $colour, string $height = '5px') => "height: {$height}; width: {$width}; background: {$colour}; border-radius: 3px;";
+    $bar = fn (string $width, string $colour, string $height = '4px') => "height: {$height}; width: {$width}; background: {$colour}; border-radius: 2px;";
+    $ink = $value === 'classic' ? '#2b3138' : ($value === 'modern' ? 'var(--invoice-accent)' : '#c4c9d0');
 @endphp
 
 <div {{ $attributes->class(['position-relative overflow-hidden bg-white border rounded-3']) }} style="aspect-ratio: 16 / 10;" aria-hidden="true">
-    @if ($value === 'modern')
-        <div style="background: var(--invoice-accent); height: 30%; padding: 10% 9% 0;">
-            <div style="{{ $bar('45%', 'rgba(255,255,255,.9)') }} margin-bottom: 5px;"></div>
-            <div style="{{ $bar('28%', 'rgba(255,255,255,.65)') }}"></div>
+    {{-- The letterhead. --}}
+    <div class="d-flex align-items-center gap-1" style="padding: 6% 7% 3%; border-bottom: 1px solid #e4e7eb;">
+        <div style="width: 10%; aspect-ratio: 1; background: #9aa5b1; border-radius: 2px;"></div>
+        <div style="flex: 1;">
+            <div style="{{ $bar('46%', '#9aa5b1') }} margin-bottom: 3px;"></div>
+            <div style="{{ $bar('28%', '#d9dde3', '3px') }}"></div>
         </div>
-        <div style="padding: 9% 9% 0;">
-            @foreach (['70%', '60%', '66%'] as $width)
-                <div style="{{ $bar($width, '#d9dde3', '4px') }} margin-bottom: 6px;"></div>
-            @endforeach
+    </div>
+
+    <div style="padding: 4% 7% 0;">
+        {{-- Attention to on the left, the reference box on the right. --}}
+        <div class="d-flex justify-content-between align-items-start" style="margin-bottom: 4%;">
+            <div style="width: 38%;">
+                <div style="{{ $bar('80%', $value === 'modern' ? 'var(--invoice-accent)' : '#6b7480') }} margin-bottom: 3px;"></div>
+                <div style="{{ $bar('60%', '#d9dde3', '3px') }}"></div>
+            </div>
+            @if ($value === 'minimal')
+                <div style="width: 30%;">
+                    <div style="height: 1px; background: #e4e7eb; margin-bottom: 5px;"></div>
+                    <div style="height: 1px; background: #e4e7eb;"></div>
+                </div>
+            @else
+                <div style="width: 30%; height: 14px; border: 1px solid {{ $ink }}; background: linear-gradient(to right, {{ $value === 'modern' ? 'var(--invoice-accent)' : 'transparent' }} 45%, transparent 45%);"></div>
+            @endif
         </div>
-        <div class="position-absolute rounded-circle" style="width: 14%; aspect-ratio: 1; right: 8%; bottom: 10%; background: var(--invoice-accent);"></div>
-    @elseif ($value === 'minimal')
-        <div style="padding: 11% 11% 0;">
-            <div style="{{ $bar('34%', '#b8bec7', '4px') }} margin-bottom: 5px;"></div>
-            <div style="{{ $bar('20%', '#d9dde3', '4px') }} margin-bottom: 16%;"></div>
-            @foreach (['64%', '56%'] as $width)
-                <div style="{{ $bar($width, '#eceef1', '3px') }} margin-bottom: 7px;"></div>
-            @endforeach
-        </div>
-        <div class="position-absolute" style="right: 11%; bottom: 13%; width: 18%; height: 3px; background: var(--invoice-accent);"></div>
+
+        {{-- The heading. --}}
+        @if ($value === 'modern')
+            <div style="height: 8px; background: var(--invoice-accent); border-radius: 2px; margin-bottom: 4%;"></div>
+        @elseif ($value === 'classic')
+            <div style="border-top: 2px solid #2b3138; border-bottom: 2px solid #2b3138; padding: 3px 0; margin-bottom: 4%;">
+                <div class="mx-auto" style="{{ $bar('55%', '#2b3138', '3px') }}"></div>
+            </div>
+        @else
+            <div class="mx-auto" style="{{ $bar('45%', '#d9dde3', '3px') }} margin-bottom: 5%;"></div>
+        @endif
+
+        {{-- The lines. --}}
+        @foreach (['72%', '62%'] as $width)
+            <div style="{{ $bar($width, $value === 'minimal' ? '#eceef1' : '#d9dde3', '3px') }} margin-bottom: 5px;"></div>
+        @endforeach
+    </div>
+
+    {{-- The total. --}}
+    @if ($value === 'minimal')
+        <div class="position-absolute" style="right: 7%; bottom: 9%; width: 18%; height: 2px; background: var(--invoice-accent);"></div>
     @else
-        <div style="padding: 10% 9% 0;">
-            <div style="{{ $bar('42%', '#2b3138') }} margin-bottom: 5px;"></div>
-            <div style="{{ $bar('26%', '#6b7480') }} margin-bottom: 7%;"></div>
-            <div style="height: 2px; background: #2b3138; margin-bottom: 7%;"></div>
-            @foreach (['72%', '62%'] as $width)
-                <div style="{{ $bar($width, '#c4c9d0', '4px') }} margin-bottom: 6px;"></div>
-            @endforeach
-        </div>
-        <div class="position-absolute" style="width: 12%; aspect-ratio: 1; right: 9%; bottom: 10%; background: #2b3138;"></div>
+        <div class="position-absolute" style="right: 7%; bottom: 8%; width: 20%; height: 6px; background: {{ $ink }}; border-radius: 2px;"></div>
     @endif
 </div>
