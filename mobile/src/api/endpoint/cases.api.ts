@@ -7,7 +7,7 @@ import { FeatureUnavailableError } from '@/config/features';
 import { fetchAllPage } from '../pagination';
 import { mapMatter, mapMatterList } from '../mappers/matter';
 import { Document, indexIncluded, Resource } from '../jsonapi';
-import { isDeviceOffline } from '@/offline';
+import { isDeviceOffline, OfflineNotAllowedError } from '@/offline';
 
 //The server's matter filters: open (default), the user's own, nobody assigned yet, or closed
 export type MatterFilter = 'open' | 'mine' | 'unassigned' | 'closed';
