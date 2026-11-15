@@ -14,6 +14,8 @@ use App\Settings\FirmSettings;
 use App\Settings\InvoiceSettings;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Activitylog\Models\Activity;
 use Tests\TestCase;
 
@@ -143,6 +145,50 @@ class SettingsTest extends TestCase
         $this->get(route('login'))
             ->assertSee('<title>Sign in — Example Attorneys</title>', false)
             ->assertSee('Example Attorneys Attorneys Inc. · staff access only');
+    }
+
+    /** A one-pixel PNG, so the tests need no image library. */
+    protected function png(string $name = 'letterhead.png'): UploadedFile
+    {
+        return UploadedFile::fake()->createWithContent($name, base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC'));
+    }
+
+    public function test_a_letterhead_is_uploaded_printed_at_the_top_of_bills_and_can_be_replaced_or_removed(): void
+    {
+        Storage::fake(config('media-library.disk_name'));
+        $user = $this->userWith('manage_firm_settings');
+        $details = ['name' => 'Example Attorneys', 'website' => 'www.example.test', 'registration_number' => '2020/000000/21'];
+
+        $this->actingAs($user)->put(route('settings.firm.update'), $details + ['letterhead' => $this->png()])
+            ->assertSessionHasNoErrors();
+
+        $firm = app(FirmSettings::class)->refresh();
+        $first = $firm->letterheadPath;
+        Storage::disk(config('media-library.disk_name'))->assertExists($first);
+        $this->assertSame('www.example.test', $firm->website);
+
+        $this->actingAs($user)->get(route('settings', ['tab' => 'firm']))->assertSee('data:image/png;base64,', false);
+        $bill = BillLine::factory()->create()->bill->load(['matter', 'lines']);
+        $html = view('pdf.bill', ['bill' => $bill])->render();
+        $this->assertStringContainsString('<img src="data:image/png;base64,', $html);
+        $this->assertStringNotContainsString('<div class="firm">', $html, 'the letterhead takes the place of the text');
+
+        $this->actingAs($user)->put(route('settings.firm.update'), $details + ['letterhead' => $this->png('second.png')]);
+        Storage::disk(config('media-library.disk_name'))->assertMissing($first);
+
+        $this->actingAs($user)->put(route('settings.firm.update'), $details + ['remove_letterhead' => '1']);
+        $this->assertNull(app(FirmSettings::class)->refresh()->letterheadPath);
+
+        $html = view('pdf.bill', ['bill' => $bill])->render();
+        $this->assertStringContainsString('<div class="firm">Example Attorneys</div>', $html);
+        $this->assertStringContainsString('Company reg. 2020/000000/21', $html);
+    }
+
+    public function test_a_letterhead_must_be_a_png_or_jpg(): void
+    {
+        $this->actingAs($this->userWith('manage_firm_settings'))
+            ->put(route('settings.firm.update'), ['name' => 'X', 'letterhead' => UploadedFile::fake()->create('letterhead.pdf', 10, 'application/pdf')])
+            ->assertSessionHasErrorsIn('firm_settings', 'letterhead');
     }
 
     public function test_a_name_is_needed_and_an_email_must_be_one(): void

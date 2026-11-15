@@ -18,7 +18,7 @@ class SaveFirmSettings
      * ones, including bills issued before, so the change is written to the
      * audit log.
      *
-     * @param  array{name: string, tagline: ?string, addressLines: list<string>, phone: ?string, email: ?string}  $values
+     * @param  array{name: string, tagline: ?string, addressLines: list<string>, phone: ?string, email: ?string, website: ?string, registrationNumber: ?string}  $values
      */
     public function save(array $values): FirmSettings
     {

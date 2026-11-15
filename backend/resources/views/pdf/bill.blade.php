@@ -1,5 +1,6 @@
 @php
     $firm = app(\App\Settings\FirmSettings::class);
+    $letterhead = $firm->letterheadDataUri();
     $invoices = app(\App\Settings\InvoiceSettings::class);
     $theme = $invoices->theme->value;
     $accent = $invoices->accentColour;
@@ -28,6 +29,7 @@
         .totals td { border-bottom: none; padding: 3pt 4pt; }
         .grand td { border-top: 1px solid #1f2933; font-weight: bold; }
         .stamp { position: fixed; top: 40%; left: 15%; font-size: 72pt; color: #d64545; opacity: 0.15; transform: rotate(-30deg); }
+        .letterhead { width: 100%; margin-bottom: 10pt; }
         .payment { margin-top: 22pt; padding-top: 8pt; border-top: 1px solid #e4e7eb; }
         .payment h2 { font-size: 10pt; margin: 0 0 4pt; }
 
@@ -60,26 +62,47 @@
         <div class="stamp">VOID</div>
     @endif
 
-    <div class="{{ $theme === 'modern' ? 'band' : '' }}">
-    <table class="head" role="presentation">
-        <tr>
-            <td>
-                <div class="firm">{{ $firm->name }}</div>
-                @foreach ($firm->addressLines as $line)
-                    <div class="meta">{{ $line }}</div>
-                @endforeach
-                @if ($firm->phone || $firm->email)
-                    <div class="meta">{{ collect([$firm->phone, $firm->email])->filter()->implode(' · ') }}</div>
-                @endif
-            </td>
-            <td style="text-align: right;">
-                <h1>{{ $bill->kind->label() }}</h1>
-                <div>{{ $bill->number ?? 'Draft, not issued' }}</div>
-                <div class="meta">{{ ($bill->issued_at ?? $bill->created_at)->format('j F Y') }}</div>
-            </td>
-        </tr>
-    </table>
-    </div>
+    @if ($letterhead)
+        {{-- The firm's own letterhead, in place of its details set as text. --}}
+        <img src="{{ $letterhead }}" alt="" class="letterhead">
+        <table class="head" role="presentation">
+            <tr>
+                <td></td>
+                <td style="text-align: right;">
+                    <h1>{{ $bill->kind->label() }}</h1>
+                    <div>{{ $bill->number ?? 'Draft, not issued' }}</div>
+                    <div class="meta">{{ ($bill->issued_at ?? $bill->created_at)->format('j F Y') }}</div>
+                </td>
+            </tr>
+        </table>
+    @else
+        <div class="{{ $theme === 'modern' ? 'band' : '' }}">
+        <table class="head" role="presentation">
+            <tr>
+                <td>
+                    <div class="firm">{{ $firm->name }}</div>
+                    @foreach ($firm->addressLines as $line)
+                        <div class="meta">{{ $line }}</div>
+                    @endforeach
+                    @if ($firm->phone || $firm->email)
+                        <div class="meta">{{ collect([$firm->phone, $firm->email])->filter()->implode(' · ') }}</div>
+                    @endif
+                    @if ($firm->website)
+                        <div class="meta">{{ $firm->website }}</div>
+                    @endif
+                    @if ($firm->registrationNumber)
+                        <div class="meta">Company reg. {{ $firm->registrationNumber }}</div>
+                    @endif
+                </td>
+                <td style="text-align: right;">
+                    <h1>{{ $bill->kind->label() }}</h1>
+                    <div>{{ $bill->number ?? 'Draft, not issued' }}</div>
+                    <div class="meta">{{ ($bill->issued_at ?? $bill->created_at)->format('j F Y') }}</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    @endif
 
     <table class="head" role="presentation">
         <tr>

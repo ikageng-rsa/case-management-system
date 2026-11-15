@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Settings;
 
+use Illuminate\Support\Facades\Storage;
 use Spatie\LaravelSettings\Settings;
 
 /*
@@ -24,8 +25,28 @@ class FirmSettings extends Settings
 
     public ?string $email;
 
+    public ?string $website;
+
+    /** The company registration number, as printed on the letterhead. */
+    public ?string $registrationNumber;
+
+    /** Where the uploaded letterhead image is kept on the documents disk, if there is one. */
+    public ?string $letterheadPath;
+
     public static function group(): string
     {
         return 'firm';
+    }
+
+    /** The letterhead as a data URI, so it can be printed into a PDF without a web address. */
+    public function letterheadDataUri(): ?string
+    {
+        $disk = Storage::disk(config('media-library.disk_name'));
+
+        if ($this->letterheadPath === null || ! $disk->exists($this->letterheadPath)) {
+            return null;
+        }
+
+        return 'data:'.$disk->mimeType($this->letterheadPath).';base64,'.base64_encode($disk->get($this->letterheadPath));
     }
 }
