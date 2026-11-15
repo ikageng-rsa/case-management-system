@@ -1,0 +1,28 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Settings;
+
+use Spatie\LaravelSettings\Settings;
+
+/*
+ * The firm as it is printed on its bills and shown in the app, kept by the firm
+ * rather than in the code or the server's environment.
+ */
+class FirmSettings extends Settings
+{
+    public string $name;
+
+    /** @var list<string> */
+    public array $addressLines;
+
+    public ?string $phone;
+
+    public ?string $email;
+
+    public static function group(): string
+    {
+        return 'firm';
+    }
+}

@@ -18,7 +18,7 @@
     <body>
         <div class="page">
             <x-ui.sidebar
-                firm="Example Firm"
+                :firm="app(\App\Settings\FirmSettings::class)->name"
                 tagline="Attorneys Inc."
                 :user="$user->name"
                 :role="Str::headline($user->getRoleNames()->first() ?? '')"
@@ -34,7 +34,7 @@
                 <x-ui.nav-item :href="route('documents')" label="Documents" icon="file-text" :active="request()->routeIs('documents')"/>
                 <x-ui.nav-item href="#" label="Reports" icon="chart-bar"/>
 
-                @canany(['view_users', 'view_audit_log', 'manage_courts', 'manage_matter_types', 'manage_activity_types', 'manage_tariffs', 'manage_billing_settings'])
+                @canany(['view_users', 'view_audit_log', 'manage_courts', 'manage_matter_types', 'manage_activity_types', 'manage_tariffs', 'manage_billing_settings', 'manage_firm_settings'])
                     <x-ui.nav-section>Firm</x-ui.nav-section>
                 @endcanany
                 @can('view_users')
@@ -43,9 +43,9 @@
                 @canany(['manage_courts', 'manage_matter_types', 'manage_activity_types', 'manage_tariffs'])
                     <x-ui.nav-item :href="route('reference-data')" label="Reference data" icon="database" :active="request()->routeIs('reference-data')"/>
                 @endcanany
-                @can('manage_billing_settings')
-                    <x-ui.nav-item :href="route('billing-settings')" label="Billing settings" icon="receipt" :active="request()->routeIs('billing-settings')"/>
-                @endcan
+                @canany(['manage_billing_settings', 'manage_firm_settings'])
+                    <x-ui.nav-item :href="route('settings')" label="Settings" icon="settings" :active="request()->routeIs('settings')"/>
+                @endcanany
                 @can('view_audit_log')
                     <x-ui.nav-item :href="route('audit-log')" label="Audit log" icon="history" :active="request()->routeIs('audit-log*')"/>
                 @endcan

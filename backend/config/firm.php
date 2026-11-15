@@ -6,10 +6,11 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | The firm, as it is printed on its bills
+    | The firm's details on a new installation
     |--------------------------------------------------------------------------
     |
-    | Set per installation in the environment, never in the code.
+    | Read once, when the firm settings are first created. After that the firm
+    | keeps them under Settings, and changing these has no effect.
     |
     */
 

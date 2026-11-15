@@ -1,4 +1,5 @@
 @php
+    $firm = app(\App\Settings\FirmSettings::class);
     $rand = fn (int $cents) => 'R '.number_format($cents / 100, 2, '.', ' ');
     $percent = rtrim(rtrim(number_format($bill->drawing_fee_percent_hundredths / 100, 2, '.', ''), '0'), '.');
 @endphp
@@ -35,12 +36,12 @@
     <table class="head" role="presentation">
         <tr>
             <td>
-                <div class="firm">{{ config('firm.name') }}</div>
-                @foreach (config('firm.address') as $line)
+                <div class="firm">{{ $firm->name }}</div>
+                @foreach ($firm->addressLines as $line)
                     <div class="meta">{{ $line }}</div>
                 @endforeach
-                @if (config('firm.phone') || config('firm.email'))
-                    <div class="meta">{{ collect([config('firm.phone'), config('firm.email')])->filter()->implode(' · ') }}</div>
+                @if ($firm->phone || $firm->email)
+                    <div class="meta">{{ collect([$firm->phone, $firm->email])->filter()->implode(' · ') }}</div>
                 @endif
             </td>
             <td style="text-align: right;">

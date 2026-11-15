@@ -17,6 +17,7 @@ use App\Models\Matter\MatterAssignment;
 use App\Models\Narration\Narration;
 use App\Models\Reference\ActivityType;
 use App\Models\User\User;
+use App\Settings\FirmSettings;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -207,7 +208,9 @@ class BillsTest extends TestCase
 
     public function test_a_bill_downloads_as_a_pdf_named_by_its_number(): void
     {
-        config(['firm.name' => 'Test Firm Inc.']);
+        $firm = app(FirmSettings::class);
+        $firm->name = 'Test Firm Inc.';
+        $firm->save();
         $bill = BillLine::factory()->for(Bill::factory()->for($this->matter)->issued('INV/2026/0007'))->create()->bill;
 
         $response = $this->actingAs($this->director)->get(route('bill.pdf', $bill));
