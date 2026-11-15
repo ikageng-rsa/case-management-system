@@ -3,7 +3,7 @@ import { Alert, StyleSheet, Text, View } from 'react-native';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
 import { useRouter } from 'expo-router';
-import { requestPasswordResetCode } from '@/api/endpoint/auth.api';
+//import { requestPasswordResetCode } from '@/api/endpoint/auth.api';
 import { getApiErrorMessage } from '@/api/errors';
 import { colors, spacing, typography } from '@/theme/index';
 
@@ -28,7 +28,7 @@ export default function ForgotPasswordScreen() {
     try{
       //Backend generates the code and delivers it (e-mail/SMS). It answers the same way whether or not the
       //account exists, so this screen can't be used to find out who has an account
-      await requestPasswordResetCode(email.trim());
+      //await requestPasswordResetCode(email.trim());
       router.push({pathname: '/verify-reset-code', params: {email: email.trim()}});
     }catch(error){
         Alert.alert('Could not send code', getApiErrorMessage(error));

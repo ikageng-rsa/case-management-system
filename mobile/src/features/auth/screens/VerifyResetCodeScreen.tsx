@@ -3,7 +3,7 @@ import { Alert, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
-import { verifyPasswordResetCode } from '@/api/endpoint/auth.api';
+//import { verifyPasswordResetCode } from '@/api/endpoint/auth.api';
 import { setResetToken } from '@/features/auth/services/resetSession';
 import { colors, spacing, typography } from '@/theme/index';
 
@@ -21,9 +21,9 @@ export default function VerifyResetCodeScreen() {
         }
         setLoading(true);
         try {
-            const result = await verifyPasswordResetCode(email, code.trim());
-            setResetToken(result.resetToken);
-            router.push({ pathname: '/set-new-password', params: { email } });
+            //const result = await verifyPasswordResetCode(email, code.trim());
+            //setResetToken(result.resetToken);
+            //router.push({ pathname: '/set-new-password', params: { email } });
         } catch {
             Alert.alert('Incorrect code', 'That code is wrong or has expired. Request a new one.');
         } finally {
