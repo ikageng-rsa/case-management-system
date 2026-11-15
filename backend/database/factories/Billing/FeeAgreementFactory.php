@@ -45,4 +45,9 @@ class FeeAgreementFactory extends Factory
     {
         return $this->state(fn (array $attributes) => ['status' => FeeAgreementStatus::Failed, 'closed_at' => now()]);
     }
+
+    public function finalised(int $amountReceivedCents = 48000000): static
+    {
+        return $this->state(fn (array $attributes) => ['status' => FeeAgreementStatus::Finalised, 'amount_received_cents' => $amountReceivedCents, 'closed_at' => now()]);
+    }
 }
