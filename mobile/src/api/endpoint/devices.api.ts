@@ -1,5 +1,5 @@
-import { apiClient } from '@api/client';
-import { Document, Resource } from '@api/jsonapi';
+import { apiClient } from '@/api/client';
+import { Document, Resource } from '@/api/jsonapi';
 
 export interface DeviceRegistration {
     platform: 'ios' | 'android';

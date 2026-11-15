@@ -1,24 +1,29 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { encGetItem, encSetItem } from '@/utils/encryptedStorage';
 import { getActiveUserId } from './context';
-import { cacheKey, listUserKeys, metaKey, outboxKey, readJson, serial, writeJson } from './storage';
+import { cacheKey, listUserKeys, metaKey, outboxKey, readJson, serial, userPrefix, writeJson } from './storage';
 import { CacheMeta, MutationPatch, OutboxEntry, SyncEntity } from './types';
 
 export const CacheNames = {
     cases: 'cases',
+    casesClosed: 'cases:closed',
     diary: 'diary',
+    diaryCompleted: 'diary:completed',
     users: 'users',
+    clients: 'clients',
+    activityTypes: 'lookups:activity-types',
+    capacities: 'lookups:assignment-capacities',
     notifications: 'notifications',
     narrations: (caseId: string) => `narrations:${caseId}`,
     documents: (caseId: string) => `documents:${caseId}`,
+    documentKinds: 'lookups:document-kinds',
 };
 
 type Row = { id: string } & Record<string, any>;
 
-/*  
+/* ---------------------------------------------------------------------------
  * Plain read/write of one cached collection (the active user's).
- * 
- *  */
+ * ------------------------------------------------------------------------- */
 
 export async function cacheGet<T>(name: string, userId = getActiveUserId()): Promise<T | null> {
     return userId ? readJson<T>(cacheKey(userId, name)) : null;
@@ -58,7 +63,7 @@ export function overlayOutbox<T extends Row>(
     return result;
 }
 
-/*  
+/* ---------------------------------------------------------------------------
  * Serialised mutations. Functions named *Locked must only run inside serial().
  * ------------------------------------------------------------------------- */
 
@@ -118,43 +123,28 @@ export function cacheSet(name: string, value: unknown): Promise<void> {
  * the remaining queued requests (e.g. a narration waiting on a case created offline).
  * Temp ids are unique 16-hex tokens, so a plain text replace is safe.
  */
-
-export async function remapTempIdLocked(
-    userId: string,
-    tempId: string,
-    realId: string,
-): Promise<void> {
-    const keys = (await listUserKeys(userId)).filter(
-        key => key !== metaKey(userId),
-    );
-
-    const entries = await Promise.all(
-        keys.map(async key => ({
-            key,
-            raw: await encGetItem(key),
-        })),
-    );
-
-    for (const { key, raw } of entries) {
+export async function remapTempIdLocked(userId: string, tempId: string, realId: string): Promise<void> {
+    for (const key of await listUserKeys(userId)) {
+        if (key === metaKey(userId)) {
+            continue;
+        }
+        const raw = await encGetItem(key);
         if (raw === null) {
             continue;
         }
-
         const nextRaw = raw.split(tempId).join(realId);
         const nextKey = key.split(tempId).join(realId);
-
         if (nextKey !== key) {
-            AsyncStorage.removeItem(key);
+            await AsyncStorage.removeItem(key);
         }
-
         if (nextKey !== key || nextRaw !== raw) {
-            void encSetItem(nextKey, nextRaw).catch(error =>{console.error('failed: ',error)});
+            await encSetItem(nextKey, nextRaw);
         }
     }
 }
 
 /** Runs `task` as one uninterrupted read-modify-write step over cache + outbox. */
-export { serial as exclusive } from './storage';
+export const exclusive = serial;
 
 export async function cacheMeta(userId = getActiveUserId()): Promise<CacheMeta> {
     return userId ? (await readJson<CacheMeta>(metaKey(userId))) ?? {} : {};
@@ -177,4 +167,4 @@ export async function clearUserData(userId: string): Promise<void> {
     await AsyncStorage.multiRemove(keys);
 }
 
-export { userPrefix } from './storage';
+export { userPrefix };

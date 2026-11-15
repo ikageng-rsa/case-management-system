@@ -1,4 +1,5 @@
 import { apiClient } from '@/api/client';
+import { parseServerRecord } from './parsers';
 import { applyPatch, cacheGet, cacheUpsert, overlayOutbox, writeListFromServer } from './cache';
 import { getActiveUserId } from './context';
 import { isDeviceOffline, isNetworkError, isTransientError } from './connectivity';
@@ -10,7 +11,7 @@ import { MutationPatch, OutboxEntry, SyncEntity } from './types';
 
 type Row = { id: string } & Record<string, any>;
 
-/*  
+/* ---------------------------------------------------------------------------
  * Reads: network first, cache when there is none.
  * ------------------------------------------------------------------------- */
 
@@ -89,7 +90,7 @@ export async function cachedRecord<T extends Row>(o: {
     }
 }
 
-/*  
+/* ---------------------------------------------------------------------------
  * Writes
  * ------------------------------------------------------------------------- */
 
@@ -114,7 +115,8 @@ export async function submitCreate<T extends Row>(o: {
 
     if (!containsTempId(o.url) && !containsTempId(o.body) && !(await isDeviceOffline())) {
         try {
-            const { data } = await apiClient.post<T>(o.url, o.body, { headers: { 'Idempotency-Key': requestId } });
+            const response = await apiClient.post(o.url, o.body, { headers: { 'Idempotency-Key': requestId } });
+            const data = parseServerRecord(o.entity, o.url, response.data) as T;
             await cacheUpsert(o.listName(data), data);
             return data;
         } catch (error) {
@@ -136,8 +138,8 @@ export async function submitCreate<T extends Row>(o: {
         label: o.label,
         method: 'POST',
         url: o.url,
-        // Tells the server when the record was really made, so offline work keeps its true date.
-        body: { ...o.body, clientCreatedAt: createdAt },
+        // The true date travels in the body itself (a narration's occurred_at), so nothing extra is added here.
+        body: o.body,
         entityId: tempId,
         optimistic,
         createdAt,
@@ -166,7 +168,8 @@ export async function submitUpdate<T extends Row>(o: {
     const target = isTempId(o.entityId) || containsTempId(o.url);
     if (!target && !(await isDeviceOffline())) {
         try {
-            const { data } = await apiClient.patch<T>(o.url, o.body, { headers: { 'Idempotency-Key': newRequestId() } });
+            const response = await apiClient.patch(o.url, o.body, { headers: { 'Idempotency-Key': newRequestId() } });
+            const data = parseServerRecord(o.entity, o.url, response.data) as T;
             await cacheUpsert(o.listName, data);
             return data;
         } catch (error) {
