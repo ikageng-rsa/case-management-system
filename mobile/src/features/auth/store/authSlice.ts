@@ -18,7 +18,6 @@ import { listOutbox } from '@/offline/outbox';
 import { clearOfflineData } from '@/offline/clear';
 import { clearExports } from '@/features/reporting/services/exportReport';
 import { unregisterPushDevice } from '@/services/notifications/pushRegistration';
-import { getErrorMessage } from '@/utils/ErrorMessage';
 
 interface AuthState {
   user: User | null;
@@ -26,7 +25,7 @@ interface AuthState {
   challenge: TwoFactorChallenge | null;
   /** E-mail the code was sent to, shown on the verification screen. */
   pendingEmail: string | null;
-  status: 'idle' | 'loading' | 'authenticated' | 'error' | 'needs-2fa' | 'failed';
+  status: 'idle' | 'loading' | 'authenticated' | 'error' | 'needs-2fa';
   error: string | null;
 }
 
@@ -52,7 +51,7 @@ type LoginResult =
   | { kind: 'authenticated'; user: User }
   | { kind: 'challenge'; challenge: TwoFactorChallenge; email: string };
 
-const deviceName = () => `LegalCMS ${Platform.OS} ${Platform.Version}`;
+const deviceName = () => `LegalCMS ${Platform.OS}`;
 
 export const login = createAsyncThunk<LoginResult, { email: string; password: string }>(
   'auth/login',
@@ -69,16 +68,12 @@ export const login = createAsyncThunk<LoginResult, { email: string; password: st
       return {
         kind: 'challenge',
         email,
-        challenge: {
-          token: response.challengeId,
-          method: 'totp',
-          expiresIn: response.expiresIn,
-        } as TwoFactorChallenge,
+        challenge: { token: response.challengeId, method: 'email', expiresIn: response.expiresIn },
       };
     } catch (error) {
       if (!(error instanceof OfflineSignIn) && !isNetworkError(error)) {
         // Surface the backend's own message (e.g. Laravel's 422 "These credentials do not match our records.").
-        throw new Error(getErrorMessage(error));
+        throw new Error(getApiErrorMessage(error, 'Login failed'));
       }
     }
 
@@ -133,7 +128,7 @@ export const completeTwoFactor = createAsyncThunk<User, { code: string }, { stat
       }
       return success.user;
     } catch (error) {
-      throw new Error(getErrorMessage(error));
+      throw new Error(getApiErrorMessage(error, 'Verification failed'));
     }
   },
 );
@@ -210,10 +205,8 @@ const authSlice = createSlice({
         }
       })
       .addCase(login.rejected, (state, action) => {
-          state.status = 'error';
-          state.error = getErrorMessage(
-              action.payload ?? action.error.message,
-          );
+        state.status = 'error';
+        state.error = action.error.message ?? 'Login failed';
       })
       .addCase(completeTwoFactor.fulfilled, (state, action) => {
         state.user = action.payload;
