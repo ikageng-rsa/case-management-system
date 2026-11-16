@@ -207,6 +207,99 @@
                         </div>
                     </div>
 
+                    @if ($billing)
+                        @php
+                            $rand = fn (int $cents) => 'R '.number_format($cents / 100, 2, '.', ' ');
+                            $billTones = ['draft' => 'accent', 'issued' => 'success', 'void' => 'neutral'];
+                            $paymentTones = ['unpaid' => 'neutral', 'part_paid' => 'accent', 'settled' => 'success'];
+                        @endphp
+
+                        <div class="row mb-3">
+                            <div class="col">
+                                <div class="card" x-data="{ allBills: false, allPayments: false }">
+                                    <div class="card-body">
+                                        <h3 class="text-meta text-uppercase mb-1">Billing</h3>
+                                        <p class="mb-3">{{ $billing['owedCents'] > 0 ? $rand($billing['owedCents']).' owed on issued bills' : 'Nothing owed on issued bills' }}</p>
+
+                                        <h4 class="text-meta text-uppercase mb-2">Bills</h4>
+                                        <div class="table-responsive">
+                                            <table class="table table-vcenter">
+                                                <tbody>
+                                                    @forelse ($billing['bills'] as $bill)
+                                                        <tr @if ($loop->index >= 4) x-show="allBills" x-cloak @endif>
+                                                            <td class="text-nowrap">
+                                                                <a href="{{ route('bill.show', $bill) }}">{{ $bill->number ?? 'Draft' }}</a>
+                                                                <div class="text-meta">{{ $bill->kind->label() }} · {{ $bill->matter->reference }}</div>
+                                                            </td>
+                                                            <td class="text-nowrap">
+                                                                <x-ui.stage-badge :tone="$billTones[$bill->status->value]">{{ $bill->status->label() }}</x-ui.stage-badge>
+                                                                @if ($bill->paymentState())
+                                                                    <x-ui.stage-badge :tone="$paymentTones[$bill->paymentState()->value]" class="ms-1">{{ $bill->paymentState()->label() }}</x-ui.stage-badge>
+                                                                @endif
+                                                            </td>
+                                                            <td class="text-meta text-nowrap">{{ ($bill->issued_at ?? $bill->created_at)->format('d M y') }}</td>
+                                                            <td class="text-end text-nowrap">
+                                                                {{ $rand($bill->total_cents) }}
+                                                                @if ($bill->isIssued() && $bill->paid_cents > 0 && $bill->balanceCents() > 0)
+                                                                    <div class="text-meta">{{ $rand($bill->balanceCents()) }} still owed</div>
+                                                                @endif
+                                                            </td>
+                                                        </tr>
+                                                    @empty
+                                                        <tr>
+                                                            <td class="text-center text-secondary py-3">No bills for this client.</td>
+                                                        </tr>
+                                                    @endforelse
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        @if ($billing['bills']->count() > 4)
+                                            <x-ui.button variant="ghost-secondary" size="sm" x-on:click="allBills = ! allBills"
+                                                x-text="allBills ? 'Show fewer' : 'Show all {{ $billing['bills']->count() }} bills'">Show all {{ $billing['bills']->count() }} bills</x-ui.button>
+                                        @endif
+
+                                        <h4 class="text-meta text-uppercase mt-3 mb-2">Payments</h4>
+                                        <div class="table-responsive">
+                                            <table class="table table-vcenter">
+                                                <tbody>
+                                                    @forelse ($billing['payments'] as $payment)
+                                                        <tr @if ($loop->index >= 4) x-show="allPayments" x-cloak @endif>
+                                                            <td class="text-meta text-nowrap">{{ $payment->received_on->format('d M y') }}</td>
+                                                            <td class="text-nowrap">
+                                                                <a href="{{ route('bill.show', $payment->bill) }}">{{ $payment->bill->number }}</a>
+                                                                <div class="text-meta">{{ $payment->method->label() }} into the {{ strtolower($payment->account->label()) }}</div>
+                                                            </td>
+                                                            <td class="text-meta">
+                                                                @if ($payment->isReversed())
+                                                                    Reversed
+                                                                @else
+                                                                    <a href="{{ route('payment.receipt', $payment) }}">Receipt</a>
+                                                                @endif
+                                                            </td>
+                                                            <td class="text-end text-nowrap">
+                                                                <span @class(['text-decoration-line-through text-secondary' => $payment->isReversed()])>{{ $rand($payment->amount_cents) }}</span>
+                                                            </td>
+                                                        </tr>
+                                                    @empty
+                                                        <tr>
+                                                            <td class="text-center text-secondary py-3">No payments from this client.</td>
+                                                        </tr>
+                                                    @endforelse
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        @if ($billing['payments']->count() > 4)
+                                            <x-ui.button variant="ghost-secondary" size="sm" x-on:click="allPayments = ! allPayments"
+                                                x-text="allPayments ? 'Show fewer' : 'Show all {{ $billing['payments']->count() }} payments'">Show all {{ $billing['payments']->count() }} payments</x-ui.button>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
                     @php
                         $outstanding = count($client->outstandingFicaDocuments());
                     @endphp
