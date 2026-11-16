@@ -21,10 +21,7 @@ export interface ParsedFileReference {
 }
 
 export function parseFileReference(reference: string): ParsedFileReference | null {
-  const pattern =
-    /^([A-Z]{1,4})\/([A-Z]{2,6})\/(\d{1,4})\/(\d{4})$/i;
-
-  const match = pattern.exec(reference);
+  const match = reference.match(/^([A-Z]{1,4})\/([A-Z]{2,6})\/(\d{1,4})\/(\d{4})$/i);
   if (!match) {
     return null;
   }
@@ -32,11 +29,11 @@ export function parseFileReference(reference: string): ParsedFileReference | nul
   return {
     attorneyInitials: attorneyInitials.toUpperCase(),
     matterTypeCode: matterTypeCode.toUpperCase(),
-    sequence: Number.parseInt(sequence, 10),
-    year: Number.parseInt(year, 10),
+    sequence: parseInt(sequence, 10),
+    year: parseInt(year, 10),
   };
 }
 
-// getInitials now lives in its own module (@utils/initials / @/utils/initials)   
+// getInitials now lives in its own module (@utils/initials / @/utils/initials)
 // — re-exported here so anything still importing it from this file keeps working.
-export { getInitials } from './initials';                                         
+export { getInitials } from './initials';
