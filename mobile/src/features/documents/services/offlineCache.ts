@@ -1,32 +1,7 @@
 /**
- * Offline document cache — intentionally conservative for POPIA/FICA reasons:
- * only "Standard" confidentiality documents may be cached to disk. Anything
- * "Restricted" or "Privileged" must stream on demand and never be written to
- * device storage. Swap AsyncStorage for a proper encrypted store (e.g.
- * react-native-encrypted-storage or SQLCipher via WatermelonDB) before this
- * touches real client files.
+ * Document files are never kept on the phone after they have been opened: `downloadDocument` writes to the cache
+ * folder and the caller deletes the copy straight after sharing it. Only the document list (names, kinds, sizes)
+ * is cached, by `fetchDocumentsForCase`, so the list still shows offline. Files attached on this phone and not
+ * yet uploaded live in the app's own storage until they reach the server (see narrationDocuments).
  */
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { CaseDocument } from '@/models/index';
-
-const CACHE_KEY_PREFIX = 'legalcms_doc_cache_';
-
-export function isCacheable(doc: CaseDocument): boolean {
-  return doc.confidentiality === 'Standard';
-}
-
-export async function cacheDocumentMeta(doc: CaseDocument): Promise<void> {
-  if (!isCacheable(doc)) {
-    return;
-  }
-  await AsyncStorage.setItem(`${CACHE_KEY_PREFIX}${doc.id}`, JSON.stringify(doc));
-}
-
-export async function getCachedDocumentMeta(docId: string): Promise<CaseDocument | null> {
-  const raw = await AsyncStorage.getItem(`${CACHE_KEY_PREFIX}${docId}`);
-  return raw ? JSON.parse(raw) : null;
-}
-
-export async function clearDocumentCache(docId: string): Promise<void> {
-  await AsyncStorage.removeItem(`${CACHE_KEY_PREFIX}${docId}`);
-}
+export const DOCUMENT_FILES_CACHED_ON_DEVICE = false;
