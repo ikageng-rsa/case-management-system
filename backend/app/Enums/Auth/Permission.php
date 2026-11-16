@@ -64,6 +64,8 @@ enum Permission: string
     case VoidBills = 'void_bills';
     // Recording money received on an issued bill, and reversing a payment recorded in error.
     case RecordPayments = 'record_payments';
+    // Seeing what is owed to the firm across the matters a person may see.
+    case ViewBillingReports = 'view_billing_reports';
     case ViewAuditLog = 'view_audit_log';
     case ExportAuditLog = 'export_audit_log';
 }
