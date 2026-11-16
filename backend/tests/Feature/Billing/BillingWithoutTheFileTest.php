@@ -100,6 +100,39 @@ class BillingWithoutTheFileTest extends TestCase
         $this->assertSame(1, FeeAgreement::count());
     }
 
+    public function test_an_attorney_records_the_fee_agreement_on_their_matter_but_sees_no_amounts(): void
+    {
+        $attorney = tap(User::factory()->create())->assignRole(RoleEnum::Attorney->value);
+        MatterAssignment::factory()->for($this->matter)->for($attorney)->create();
+
+        FeeAgreement::factory()->for($this->matter)->contingency(25)->finalised(48000000)->create();
+        Bill::factory()->for($this->matter)->issued('INV/2026/0001')->create(['total_cents' => 1000000, 'paid_cents' => 400000]);
+
+        $this->actingAs($attorney)->get(route('matter.show', [$this->matter, 'tab' => 'billing']))
+            ->assertOk()
+            ->assertSee('Fee agreement')
+            ->assertSee('Record fee agreement')
+            ->assertSee('Contingency, 25%')
+            ->assertSee('Disbursements')
+            ->assertDontSee('R 480 000.00')
+            ->assertDontSee('R 120 000.00')
+            ->assertDontSee('INV/2026/0001')
+            ->assertDontSee('R 10 000.00')
+            ->assertDontSee('still owed')
+            ->assertDontSee('Work recorded')
+            ->assertDontSee('Raise a bill')
+            ->assertDontSee('Raise fee bill');
+
+        // The director sees the same matter with its amounts.
+        $this->actingAs($this->director)->get(route('matter.show', [$this->matter, 'tab' => 'billing']))
+            ->assertOk()
+            ->assertSee('R 480 000.00')
+            ->assertSee('INV/2026/0001')
+            ->assertSee('Work recorded')
+            ->assertSee('Raise a bill')
+            ->assertSee('Raise fee bill');
+    }
+
     public function test_someone_who_sees_the_file_is_sent_to_its_billing_tab(): void
     {
         $this->actingAs($this->director)->get(route('billing.matter', $this->matter))
