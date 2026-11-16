@@ -25,6 +25,8 @@ class DocumentController extends Controller
         /** @var User $user */
         $user = $request->user();
 
+        abort_unless($user->worksOnMatters(), 403);
+
         $matterId = $request->query('matter');
         $kind = DocumentKind::tryFrom((string) $request->query('type'));
 
