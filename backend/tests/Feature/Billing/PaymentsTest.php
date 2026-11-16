@@ -231,6 +231,30 @@ class PaymentsTest extends TestCase
         $this->assertTrue($this->bill->refresh()->isIssued());
     }
 
+    public function test_finance_records_a_payment_without_the_file_and_cannot_reverse_it(): void
+    {
+        $finance = tap(User::factory()->create(['name' => 'Fikile Nkosi']))->assignRole(RoleEnum::Finance->value);
+
+        $this->actingAs($finance)->get(route('matter.show', $this->matter))->assertForbidden();
+
+        $this->actingAs($finance)->get(route('bill.show', $this->bill))
+            ->assertOk()
+            ->assertSee('Record payment')
+            ->assertDontSee('Void');
+
+        $this->actingAs($finance)->post(route('bill.payments.store', $this->bill), $this->payment())
+            ->assertRedirect(route('bill.show', $this->bill));
+
+        $payment = Payment::sole();
+        $this->assertTrue($payment->recordedBy->is($finance));
+
+        $this->actingAs($finance)->get(route('bill.show', $this->bill))->assertOk()->assertDontSee('Reverse');
+        $this->actingAs($finance)->post(route('payment.reverse', $payment), ['reason' => 'Wrong bill'])->assertForbidden();
+        $this->actingAs($finance)->get(route('payment.proof', $payment))->assertOk();
+
+        $this->assertFalse($payment->fresh()->isReversed());
+    }
+
     public function test_recording_and_reversing_payments_needs_the_permission_and_sight_of_the_matter(): void
     {
         $payment = Payment::factory()->for($this->bill)->create();

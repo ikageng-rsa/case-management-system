@@ -64,41 +64,56 @@ class MatterPolicy
         return $matter->isOpen() && $matter->isAssignedTo($user);
     }
 
-    /** How the client is charged: recording, finalising or failing a fee agreement, for those who may see the file. */
+    /*
+     * The money on a matter is reached apart from its file: by someone who may
+     * see the file, or by someone who works on billing across every matter and
+     * never opens one. Each billing ability is a permission within that reach.
+     */
+    protected function inBillingScope(User $user, Matter $matter): bool
+    {
+        return $user->can(Permission::AccessAllBilling->value) || $this->view($user, $matter);
+    }
+
+    /** How the client is charged: recording, finalising or failing a fee agreement, and the costs paid out. */
     public function manageFees(User $user, Matter $matter): bool
     {
-        return $user->can(Permission::ManageFeeAgreements->value) && $this->view($user, $matter);
+        return $user->can(Permission::ManageFeeAgreements->value) && $this->inBillingScope($user, $matter);
+    }
+
+    /** Seeing the amounts on the matter: the value of its work, its bills, their payments and what is owed. */
+    public function viewBills(User $user, Matter $matter): bool
+    {
+        return $user->can(Permission::ViewBills->value) && $this->inBillingScope($user, $matter);
     }
 
     /** Drawing a bill on the matter, and changing or deleting it while it is a draft. */
     public function draftBills(User $user, Matter $matter): bool
     {
-        return $user->can(Permission::DraftBills->value) && $this->view($user, $matter);
+        return $user->can(Permission::DraftBills->value) && $this->inBillingScope($user, $matter);
     }
 
     /** Issuing a checked draft, after which it is owed. */
     public function issueBills(User $user, Matter $matter): bool
     {
-        return $user->can(Permission::IssueBills->value) && $this->view($user, $matter);
+        return $user->can(Permission::IssueBills->value) && $this->inBillingScope($user, $matter);
     }
 
     /** Voiding a bill issued in error. */
     public function voidBills(User $user, Matter $matter): bool
     {
-        return $user->can(Permission::VoidBills->value) && $this->view($user, $matter);
+        return $user->can(Permission::VoidBills->value) && $this->inBillingScope($user, $matter);
     }
 
-    /** Recording a payment on an issued bill, and reversing one recorded in error. */
+    /** Recording a payment on an issued bill. */
     public function recordPayments(User $user, Matter $matter): bool
     {
-        return $user->can(Permission::RecordPayments->value) && $this->view($user, $matter);
+        return $user->can(Permission::RecordPayments->value) && $this->inBillingScope($user, $matter);
     }
 
-    /** Seeing the matter's bills, for anyone who drafts, issues or voids them or records payments on them. */
-    public function viewBills(User $user, Matter $matter): bool
+    /** Reversing a payment recorded in error: undoing is held apart from doing. */
+    public function reversePayments(User $user, Matter $matter): bool
     {
-        return $this->draftBills($user, $matter) || $this->issueBills($user, $matter) || $this->voidBills($user, $matter)
-            || $this->recordPayments($user, $matter);
+        return $user->can(Permission::ReversePayments->value) && $this->inBillingScope($user, $matter);
     }
 
     public function deleteDocument(User $user, Matter $matter): bool
