@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Client;
 
+use App\Enums\Auth\Permission;
 use App\Enums\Client\ClientType;
 use App\Enums\Client\ContactKind;
 use App\Enums\Client\FicaDocument;
@@ -16,6 +17,7 @@ use App\Models\Matter\Matter;
 use App\Models\Reference\Court;
 use App\Models\Reference\MatterType;
 use App\Models\User\User;
+use App\Queries\Billing\ClientBilling;
 use App\Queries\Clients\MatchingClients;
 use App\Services\Clients\AddClientContact;
 use App\Services\Clients\DuplicateClientException;
@@ -50,13 +52,13 @@ class ClientController extends Controller
         return $this->render($request, null);
     }
 
-    public function show(Request $request, Client $client): View
+    public function show(Request $request, Client $client, ClientBilling $billing): View
     {
         Gate::authorize('view', $client);
 
         $client->recordAccess('read', ['ip' => $request->ip()]);
 
-        return $this->render($request, $client);
+        return $this->render($request, $client, $billing);
     }
 
     public function store(
@@ -150,7 +152,7 @@ class ClientController extends Controller
         );
     }
 
-    protected function render(Request $request, ?Client $client): View
+    protected function render(Request $request, ?Client $client, ?ClientBilling $billing = null): View
     {
         /** @var User $user */
         $user = $request->user();
@@ -166,6 +168,7 @@ class ClientController extends Controller
             'total' => Client::query()->count(),
             'query' => (string) $request->query('q'),
             'client' => $client,
+            'billing' => $client !== null && $billing !== null && $user->can(Permission::ViewBills->value) ? $billing->for($client, $user) : null,
             'canSeeContacts' => $user->can('view_client_contacts'),
             'canReveal' => $user->can('view_unmasked_client_data'),
             'canEditClient' => $client !== null && $user->can('update', $client),
