@@ -17,7 +17,14 @@
 
     <div class="mb-3 d-flex align-items-start justify-content-between gap-3">
         <div>
-            <a href="{{ route('matter.show', [$bill->matter, 'tab' => 'billing']) }}" class="text-meta">← {{ $bill->matter->reference }}</a>
+            {{-- Opened from the debtors report, the way back is to the report; otherwise to the matter the bill is on. --}}
+            @if (request('from') === 'debtors' && auth()->user()->can('view_billing_reports'))
+                <a href="{{ route('reports', ['tab' => 'debtors']) }}" class="text-meta">← Debtors report</a>
+                <span class="text-meta">·</span>
+                <a href="{{ route('matter.show', [$bill->matter, 'tab' => 'billing']) }}" class="text-meta">{{ $bill->matter->reference }}</a>
+            @else
+                <a href="{{ route('matter.show', [$bill->matter, 'tab' => 'billing']) }}" class="text-meta">← {{ $bill->matter->reference }}</a>
+            @endif
             <h1 class="mb-1">
                 {{ $bill->kind->label() }} {{ $bill->number }}
                 <x-ui.stage-badge :tone="$tones[$bill->status->value]" class="ms-2">{{ $bill->status->label() }}</x-ui.stage-badge>

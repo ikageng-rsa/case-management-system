@@ -55,7 +55,7 @@
                             <tr>
                                 <td class="text-nowrap">
                                     @can('viewBills', $row['bill']->matter)
-                                        <a href="{{ route('bill.show', $row['bill']) }}">{{ $row['bill']->number }}</a>
+                                        <a href="{{ route('bill.show', [$row['bill'], 'from' => 'debtors']) }}">{{ $row['bill']->number }}</a>
                                     @else
                                         {{ $row['bill']->number }}
                                     @endcan
