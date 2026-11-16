@@ -69,6 +69,8 @@ enum Permission: string
     // Recording money received on an issued bill, and reversing a payment recorded in error.
     case RecordPayments = 'record_payments';
     case ReversePayments = 'reverse_payments';
+    // Seeing the list of payments received across bills.
+    case ViewPayments = 'view_payments';
     // Seeing what is owed to the firm across the matters a person may see.
     case ViewBillingReports = 'view_billing_reports';
     case ViewAuditLog = 'view_audit_log';
@@ -85,7 +87,7 @@ enum Permission: string
             self::WithdrawPopiaConsent, self::ExportClientData => 'Clients and personal information',
             self::EditAnyNarrations, self::DeleteNarrations, self::DeleteDocuments, self::AmendLedgerEntries => 'Work on the file',
             self::AccessAllBilling, self::ViewBills, self::ManageFeeAgreements, self::DraftBills, self::IssueBills,
-            self::VoidBills, self::RecordPayments, self::ReversePayments, self::ViewBillingReports => 'Billing',
+            self::VoidBills, self::RecordPayments, self::ReversePayments, self::ViewPayments, self::ViewBillingReports => 'Billing',
             self::ViewUsers, self::EditUsers, self::InviteUsers, self::DeactivateUsers, self::AssignRoles, self::ManageRoles => 'Users and roles',
             self::ManageMatterTypes, self::ManageActivityTypes, self::ManageCourts, self::ManageTariffs,
             self::ManageBillingSettings, self::ManageFirmSettings => 'Firm setup',
