@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import Button from '@/components/Button';
 import Card from '@/components/Card';
 import Input from '@/components/Input';
@@ -7,13 +7,15 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import { fetchNotificationPreferences, updateNotificationPreferences } from '@/api/endpoint/notifications.api';
 import { getApiErrorMessage } from '@/api/errors';
 import { NotificationChannelKey, NotificationPreferences, NotificationType } from '@/models/index';
-import { colors, spacing, typography } from '@/theme/index';
+import { colors, fontFamily, spacing, typography } from '@/theme/index';
+import { notifyError, notifySuccess } from '@/utils/notify';
 
 const TYPE_LABEL: Record<NotificationType, string> = {
-    diary_overdue: 'Diary item overdue',
-    diary_due_soon: 'Diary item due soon',
-    diary_assigned: 'Diary item assigned to me',
-    case_assigned: 'Added to a case',
+    diary_overdue: 'Diary entry overdue',
+    diary_due_soon: 'Diary entry due soon',
+    diary_assigned: 'Diary entry assigned to me',
+    matter_assigned: 'Added to a matter',
+    matter_unassigned: 'Removed from a matter',
 };
 const CHANNELS: { key: NotificationChannelKey; label: string }[] = [
     { key: 'push', label: 'App' },
@@ -62,15 +64,15 @@ export default function NotificationSettingsScreen() {
 
     const save = async () => {
         if (prefs.quietHours.enabled && (!HHMM.test(prefs.quietHours.start) || !HHMM.test(prefs.quietHours.end))) {
-            Alert.alert('Quiet hours', 'Use the 24-hour format HH:MM, for example 21:00.');
+            notifyError('Quiet hours', 'Use the 24-hour format HH:MM, for example 21:00.');
             return;
         }
         setSaving(true);
         try {
             setPrefs(await updateNotificationPreferences(prefs));
-            Alert.alert('Saved', 'Your notification settings were updated.');
+            notifySuccess('Saved', 'Your notification settings were updated.');
         } catch (e) {
-            Alert.alert('Could not save', getApiErrorMessage(e, 'Please try again.'));
+            notifyError('Could not save', getApiErrorMessage(e, 'Please try again.'));
         } finally {
             setSaving(false);
         }
@@ -121,7 +123,7 @@ const styles = StyleSheet.create({
     note: { ...typography.caption, color: colors.textSecondary, marginBottom: spacing.md },
     error: { ...typography.body, color: colors.red, padding: spacing.lg },
     card: { marginBottom: spacing.md },
-    cardTitle: { ...typography.body, fontWeight: '700', color: colors.textPrimary },
+    cardTitle: { ...typography.body, fontFamily: fontFamily.sansSemibold, color: colors.textPrimary },
     row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: spacing.xs },
     rowLabel: { ...typography.body, color: colors.textSecondary },
     timeRow: { flexDirection: 'row', gap: spacing.md },

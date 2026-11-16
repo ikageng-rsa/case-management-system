@@ -6,10 +6,11 @@ import Button from '@/components/Button';
 import EmptyState from '@/components/EmptyState';
 import { fetchNotifications, markAllNotificationsRead, markNotificationRead } from '@/api/endpoint/notifications.api';
 import { refreshUnreadCount } from '@/hooks/useUnreadNotifications';
+import { hasFeature } from '@/config/features';
 import { useOnSynced } from '@/hooks/useSyncStatus';
 import { routeForNotification } from '@/utils/deepLinks';
 import { AppNotification } from '@/models/index';
-import { colors, spacing, typography } from '@/theme/index';
+import { colors, fontFamily, spacing, typography } from '@/theme/index';
 
 /** The user's inbox. Items are created and delivered (push / SMS / e-mail) by the backend. */
 export default function NotificationsScreen() {
@@ -36,15 +37,15 @@ export default function NotificationsScreen() {
     const open = async (item: AppNotification) => {
         if (!item.readAt) {
             setItems(list => list.map(n => (n.id === item.id ? { ...n, readAt: new Date().toISOString() } : n)));
-            await markNotificationRead(item.id).then(refreshUnreadCount).catch(() => { });
+            markNotificationRead(item.id).then(refreshUnreadCount).catch(() => { });
         }
         router.push(routeForNotification(item.data));
     };
 
     const readAll = async () => {
         setItems(list => list.map(n => ({ ...n, readAt: n.readAt ?? new Date().toISOString() })));
-        await markAllNotificationsRead().catch((error) => { console.error('Unable to mark Notification as Read: ', error)});
-        await refreshUnreadCount().catch((error) =>{console.error('failed to refresh unread count: ',error)});
+        await markAllNotificationsRead().catch(() => { });
+        refreshUnreadCount();
     };
 
     const unread = items.filter(n => !n.readAt).length;
@@ -52,7 +53,9 @@ export default function NotificationsScreen() {
     return (
         <View style={styles.container}>
             <View style={styles.actions}>
-                <Button label="Notification settings" variant="secondary" onPress={() => router.push('/more/notification-settings')} style={styles.actionButton} />
+                {hasFeature('notificationPreferences') ? (
+                    <Button label="Notification settings" variant="secondary" onPress={() => router.push('/more/notification-settings')} style={styles.actionButton} />
+                ) : null}
                 {unread > 0 ? <Button label={`Mark ${unread} as read`} variant="secondary" onPress={readAll} style={styles.actionButton} /> : null}
             </View>
             <FlatList
@@ -71,7 +74,7 @@ export default function NotificationsScreen() {
                     </Pressable>
                 )}
                 ListEmptyComponent={
-                    loading ? null : <EmptyState title="No notifications" message="Overdue and due-soon diary alerts, and new assignments, will appear here." />
+                    loading ? null : <EmptyState title="No notifications" message="Diary alerts and matter assignments will appear here." />
                 }
             />
         </View>
@@ -84,7 +87,7 @@ const styles = StyleSheet.create({
     actionButton: { alignSelf: 'stretch' },
     list: { padding: spacing.md },
     unread: { borderColor: colors.gold },
-    title: { ...typography.body, fontWeight: '700', color: colors.textPrimary },
+    title: { ...typography.body, fontFamily: fontFamily.sansSemibold, color: colors.textPrimary },
     body: { ...typography.body, color: colors.textSecondary, marginTop: spacing.xs },
     time: { ...typography.caption, color: colors.textMuted, marginTop: spacing.xs },
 });
