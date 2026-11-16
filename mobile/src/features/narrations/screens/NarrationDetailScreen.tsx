@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Sharing from 'expo-sharing';
@@ -19,10 +19,13 @@ import {
   retryPendingSync,
 } from '@/features/documents/services/narrationDocuments';
 import { useAppSelector } from '@/hooks/useAppDispatch';
-import { canEditRecords, hasGlobalVisibility } from '@/constants/roles';
-import { formatDuration } from '@/utils/formatDuration';
-import { colors, spacing, typography } from '@/theme/index';
+import { canEditRecords } from '@/constants/roles';
+import { formatQuantity, MEASURE_LABEL } from '@/api/mappers/narration';
+import { hasFeature } from '@/config/features';
+import { colors, fontFamily, spacing, typography } from '@/theme/index';
 import { CaseDocument, Narration } from '@/models/index';
+import { notifyError, notifyWarning } from '@/utils/notify';
+import { confirmAction } from '@/ui';
 
 const SYNC_LABEL: Record<CaseDocument['syncStatus'], string> = {
   'local-only': 'Saved on device',
@@ -71,85 +74,63 @@ export default function NarrationDetailScreen() {
   }
 
   const canEdit = me ? canEditRecords(me.role) : false;
-  // Same rule as the server: an entry is changed by whoever wrote it, or by a Director/Admin.
-  const canEditEntry = canEdit && me ? item.authorId === me.id || hasGlobalVisibility(me.role) || item.syncState === 'pending' : false;
-
 
   const addDocuments = async () => {
-    const result = await DocumentPicker.getDocumentAsync({
-      multiple: true,
-      copyToCacheDirectory: true,
-    });
-
+    const result = await DocumentPicker.getDocumentAsync({ multiple: true, copyToCacheDirectory: true });
     if (result.canceled) {
       return;
     }
-
-    const uploads = result.assets.map(async asset => {
+    for (const asset of result.assets) {
       try {
         await attachDocumentToNarration({
           caseId,
           narrationId,
-          file: {
-            uri: asset.uri,
-            name: asset.name,
-            mimeType: asset.mimeType,
-            size: asset.size,
-          },
-          confidentiality: 'Standard',
-          uploadedById: me?.id ?? '',
+          file: { uri: asset.uri, name: asset.name, mimeType: asset.mimeType, size: asset.size },
+          kind: 'evidence',
         });
-      } catch (error) {
-        console.error(
-          'Failed to attach file in narration:',
-          error,
-        );
-        Alert.alert('Could not store file', asset.name);
+      } catch {
+        notifyError('Could not store file', asset.name);
       }
-    });
-
-    await Promise.all(uploads);
-
+    }
     setDocs(await getDocumentsForNarration(narrationId));
   };
 
-
   const openDoc = async (doc: CaseDocument) => {
-    const uri = doc.localUri ?? doc.uri;
+    const uri = doc.localUri;
+    if (!uri) {
+      router.push({ pathname: '/cases/[caseId]/documents/[documentId]', params: { caseId, documentId: doc.id } });
+      return;
+    }
     if (await Sharing.isAvailableAsync()) {
       await Sharing.shareAsync(uri, { mimeType: doc.mimeType, dialogTitle: doc.fileName });
     } else {
-      Alert.alert('Cannot open', 'Sharing/opening files is not available on this device.');
+      notifyError('Cannot open', 'Sharing/opening files is not available on this device.');
     }
   };
 
   const removeDoc = async (doc: CaseDocument) => {
     // Deleting is an online-only action; an attachment that never left this device is just a local draft.
     if (doc.syncStatus === 'synced' && (await isDeviceOffline())) {
-      Alert.alert('Offline', 'Removing a saved document needs an internet connection.');
+      notifyWarning('Offline', 'Removing a saved document needs an internet connection.');
       return;
     }
-    Alert.alert('Remove document?', doc.fileName, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Remove',
-        style: 'destructive',
-        onPress: async () => {
-          await removeNarrationDocument(narrationId, doc.id);
-          setDocs(await getDocumentsForNarration(narrationId));
-        },
-      },
-    ]);
+    const ok = await confirmAction({ title: 'Remove document?', message: doc.fileName, actionLabel: 'Remove', icon: 'trash-2' });
+    if (ok) {
+      await removeNarrationDocument(narrationId, doc.id);
+      setDocs(await getDocumentsForNarration(narrationId));
+    }
   };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>{item.title || item.activityType}</Text>
+      <Text style={styles.title}>{item.title || item.activityName || item.activityType}</Text>
       <SyncBadge state={item.syncState} />
       <Card style={styles.card}>
-        <DetailRow label="Activity" value={item.activityType} />
-        <DetailRow label="Time spent" value={formatDuration(item.timeSpentMinutes ?? 0)} />
-        <DetailRow label="Billable" value={item.billable ? 'Yes' : 'No'} />
+        <DetailRow label="Activity" value={item.activityName ?? item.activityType} />
+        <DetailRow label={MEASURE_LABEL[item.measure ?? 'minutes'] ?? 'Amount'} value={formatQuantity(item.quantity ?? 0, item.measure)} />
+        {item.timeTakenMinutes ? <DetailRow label="Time taken" value={`${item.timeTakenMinutes} min`} /> : null}
+        {item.billableUnits !== undefined ? <DetailRow label="Billable units" value={String(item.billableUnits)} /> : null}
+        <DetailRow label="Work done on" value={(item.occurredAt ?? item.createdAt)?.slice(0, 10)} />
         <DetailRow label="Logged" value={item.createdAt?.slice(0, 10)} />
         <Pressable onPress={() => router.push({ pathname: '/cases/[caseId]', params: { caseId: item.caseId } })}>
           <Text style={styles.link}>Open case →</Text>
@@ -160,14 +141,6 @@ export default function NarrationDetailScreen() {
           </Pressable>
         ) : null}
       </Card>
-
-      {canEditEntry ? (
-        <Button
-          label="Edit entry"
-          variant="secondary"
-          onPress={() => router.push({ pathname: './cases/[caseId]/edit-activity', params: { caseId, narrationId } })}
-        />
-      ) : null}
 
       <Card style={styles.card}>
         <Text style={styles.cardTitle}>Summary</Text>
@@ -180,20 +153,20 @@ export default function NarrationDetailScreen() {
         ) : null}
       </Card>
 
-      <SectionHeader title="Documents" />
-      {docs.length === 0 ? <Text style={styles.note}>No documents attached to this entry.</Text> : null}
-      {docs.map(doc => (
+      {hasFeature('documents') ? <SectionHeader title="Documents" /> : null}
+      {hasFeature('documents') && docs.length === 0 ? <Text style={styles.note}>No documents attached to this entry.</Text> : null}
+      {(hasFeature('documents') ? docs : []).map(doc => (
         <Card key={doc.id}>
           <Pressable onPress={() => openDoc(doc)}>
-            <Text style={styles.docName} numberOfLines={1}>{doc.fileName}</Text>
+            <Text style={styles.docName} numberOfLines={1}>{doc.name}</Text>
             <Text style={styles.note}>
-              {doc.confidentiality} · v{doc.version} · {SYNC_LABEL[doc.syncStatus]}
+              {doc.kind} · {SYNC_LABEL[doc.syncStatus]}
             </Text>
           </Pressable>
           {canEdit ? <Text style={styles.remove} onPress={() => removeDoc(doc)}>Remove</Text> : null}
         </Card>
       ))}
-      {canEdit ? <Button label="+ Attach documents" variant="secondary" onPress={addDocuments} /> : null}
+      {canEdit && hasFeature('documents') ? <Button label="+ Attach documents" variant="secondary" onPress={addDocuments} /> : null}
     </ScrollView>
   );
 }
@@ -206,8 +179,8 @@ const styles = StyleSheet.create({
   cardTitle: { ...typography.h3, color: colors.navy, marginBottom: spacing.xs },
   spaced: { marginTop: spacing.md },
   body: { ...typography.body, color: colors.textPrimary },
-  link: { ...typography.body, color: colors.navy, fontWeight: '600', marginTop: spacing.sm },
-  docName: { ...typography.body, fontWeight: '600', color: colors.textPrimary },
+  link: { ...typography.body, color: colors.navy, fontFamily: fontFamily.sansSemibold, marginTop: spacing.sm },
+  docName: { ...typography.body, fontFamily: fontFamily.sansSemibold, color: colors.textPrimary },
   note: { ...typography.caption, color: colors.textSecondary, paddingVertical: spacing.xs },
-  remove: { ...typography.caption, color: colors.danger, fontWeight: '600', marginTop: spacing.xs },
+  remove: { ...typography.caption, color: colors.danger, fontFamily: fontFamily.sansSemibold, marginTop: spacing.xs },
 });
