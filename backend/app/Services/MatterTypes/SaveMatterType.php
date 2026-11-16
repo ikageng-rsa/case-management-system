@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\MatterTypes;
 
+use App\Enums\Billing\FeeAgreementKind;
 use App\Models\Reference\MatterType;
 use App\Services\Reference\ReferenceDataLocked;
 
@@ -14,7 +15,7 @@ class SaveMatterType
      * matter exists the code stays as it is. Everything else may change, and
      * applies to matters opened from then on.
      *
-     * @param  array{code?: string, name: string, default_prescription_months?: ?int, is_litigation?: bool}  $data
+     * @param  array{code?: string, name: string, default_prescription_months?: ?int, is_litigation?: bool, default_fee_kind?: string}  $data
      */
     public function save(?MatterType $type, array $data): MatterType
     {
@@ -29,6 +30,7 @@ class SaveMatterType
             'name' => trim($data['name']),
             'default_prescription_months' => $data['default_prescription_months'] ?? null,
             'is_litigation' => (bool) ($data['is_litigation'] ?? false),
+            'default_fee_kind' => FeeAgreementKind::tryFrom($data['default_fee_kind'] ?? '') ?? $type->default_fee_kind ?? FeeAgreementKind::Mandate,
         ])->save();
 
         return $type;

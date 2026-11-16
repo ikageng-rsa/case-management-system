@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Reference data — Example Firm')
+@section('title', 'Reference data')
 
 @section('content')
     @php
@@ -208,11 +208,11 @@ $used = $type->matters_count > 0;
                 'sheet' => 'edit-matter-type-'.$type->getKey(), 'bag' => 'matter_type_'.$type->getKey(), 'title' => 'Edit matter type',
                 'action' => route('matter-type.update', $type), 'method' => 'PATCH',
                 'code' => $type->code, 'name' => $type->name, 'months' => $type->default_prescription_months,
-                'litigation' => $type->is_litigation, 'locked' => $type->matters_count > 0, 'submit' => 'Save matter type',
+                'litigation' => $type->is_litigation, 'fee' => $type->default_fee_kind->value, 'locked' => $type->matters_count > 0, 'submit' => 'Save matter type',
             ])->push([
                 'sheet' => 'new-matter-type', 'bag' => 'matter_type_new', 'title' => 'Add a matter type',
                 'action' => route('matter-type.store'), 'method' => 'POST',
-                'code' => '', 'name' => '', 'months' => null, 'litigation' => false, 'locked' => false, 'submit' => 'Add matter type',
+                'code' => '', 'name' => '', 'months' => null, 'litigation' => false, 'fee' => 'mandate', 'locked' => false, 'submit' => 'Add matter type',
             ]);
         @endphp
 
@@ -235,6 +235,14 @@ $used = $type->matters_count > 0;
                     <input class="form-check-input" type="checkbox" name="is_litigation" value="1" @checked($input($form['bag'], 'is_litigation', $form['litigation']))>
                     <span class="form-check-label">Before a court, so a court is required</span>
                 </label>
+
+                <x-ui.select label="Fee agreement" name="default_fee_kind" id="{{ $form['sheet'] }}_fee" wrapper="mt-3"
+                    hint="What a new matter of this type is suggested to be charged under. It can be changed on the matter."
+                    :error="$errors->getBag($form['bag'])->first('default_fee_kind')">
+                    @foreach ($feeKinds as $kind)
+                        <option value="{{ $kind->value }}" @selected($input($form['bag'], 'default_fee_kind', $form['fee']) === $kind->value)>{{ $kind->label() }}</option>
+                    @endforeach
+                </x-ui.select>
                 <p class="form-hint">Changes apply to matters opened from now on; matters already open keep what they have.</p>
 
                 <x-slot:footer>
@@ -269,6 +277,7 @@ $used = $type->matters_count > 0;
                             <th>Counted in</th>
                             <th>Billable</th>
                             <th>Needs a court</th>
+                            <th>Time on top</th>
                             <th class="text-center">Narrations</th>
                             <th></th>
                         </tr>
@@ -289,6 +298,7 @@ $used = $type->matters_count > 0;
                                 <td>{{ $type->unit_label }}</td>
                                 <td>{{ $type->default_billable ? 'Yes' : 'No' }}</td>
                                 <td>{{ $type->requires_court ? 'Yes' : 'No' }}</td>
+                                <td>{{ $type->charges_time_on_top ? 'Yes' : 'No' }}</td>
                                 <td class="text-center">{{ $type->narrations_count }}</td>
                                 <td class="text-end text-nowrap">
                                     @if ($type->trashed())
@@ -317,7 +327,7 @@ $used = $type->narrations_count > 0;
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="7" class="text-center text-secondary py-4">No kinds of work yet.</td></tr>
+                            <tr><td colspan="8" class="text-center text-secondary py-4">No kinds of work yet.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -329,13 +339,13 @@ $used = $type->narrations_count > 0;
                 'sheet' => 'edit-activity-type-'.$type->getKey(), 'bag' => 'activity_type_'.$type->getKey(), 'title' => 'Edit kind of work',
                 'action' => route('activity-type.update', $type), 'method' => 'PATCH',
                 'code' => $type->code, 'name' => $type->name, 'measure' => $type->measure->value, 'increment' => $type->increment,
-                'billable' => $type->default_billable, 'court' => $type->requires_court,
+                'billable' => $type->default_billable, 'court' => $type->requires_court, 'time' => $type->charges_time_on_top,
                 'counting_locked' => $type->narrations_count > 0, 'code_locked' => $type->narrations_count > 0 || $type->isSystem(),
                 'submit' => 'Save kind of work',
             ])->push([
                 'sheet' => 'new-activity-type', 'bag' => 'activity_type_new', 'title' => 'Add a kind of work',
                 'action' => route('activity-type.store'), 'method' => 'POST',
-                'code' => '', 'name' => '', 'measure' => 'minutes', 'increment' => 6, 'billable' => true, 'court' => false,
+                'code' => '', 'name' => '', 'measure' => 'minutes', 'increment' => 6, 'billable' => true, 'court' => false, 'time' => false,
                 'counting_locked' => false, 'code_locked' => false, 'submit' => 'Add kind of work',
             ]);
         @endphp
@@ -375,6 +385,16 @@ $used = $type->narrations_count > 0;
                     <span class="form-check-label">Needs a court (for appearances)</span>
                 </label>
 
+                <input type="hidden" name="charges_time_on_top" value="0">
+                <label class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" name="charges_time_on_top" value="1" @checked($input($form['bag'], 'charges_time_on_top', $form['time']))>
+                    <span class="form-check-label">Charge time on top, e.g. travelling time with the kilometres</span>
+                </label>
+                <p class="form-hint">Narrations of this work also ask for the time taken. The time is rated when the bill is raised.</p>
+                @if ($errors->getBag($form['bag'])->has('charges_time_on_top'))
+                    <div class="text-danger small mb-2">{{ $errors->getBag($form['bag'])->first('charges_time_on_top') }}</div>
+                @endif
+
                 <x-slot:footer>
                     <div class="d-flex align-items-center justify-content-between">
                         <x-ui.button variant="outline-secondary" size="sm" x-on:click="close()">Cancel</x-ui.button>
@@ -383,5 +403,101 @@ $used = $type->narrations_count > 0;
                 </x-slot:footer>
             </x-ui.sheet>
         @endforeach
+    @endif
+
+    {{-- ===================================================== Tariffs --}}
+    @if ($tab === 'tariffs')
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <div>
+                    <h3 class="card-title mb-0">Tariffs</h3>
+                    <p class="text-meta mb-0">An upload is a draft until it is checked and published. Each tariff is then in force from its date until a newer one starts.</p>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <x-ui.button :href="route('tariff-schedule.template')" variant="outline-secondary" icon="download" size="sm">Template</x-ui.button>
+                    <x-ui.button variant="primary" icon="upload" size="sm"
+                        x-data x-on:click="$dispatch('sheet-open', 'new-tariff-schedule')">Upload tariff</x-ui.button>
+                </div>
+            </div>
+
+            @if ($errors->getBag('tariff_schedules')->any())
+                <div class="alert alert-danger m-3 mb-0">{{ $errors->getBag('tariff_schedules')->first() }}</div>
+            @endif
+
+            <div class="table-responsive">
+                <table class="table table-vcenter card-table">
+                    <thead>
+                        <tr>
+                            <th>Tariff</th>
+                            <th>In force from</th>
+                            <th class="text-center">Rates</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($tariffSchedules as $schedule)
+                            <tr>
+                                <td>
+                                    <a href="{{ route('tariff-schedule.show', $schedule) }}">{{ $schedule->name }}</a>
+                                    @php
+                                        [$tone, $label] = ['draft' => ['accent', 'Draft'], 'upcoming' => ['info', 'Upcoming'], 'in_force' => ['success', 'In force'], 'replaced' => ['neutral', 'Replaced']][$schedule->status($tariffInForce)];
+                                    @endphp
+                                    <x-ui.stage-badge :tone="$tone" class="ms-2">{{ $label }}</x-ui.stage-badge>
+                                </td>
+                                <td>{{ $schedule->effective_from->format('j M Y') }}</td>
+                                <td class="text-center">{{ $schedule->items_count }}</td>
+                                <td class="text-end text-nowrap">
+                                    <x-ui.button :href="route('tariff-schedule.source', $schedule)" variant="ghost-secondary" size="sm">Download</x-ui.button>
+
+                                    @unless ($schedule->hasStarted())
+                                        <form method="POST" action="{{ route('tariff-schedule.destroy', $schedule) }}" class="d-inline"
+                                            data-confirm="Remove {{ $schedule->name }}? It has not come into force, so nothing has been charged from it."
+                                            data-confirm-title="Remove tariff" data-confirm-action="Remove"
+                                            data-confirm-tone="danger" data-confirm-icon="trash">
+                                            @csrf
+                                            @method('DELETE')
+                                            <x-ui.button type="submit" variant="ghost-danger" size="sm">Remove</x-ui.button>
+                                        </form>
+                                    @endunless
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="4" class="text-center text-secondary py-4">No tariffs yet. Download the template, copy in the gazette's rates and upload it.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <x-ui.sheet name="new-tariff-schedule" title="Upload a tariff" bag="tariff_schedule_new"
+            :action="route('tariff-schedule.store')" method="POST" enctype="multipart/form-data">
+            <x-ui.input label="Name" name="name" id="tariff_name" hint="As the gazette calls it, e.g. Magistrates' Courts tariff 2027"
+                :value="$input('tariff_schedule_new', 'name', '')" :error="$errors->getBag('tariff_schedule_new')->first('name')" />
+
+            <x-ui.input label="In force from" name="effective_from" id="tariff_effective_from" type="date"
+                :value="$input('tariff_schedule_new', 'effective_from', '')" :error="$errors->getBag('tariff_schedule_new')->first('effective_from')" />
+
+            <x-ui.input label="Tariff file" name="file" id="tariff_file" type="file" accept=".csv"
+                hint="A .csv in the template's layout: one line per kind of work, with its rate in rand on each scale. Leave a scale empty when the gazette does not quote it. What each role charges is set after the upload." />
+
+            @if ($errors->getBag('tariff_schedule_new')->has('file'))
+                <div class="alert alert-danger">
+                    <p class="mb-1">Nothing was saved. Fix these lines and upload the file again:</p>
+                    <ul class="mb-0">
+                        @foreach ($errors->getBag('tariff_schedule_new')->get('file') as $problem)
+                            <li>{{ $problem }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            <x-slot:footer>
+                <div class="d-flex align-items-center justify-content-between">
+                    <x-ui.button variant="outline-secondary" size="sm" x-on:click="close()">Cancel</x-ui.button>
+                    <x-ui.button type="submit" variant="primary" size="sm">Upload tariff</x-ui.button>
+                </div>
+            </x-slot:footer>
+        </x-ui.sheet>
     @endif
 @endsection

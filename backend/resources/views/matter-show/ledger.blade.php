@@ -74,7 +74,7 @@
                         <td class="text-meta text-secondary">{{ $narration->activityType->name }}</td>
                         <td class="text-meta">{{ Str::initials($narration->author->name, capitalize: true) }}</td>
                         <td>{{ $narration->body }}</td>
-                        <td class="text-secondary text-nowrap">{{ $quantity($narration) }} {{ $narration->activityType->measure->value }}</td>
+                        <td class="text-secondary text-nowrap">{{ $quantity($narration) }} {{ $narration->activityType->measure->value }}@if ($narration->minutes !== null) + {{ $narration->minutes }} min @endif</td>
                         <td class="text-secondary">{{ $narration->billableUnits() }}</td>
                     </tr>
                 @empty

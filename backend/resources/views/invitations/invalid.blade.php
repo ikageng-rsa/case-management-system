@@ -1,6 +1,6 @@
 @extends('layouts.guest')
 
-@section('title', 'Invitation unavailable — Example Firm')
+@section('title', 'Invitation unavailable')
 
 @section('content')
     <div class="row g-0 min-vh-100 bg-dark">

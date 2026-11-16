@@ -129,6 +129,16 @@ class Client extends Model implements HasMedia
         ));
     }
 
+    /** Where post to the client goes: the postal address, or else the physical one, primary first. */
+    public function addressOnFile(): ?string
+    {
+        return $this->contacts()
+            ->whereIn('kind', [ContactKind::Postal, ContactKind::Physical])
+            ->get()
+            ->sortBy(fn (ClientContact $contact) => [$contact->kind === ContactKind::Postal ? 0 : 1, $contact->is_primary ? 0 : 1])
+            ->first()?->value;
+    }
+
     /** Individuals are named first/last; entities carry a single registered name. */
     protected function fullName(): Attribute
     {

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Users & roles — Example Firm')
+@section('title', 'Users & roles')
 
 @section('content')
     @php

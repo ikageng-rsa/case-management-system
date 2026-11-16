@@ -75,7 +75,17 @@
 </div>
 <div class="card mb-3">
     <div class="card-body">
-        <h3 class="card-title text-meta text-uppercase mb-3">Assignments</h3>
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h3 class="card-title text-meta text-uppercase mb-0">Assignments</h3>
+
+            {{-- On a large screen the team card beside the tabs adds people; on a small one it is hidden, so it is done here. --}}
+            @if ($matter->isOpen())
+                @can('assign', $matter)
+                    <x-ui.button variant="ghost-secondary" icon="plus" size="sm" aria-label="Add team member" class="d-lg-none"
+                        x-data x-on:click="$dispatch('sheet-open', 'assign-member')" />
+                @endcan
+            @endif
+        </div>
 
         @forelse ($matter->assignments as $assignment)
             <div class="d-flex align-items-center justify-content-between mb-3">

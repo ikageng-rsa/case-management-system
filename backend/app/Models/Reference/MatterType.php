@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models\Reference;
 
 use App\Concerns\RecordsActivity;
+use App\Enums\Billing\FeeAgreementKind;
 use App\Models\Matter\Matter;
 use Database\Factories\Reference\MatterTypeFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -15,7 +16,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['code', 'name', 'default_prescription_months', 'is_litigation'])]
+#[Fillable(['code', 'name', 'default_prescription_months', 'is_litigation', 'default_fee_kind'])]
 #[RouteKey('code')]
 class MatterType extends Model
 {
@@ -34,6 +35,7 @@ class MatterType extends Model
     {
         return [
             'default_prescription_months' => 'integer',
+            'default_fee_kind' => FeeAgreementKind::class,
             'is_litigation' => 'boolean',
         ];
     }
