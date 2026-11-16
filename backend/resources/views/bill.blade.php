@@ -214,6 +214,9 @@
                                 @if ($payment->proof())
                                     · <a href="{{ route('payment.proof', $payment) }}">Proof of payment</a>
                                 @endif
+                                @unless ($payment->isReversed())
+                                    · <a href="{{ route('payment.receipt', $payment) }}">Receipt</a>
+                                @endunless
                             </div>
                             @if ($payment->isReversed())
                                 <div class="text-meta">Reversed {{ $payment->reversed_at->format('j M Y') }}{{ $payment->reversedBy ? ' by '.$payment->reversedBy->name : '' }}: {{ $payment->reverse_reason }}</div>
