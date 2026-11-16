@@ -117,6 +117,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/bills/{bill}/issue', IssueBillController::class)->name('bill.issue');
     Route::post('/bills/{bill}/void', VoidBillController::class)->name('bill.void');
     Route::post('/bills/{bill}/payments', [PaymentsController::class, 'store'])->name('bill.payments.store');
+    Route::get('/payments', [PaymentsController::class, 'index'])->name('payments');
     Route::post('/payments/{payment}/reverse', ReversePaymentController::class)->name('payment.reverse');
     Route::get('/payments/{payment}/proof', DownloadPaymentProofController::class)->name('payment.proof');
     Route::get('/payments/{payment}/receipt', DownloadPaymentReceiptController::class)->name('payment.receipt');

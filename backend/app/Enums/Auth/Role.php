@@ -81,6 +81,7 @@ enum Role: string
                 Permission::DraftBills,
                 Permission::IssueBills,
                 Permission::RecordPayments,
+                Permission::ViewPayments,
                 Permission::ViewBillingReports,
                 Permission::ManageTariffs,
             ],

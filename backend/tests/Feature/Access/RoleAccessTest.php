@@ -26,17 +26,17 @@ class RoleAccessTest extends TestCase
     private const MOVED = 302;
 
     /** Pages in the order of the columns below. The clients page and a matter's billing lead on to another page for those let in. */
-    private const PAGES = ['dashboard', 'matters', 'matter', 'documents', 'clients', 'bills', 'matter billing', 'bill', 'reports', 'users', 'reference data', 'settings', 'audit log'];
+    private const PAGES = ['dashboard', 'matters', 'matter', 'documents', 'clients', 'bills', 'matter billing', 'bill', 'payments', 'reports', 'users', 'reference data', 'settings', 'audit log'];
 
     /** @var array<string, list<int>> */
     private const EXPECTED = [
-        'director' => [self::OK, self::OK, self::OK, self::OK, self::MOVED, self::OK, self::MOVED, self::OK, self::OK, self::OK, self::OK, self::OK, self::OK],
-        'attorney' => [self::OK, self::OK, self::OK, self::OK, self::MOVED, self::NO, self::MOVED, self::NO, self::NO, self::NO, self::NO, self::NO, self::OK],
-        'candidate_attorney' => [self::OK, self::OK, self::OK, self::OK, self::MOVED, self::NO, self::NO, self::NO, self::NO, self::NO, self::NO, self::NO, self::NO],
-        'legal_secretary' => [self::OK, self::OK, self::OK, self::OK, self::MOVED, self::NO, self::MOVED, self::NO, self::NO, self::NO, self::NO, self::NO, self::NO],
-        'manager' => [self::OK, self::OK, self::OK, self::OK, self::MOVED, self::NO, self::NO, self::NO, self::NO, self::OK, self::OK, self::NO, self::OK],
-        'finance' => [self::OK, self::NO, self::NO, self::NO, self::NO, self::OK, self::OK, self::OK, self::OK, self::NO, self::OK, self::NO, self::NO],
-        'messenger' => [self::OK, self::OK, self::OK, self::OK, self::NO, self::NO, self::NO, self::NO, self::NO, self::NO, self::NO, self::NO, self::NO],
+        'director' => [self::OK, self::OK, self::OK, self::OK, self::MOVED, self::OK, self::MOVED, self::OK, self::OK, self::OK, self::OK, self::OK, self::OK, self::OK],
+        'attorney' => [self::OK, self::OK, self::OK, self::OK, self::MOVED, self::NO, self::MOVED, self::NO, self::NO, self::NO, self::NO, self::NO, self::NO, self::OK],
+        'candidate_attorney' => [self::OK, self::OK, self::OK, self::OK, self::MOVED, self::NO, self::NO, self::NO, self::NO, self::NO, self::NO, self::NO, self::NO, self::NO],
+        'legal_secretary' => [self::OK, self::OK, self::OK, self::OK, self::MOVED, self::NO, self::MOVED, self::NO, self::NO, self::NO, self::NO, self::NO, self::NO, self::NO],
+        'manager' => [self::OK, self::OK, self::OK, self::OK, self::MOVED, self::NO, self::NO, self::NO, self::NO, self::NO, self::OK, self::OK, self::NO, self::OK],
+        'finance' => [self::OK, self::NO, self::NO, self::NO, self::NO, self::OK, self::OK, self::OK, self::OK, self::OK, self::NO, self::OK, self::NO, self::NO],
+        'messenger' => [self::OK, self::OK, self::OK, self::OK, self::NO, self::NO, self::NO, self::NO, self::NO, self::NO, self::NO, self::NO, self::NO, self::NO],
     ];
 
     /** Roles that work on files are put on the matter; finance never is. */
@@ -81,6 +81,7 @@ class RoleAccessTest extends TestCase
             route('bills'),
             route('billing.matter', $this->matter),
             route('bill.show', $this->bill),
+            route('payments'),
             route('reports'),
             route('users'),
             route('reference-data'),
