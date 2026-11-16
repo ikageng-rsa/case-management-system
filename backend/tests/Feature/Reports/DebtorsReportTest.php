@@ -96,6 +96,67 @@ class DebtorsReportTest extends TestCase
             ->assertSee("← {$bill->matter->reference}");
     }
 
+    public function test_the_dashboard_shows_what_is_owed_to_those_who_may_see_the_report(): void
+    {
+        $this->issued('INV/2026/0001', '2026-11-06', 1000000, 400000);
+        $this->issued('INV/2026/0004', '2026-09-01', 500000, state: ['kind' => BillKind::BillOfCost]);
+
+        $this->actingAs($this->director)->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Owed to the firm')
+            ->assertSee('R 11 000.00');
+
+        $secretary = tap(User::factory()->create())->assignRole(RoleEnum::Secretary->value);
+
+        $this->actingAs($secretary)->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Open matters')
+            ->assertDontSee('Owed to the firm');
+    }
+
+    public function test_finance_gets_a_billing_dashboard_with_no_matter_widgets(): void
+    {
+        $this->issued('INV/2026/0001', '2026-11-06', 1000000, 400000);
+        $this->issued('INV/2026/0003', '2026-07-01', 300000);
+
+        $finance = tap(User::factory()->create())->assignRole(RoleEnum::Finance->value);
+        // Having once been on a matter, and taken off it, does not bring the matter pages back.
+        MatterAssignment::factory()->for(Matter::factory())->for($finance)->create()->unassign();
+
+        $this->actingAs($finance)->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Owed by clients')
+            ->assertSee('R 9 000.00')
+            ->assertSee('Longest outstanding')
+            ->assertSeeInOrder(['INV/2026/0003', 'INV/2026/0001'])
+            ->assertDontSee('Open matters')
+            ->assertDontSee('Matters needing attention')
+            ->assertDontSee('Recent narration')
+            ->assertDontSee('Search clients')
+            ->assertDontSee(route('matters'))
+            ->assertDontSee(route('documents'));
+
+        $this->actingAs($finance)->get(route('matters'))->assertForbidden();
+        $this->actingAs($finance)->get(route('documents'))->assertForbidden();
+    }
+
+    public function test_someone_on_no_matter_and_with_no_billing_is_told_so(): void
+    {
+        $candidate = tap(User::factory()->create())->assignRole(RoleEnum::CandidateAttorney->value);
+
+        $this->actingAs($candidate)->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('You have not been put on a matter yet.')
+            ->assertDontSee(route('matters'));
+
+        MatterAssignment::factory()->for(Matter::factory())->for($candidate)->create();
+
+        $this->actingAs($candidate->fresh())->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Open matters')
+            ->assertSee(route('matters'));
+    }
+
     public function test_an_empty_report_says_nothing_is_owed(): void
     {
         $this->actingAs($this->director)->get(route('reports', ['tab' => 'debtors']))
