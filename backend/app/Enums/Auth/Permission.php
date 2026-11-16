@@ -57,21 +57,16 @@ enum Permission: string
     case ManageTariffs = 'manage_tariffs';
     case ManageBillingSettings = 'manage_billing_settings';
     case ManageFirmSettings = 'manage_firm_settings';
-    /*
-     * The money on a matter is its own access, apart from the file. A billing
-     * permission applies on the matters a person may see, or on every matter,
-     * without the file, for someone who holds AccessAllBilling. Seeing amounts
-     * (the value of work, bills, payments, balances) is ViewBills; the others
-     * are things done, and none of them shows an amount by itself.
-     */
+    // Billing on every matter, without the file.
     case AccessAllBilling = 'access_all_billing';
+    // Seeing amounts: work value, bills, payments and balances.
     case ViewBills = 'view_bills';
     case ManageFeeAgreements = 'manage_fee_agreements';
     // Billing a client or the other side: drawing a bill, issuing it, and voiding one issued in error.
     case DraftBills = 'draft_bills';
     case IssueBills = 'issue_bills';
     case VoidBills = 'void_bills';
-    // Recording money received on an issued bill. Reversing one recorded in error is held apart, by fewer people.
+    // Recording money received on an issued bill, and reversing a payment recorded in error.
     case RecordPayments = 'record_payments';
     case ReversePayments = 'reverse_payments';
     // Seeing what is owed to the firm across the matters a person may see.

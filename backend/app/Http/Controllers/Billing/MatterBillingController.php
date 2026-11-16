@@ -17,12 +17,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
-/*
- * A matter's billing by itself, for someone who works on the money without the
- * file: its fee agreement, disbursements and bills, and nothing of its ledger,
- * documents, parties or diary. Someone who may open the file is sent to its
- * Billing tab, so a matter's billing has one place for each person.
- */
+/* A matter's billing without the rest of its file. */
 class MatterBillingController extends Controller
 {
     public function show(

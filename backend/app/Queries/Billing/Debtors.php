@@ -12,16 +12,10 @@ use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
-/*
- * What is owed to the firm: every issued bill with a balance, on the matters a
- * person may see, aged by how long ago it was issued. What clients owe on
- * statements and fee bills is kept apart from what the other side owes on bills
- * of cost, because different people owe them. Work not yet billed is never
- * counted here: nothing is owed until a bill is issued.
- */
+/* Issued bills with a balance, aged by days since issue; clients and bills of cost apart. */
 class Debtors
 {
-    /** The ageing columns, by the most days since issue each one holds; the last has no limit. */
+    /** Ageing columns by their upper limit in days; null has none. */
     public const BUCKETS = ['0–30 days' => 30, '31–60 days' => 60, '61–90 days' => 90, 'Over 90 days' => null];
 
     /** @return array<string, mixed> */

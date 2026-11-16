@@ -10,10 +10,6 @@ use App\Queries\Billing\Debtors;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 
-/*
- * The firm's reports, one tab each, shown to a person only when they may see
- * that report. Each report covers only the matters the person may see.
- */
 class ReportsController extends Controller
 {
     public function show(Request $request, Debtors $debtors): View

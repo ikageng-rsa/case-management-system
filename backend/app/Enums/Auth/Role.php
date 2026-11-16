@@ -74,7 +74,6 @@ enum Role: string
                 Permission::ViewAuditLog,
                 Permission::ExportAuditLog,
             ],
-            // The firm's money on every matter, without the files: no matter or client permissions.
             self::Finance => [
                 Permission::AccessAllBilling,
                 Permission::ViewBills,
