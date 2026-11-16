@@ -81,7 +81,8 @@
                 </x-slot:footerActions>
             </x-ui.sidebar>
 
-            <x-ui.header :search="$user->worksOnMatters()">
+            <x-ui.header :search="$user->worksOnMatters() || $user->can('view_clients') || $user->can('view_bills')"
+                :placeholder="$user->worksOnMatters() ? 'Search clients, references, narrations…' : 'Search…'">
                 {{-- What the system has told you. The list is fetched when the bell is opened. --}}
                 <div class="position-relative" x-data="notificationMenu({{ \Illuminate\Support\Js::from(['url' => url('/notifications'), 'unread' => $user->unreadNotifications()->count()]) }})"
                      x-on:click.outside="open = false" x-on:keydown.escape.window="open = false">
