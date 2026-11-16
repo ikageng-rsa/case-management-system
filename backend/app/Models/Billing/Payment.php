@@ -88,6 +88,24 @@ class Payment extends Model implements HasMedia
         return $this->reversed_at !== null;
     }
 
+    /** e.g. RCT-00042. */
+    public function receiptNumber(): string
+    {
+        return 'RCT-'.str_pad((string) $this->getKey(), 5, '0', STR_PAD_LEFT);
+    }
+
+    /** What was still owed on the bill once this payment was in, counting the payments up to it. */
+    public function balanceAfterCents(): int
+    {
+        $paid = (int) $this->bill->payments()->reorder()->live()
+            ->where(fn (Builder $query) => $query
+                ->where('received_on', '<', $this->received_on->toDateString())
+                ->orWhere(fn (Builder $same) => $same->whereDate('received_on', $this->received_on)->where('id', '<=', $this->getKey())))
+            ->sum('amount_cents');
+
+        return max(0, $this->bill->total_cents - $paid);
+    }
+
     /** Payments that still count towards what a bill has been paid. */
     public function scopeLive(Builder $query): void
     {

@@ -19,6 +19,8 @@ This invoice is now settled. Nothing more is owed on it.
 {{ $balance }} is still owed on this invoice.
 @endif
 
+Your receipt is attached.
+
 Regards,<br>
 {{ $firm }}
 </x-mail::message>

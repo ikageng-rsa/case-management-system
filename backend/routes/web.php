@@ -14,6 +14,7 @@ use App\Http\Controllers\Billing\DownloadBillPdfController;
 use App\Http\Controllers\Billing\DownloadDisbursementReceiptController;
 use App\Http\Controllers\Billing\DownloadFeeAgreementController;
 use App\Http\Controllers\Billing\DownloadPaymentProofController;
+use App\Http\Controllers\Billing\DownloadPaymentReceiptController;
 use App\Http\Controllers\Billing\DownloadTariffSourceController;
 use App\Http\Controllers\Billing\DownloadTariffTemplateController;
 use App\Http\Controllers\Billing\DraftFeeBillController;
@@ -118,6 +119,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/bills/{bill}/payments', [PaymentsController::class, 'store'])->name('bill.payments.store');
     Route::post('/payments/{payment}/reverse', ReversePaymentController::class)->name('payment.reverse');
     Route::get('/payments/{payment}/proof', DownloadPaymentProofController::class)->name('payment.proof');
+    Route::get('/payments/{payment}/receipt', DownloadPaymentReceiptController::class)->name('payment.receipt');
     Route::post('/bills/{bill}/lines', [BillLinesController::class, 'store'])->name('bill.lines.store');
     Route::patch('/bills/{bill}/lines/{line}', [BillLinesController::class, 'update'])->scopeBindings()->name('bill.lines.update');
     Route::delete('/bills/{bill}/lines/{line}', [BillLinesController::class, 'destroy'])->scopeBindings()->name('bill.lines.destroy');
