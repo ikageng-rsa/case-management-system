@@ -110,6 +110,7 @@ class DebtorsReportTest extends TestCase
 
         $this->actingAs($secretary)->get(route('dashboard'))
             ->assertOk()
+            ->assertSeeInOrder(['Overview', 'Dashboard', 'Practice', 'Matters'])
             ->assertSee('Open matters')
             ->assertDontSee('Owed to the firm');
     }
@@ -129,6 +130,8 @@ class DebtorsReportTest extends TestCase
             ->assertSee('R 9 000.00')
             ->assertSee('Longest outstanding')
             ->assertSeeInOrder(['INV/2026/0003', 'INV/2026/0001'])
+            ->assertSeeInOrder(['Overview', 'Dashboard', 'Billing', 'Bills'])
+            ->assertDontSee('Practice')
             ->assertDontSee('Open matters')
             ->assertDontSee('Matters needing attention')
             ->assertDontSee('Recent narration')

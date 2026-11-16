@@ -26,8 +26,12 @@
                 :initials="Str::initials($user->name, capitalize: true)"
                 :account-href="route('account')"
             >
-                <x-ui.nav-section>Practice</x-ui.nav-section>
+                <x-ui.nav-section>Overview</x-ui.nav-section>
                 <x-ui.nav-item :href="route('dashboard')" label="Dashboard" icon="layout-dashboard" :active="request()->routeIs('dashboard')" />
+
+                @if ($user->worksOnMatters() || $user->can('viewAny', \App\Models\Client\Client::class))
+                    <x-ui.nav-section>Practice</x-ui.nav-section>
+                @endif
                 @if ($user->worksOnMatters())
                     <x-ui.nav-item :href="route('matters')" label="Matters" icon="briefcase" :active="request()->routeIs('matter*')" />
                 @endif
