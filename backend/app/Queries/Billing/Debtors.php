@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Queries\Billing;
 
-use App\Enums\Auth\Permission;
 use App\Enums\Billing\BillKind;
 use App\Enums\Billing\BillStatus;
 use App\Models\Billing\Bill;
@@ -33,10 +32,7 @@ class Debtors
         $rows = Bill::query()
             ->where('status', BillStatus::Issued)
             ->whereColumn('paid_cents', '<', 'total_cents')
-            ->when(
-                ! $user->can(Permission::ViewAllMatters->value),
-                fn (Builder $query) => $query->whereHas('matter', fn (Builder $matters) => $matters->assignedTo($user)),
-            )
+            ->whereHas('matter', fn (Builder $matters) => $matters->withBillingReachedBy($user))
             ->with('matter.client')
             ->orderBy('issued_at')
             ->get()

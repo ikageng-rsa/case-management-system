@@ -22,9 +22,9 @@
             @if (request('from') === 'debtors' && auth()->user()->can('view_billing_reports'))
                 <a href="{{ route('reports', ['tab' => 'debtors']) }}" class="text-meta">← Debtors report</a>
                 <span class="text-meta">·</span>
-                <a href="{{ route('matter.show', [$bill->matter, 'tab' => 'billing']) }}" class="text-meta">{{ $bill->matter->reference }}</a>
+                <a href="{{ \App\Http\BillingHome::url($bill->matter) }}" class="text-meta">{{ $bill->matter->reference }}</a>
             @else
-                <a href="{{ route('matter.show', [$bill->matter, 'tab' => 'billing']) }}" class="text-meta">← {{ $bill->matter->reference }}</a>
+                <a href="{{ \App\Http\BillingHome::url($bill->matter) }}" class="text-meta">← {{ $bill->matter->reference }}</a>
             @endif
             <h1 class="mb-1">
                 {{ $bill->kind->label() }} {{ $bill->number }}
