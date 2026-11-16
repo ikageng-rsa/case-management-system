@@ -159,6 +159,33 @@ class PaymentsTest extends TestCase
             ->assertSee('R 5 000.00 owed on bills of cost');
     }
 
+    public function test_the_pdf_of_a_bill_says_what_has_been_paid_and_what_is_left(): void
+    {
+        $pdf = fn () => view('pdf.bill', ['bill' => $this->bill->refresh()->load(['matter', 'lines'])])->render();
+
+        $unpaid = $pdf();
+        $this->assertStringNotContainsString('Balance', $unpaid);
+        $this->assertStringContainsString('<h2>Payment</h2>', $unpaid);
+
+        $this->actingAs($this->director)->post(route('bill.payments.store', $this->bill), $this->payment());
+        $reversed = Payment::factory()->for($this->bill)->reversed()->create(['amount_cents' => 100000]);
+
+        $partPaid = $pdf();
+        $this->assertStringContainsString('<td colspan="3" class="money">Paid</td><td colspan="2" class="money">R 4 000.00</td>', $partPaid);
+        $this->assertStringContainsString('<td colspan="3" class="money">Balance</td><td colspan="2" class="money">R 6 000.00</td>', $partPaid);
+        $this->assertStringContainsString('<h2>Payment</h2>', $partPaid);
+        $this->assertStringNotContainsString('PAID</div>', $partPaid);
+
+        $this->actingAs($this->director)->post(route('bill.payments.store', $this->bill), $this->payment(['amount' => '6000']));
+
+        $settled = $pdf();
+        $this->assertStringContainsString('<div class="stamp paid">PAID</div>', $settled);
+        $this->assertStringContainsString('<td colspan="3" class="money">Balance</td><td colspan="2" class="money">R 0.00</td>', $settled);
+        $this->assertStringNotContainsString('<h2>Payment</h2>', $settled);
+
+        $this->actingAs($this->director)->get(route('bill.pdf', $this->bill))->assertOk()->assertHeader('content-type', 'application/pdf');
+    }
+
     public function test_a_payment_needs_its_proof_and_cannot_be_more_than_is_owed(): void
     {
         $this->actingAs($this->director)->post(route('bill.payments.store', $this->bill), $this->payment(['proof' => null]))
