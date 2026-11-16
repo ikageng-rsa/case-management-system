@@ -1,4 +1,5 @@
-export type NotificationType = 'diary_overdue' | 'diary_due_soon' | 'diary_assigned' | 'case_assigned';
+/** The `kind` the backend gives every notification. */
+export type NotificationType = 'matter_assigned' | 'matter_unassigned' | 'diary_assigned' | 'diary_due_soon' | 'diary_overdue';
 export type NotificationChannelKey = 'push' | 'sms' | 'email';
 
 /**
