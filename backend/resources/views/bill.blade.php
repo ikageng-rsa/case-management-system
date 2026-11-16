@@ -12,6 +12,7 @@
         $paymentTones = ['unpaid' => 'neutral', 'part_paid' => 'accent', 'settled' => 'success'];
         $paymentState = $bill->paymentState();
         $canRecordPayments = auth()->user()->can('recordPayments', $bill->matter);
+        $canReversePayments = auth()->user()->can('reversePayments', $bill->matter);
         $units = fn ($line) => rtrim(rtrim((string) $line->units, '0'), '.');
     @endphp
 
@@ -221,7 +222,7 @@
 
                         <div class="text-nowrap">
                             <span @class(['me-2', 'text-decoration-line-through text-secondary' => $payment->isReversed()])>{{ $rand($payment->amount_cents) }}</span>
-                            @if ($canRecordPayments && ! $payment->isReversed())
+                            @if ($canReversePayments && ! $payment->isReversed())
                                 <x-ui.button variant="ghost-danger" size="sm"
                                     x-data x-on:click="$dispatch('sheet-open', 'reverse-payment-{{ $payment->getKey() }}')">Reverse</x-ui.button>
                             @endif
@@ -286,7 +287,9 @@
                 </x-slot:footer>
             </x-ui.sheet>
         @endif
+    @endif
 
+    @if ($canReversePayments)
         @foreach ($bill->payments->reject->isReversed() as $payment)
             @php
                 $reverseBag = \App\Http\Requests\Billing\ReversePaymentRequest::bagFor($payment->getKey());
