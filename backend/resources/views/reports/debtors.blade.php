@@ -62,7 +62,7 @@
                                     <div class="text-meta">{{ $row['bill']->kind->label() }}</div>
                                 </td>
                                 <td class="text-nowrap">
-                                    <a href="{{ route('matter.show', [$row['bill']->matter, 'tab' => 'billing']) }}">{{ $row['bill']->matter->reference }}</a>
+                                    <a href="{{ \App\Http\BillingHome::url($row['bill']->matter) }}">{{ $row['bill']->matter->reference }}</a>
                                 </td>
                                 <td>{{ $row['bill']->addressee }}</td>
                                 <td class="text-nowrap">

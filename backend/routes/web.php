@@ -21,6 +21,7 @@ use App\Http\Controllers\Billing\FeeAgreementsController;
 use App\Http\Controllers\Billing\FinaliseFeeAgreementController;
 use App\Http\Controllers\Billing\IssueBillController;
 use App\Http\Controllers\Billing\MarkFeeAgreementFailedController;
+use App\Http\Controllers\Billing\MatterBillingController;
 use App\Http\Controllers\Billing\PaymentsController;
 use App\Http\Controllers\Billing\PublishTariffScheduleController;
 use App\Http\Controllers\Billing\ReversePaymentController;
@@ -105,6 +106,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/disbursements/{disbursement}/receipt', DownloadDisbursementReceiptController::class)->name('disbursement.receipt');
 
     // Statements of account and bills of cost on a matter.
+    Route::get('/bills', [BillsController::class, 'index'])->name('bills');
+    // A matter's billing by itself, for someone who works on the money without the file.
+    Route::get('/billing/matters/{matter}', [MatterBillingController::class, 'show'])->name('billing.matter');
     Route::post('/matters/{matter}/bills', [BillsController::class, 'store'])->name('matter.bills.store');
     Route::get('/bills/{bill}', [BillsController::class, 'show'])->name('bill.show');
     Route::delete('/bills/{bill}', [BillsController::class, 'destroy'])->name('bill.destroy');

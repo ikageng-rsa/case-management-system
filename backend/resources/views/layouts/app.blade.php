@@ -33,6 +33,13 @@
                     <x-ui.nav-item :href="route('clients')" label="Clients" icon="users" :active="request()->routeIs('client*', 'clients')"/>
                 @endcan
                 <x-ui.nav-item :href="route('documents')" label="Documents" icon="file-text" :active="request()->routeIs('documents')"/>
+
+                @canany(['view_bills', 'view_billing_reports'])
+                    <x-ui.nav-section>Billing</x-ui.nav-section>
+                @endcanany
+                @can('view_bills')
+                    <x-ui.nav-item :href="route('bills')" label="Bills" icon="receipt" :active="request()->routeIs('bills', 'bill.*', 'billing.*')"/>
+                @endcan
                 @can('view_billing_reports')
                     <x-ui.nav-item :href="route('reports')" label="Reports" icon="chart-bar" :active="request()->routeIs('reports')"/>
                 @endcan

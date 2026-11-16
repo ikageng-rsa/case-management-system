@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Billing;
 
+use App\Http\BillingHome;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Billing\FinaliseFeeAgreementRequest;
 use App\Models\Billing\FeeAgreement;
@@ -18,7 +19,7 @@ class FinaliseFeeAgreementController extends Controller
     {
         Gate::authorize('manageFees', $feeAgreement->matter);
 
-        $back = redirect()->route('matter.show', [$feeAgreement->matter, 'tab' => 'billing']);
+        $back = redirect()->to(BillingHome::url($feeAgreement->matter));
 
         try {
             $finalise->finalise($feeAgreement, $request->amountReceivedCents());
