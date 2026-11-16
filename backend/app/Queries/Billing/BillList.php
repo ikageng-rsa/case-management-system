@@ -10,17 +10,11 @@ use App\Models\User\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 
-/*
- * The bills on the matters whose billing a person works on, newest first: every
- * matter for someone who works on all billing, otherwise the matters they may
- * see. Narrowed by where a bill stands, and by its number, who it is addressed
- * to, or its matter.
- */
+/* The bills a person works on, newest first, filtered and searched. */
 class BillList
 {
     public const PER_PAGE = 25;
 
-    /** The lists a bill can be found under, in the order they are offered. */
     public const SHOWING = ['all' => 'All', 'draft' => 'Drafts', 'owed' => 'Owed', 'settled' => 'Settled', 'void' => 'Void'];
 
     /** @return array{bills: LengthAwarePaginator, counts: array<string, int>} */

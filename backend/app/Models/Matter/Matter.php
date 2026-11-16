@@ -315,10 +315,7 @@ class Matter extends Model implements HasMedia
         );
     }
 
-    /*
-     * The matters whose billing a person works on: every matter for someone who
-     * works on all billing or browses every file, otherwise the ones they carry.
-     */
+    /** The matters whose billing a person works on. */
     public function scopeWithBillingReachedBy(Builder $query, User $user): void
     {
         if ($user->can(Permission::AccessAllBilling->value) || $user->can(Permission::ViewAllMatters->value)) {

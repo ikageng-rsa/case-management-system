@@ -64,23 +64,18 @@ class MatterPolicy
         return $matter->isOpen() && $matter->isAssignedTo($user);
     }
 
-    /*
-     * The money on a matter is reached apart from its file: by someone who may
-     * see the file, or by someone who works on billing across every matter and
-     * never opens one. Each billing ability is a permission within that reach.
-     */
     protected function inBillingScope(User $user, Matter $matter): bool
     {
         return $user->can(Permission::AccessAllBilling->value) || $this->view($user, $matter);
     }
 
-    /** How the client is charged: recording, finalising or failing a fee agreement, and the costs paid out. */
+    /** Recording fee agreements and disbursements. */
     public function manageFees(User $user, Matter $matter): bool
     {
         return $user->can(Permission::ManageFeeAgreements->value) && $this->inBillingScope($user, $matter);
     }
 
-    /** Seeing the amounts on the matter: the value of its work, its bills, their payments and what is owed. */
+    /** Seeing the matter's amounts: work value, bills, payments and balances. */
     public function viewBills(User $user, Matter $matter): bool
     {
         return $user->can(Permission::ViewBills->value) && $this->inBillingScope($user, $matter);
@@ -110,7 +105,7 @@ class MatterPolicy
         return $user->can(Permission::RecordPayments->value) && $this->inBillingScope($user, $matter);
     }
 
-    /** Reversing a payment recorded in error: undoing is held apart from doing. */
+    /** Reversing a payment recorded in error. */
     public function reversePayments(User $user, Matter $matter): bool
     {
         return $user->can(Permission::ReversePayments->value) && $this->inBillingScope($user, $matter);
