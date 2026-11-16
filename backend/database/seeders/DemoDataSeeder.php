@@ -82,8 +82,8 @@ class DemoDataSeeder extends Seeder
     /** @return Collection<int, User> */
     protected function seedStaff(): Collection
     {
-        return collect([
-            ['name' => 'Thandiwe Mokoena', 'email' => 'director@demo.test', 'role' => RoleEnum::Director],
+        collect([
+            // ['name' => 'Thandiwe Mokoena', 'email' => 'director@demo.test', 'role' => RoleEnum::Director],
             ['name' => 'Sipho Ndlovu', 'email' => 'attorney@demo.test', 'role' => RoleEnum::Attorney],
             ['name' => 'Lerato Khumalo', 'email' => 'candidate@demo.test', 'role' => RoleEnum::CandidateAttorney],
             ['name' => 'Johan van Wyk', 'email' => 'secretary@demo.test', 'role' => RoleEnum::Secretary],
@@ -97,6 +97,8 @@ class DemoDataSeeder extends Seeder
 
             return $user;
         });
+
+        return User::all();
     }
 
     /** @return Collection<int, Client> */

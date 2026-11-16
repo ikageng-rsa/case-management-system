@@ -23,7 +23,7 @@ class CourtFactory extends Factory
         return [
             'tier' => CourtTier::High,
             'name' => CourtTier::High->courtName(),
-            'seat' => fake()->city(),
+            'seat' => $this->faker->city(),
         ];
     }
 

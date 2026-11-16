@@ -23,7 +23,7 @@ class MatterPartyFactory extends Factory
     {
         return [
             'matter_id' => Matter::factory(),
-            'name' => fake()->company(),
+            'name' => $this->faker->company(),
             'role' => PartyRole::Respondent,
             'representative' => null,
         ];

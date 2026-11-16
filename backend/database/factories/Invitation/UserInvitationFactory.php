@@ -20,8 +20,8 @@ class UserInvitationFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
+            'name' => $this->faker->name(),
+            'email' => $this->faker->unique()->safeEmail(),
             'roles' => [],
             'token_hash' => UserInvitation::hash(UserInvitation::newToken()),
             'lifetime_days' => 7,
