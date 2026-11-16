@@ -111,7 +111,17 @@
 <div class="card mb-3">
     <div class="card-body">
         <div class="d-flex align-items-center justify-content-between mb-3">
-            <h3 class="card-title text-meta text-uppercase mb-0">Bills</h3>
+            <div>
+                <h3 class="card-title text-meta text-uppercase mb-0">Bills</h3>
+                @if ($owedByClientCents > 0 || $owedByOtherSideCents > 0)
+                    <div class="text-meta">
+                        {{ collect([
+                            $owedByClientCents > 0 ? $rand($owedByClientCents).' owed by the client' : null,
+                            $owedByOtherSideCents > 0 ? $rand($owedByOtherSideCents).' owed on bills of cost' : null,
+                        ])->filter()->implode(' · ') }}
+                    </div>
+                @endif
+            </div>
 
             @can('draftBills', $matter)
                 <x-ui.button variant="primary" icon="plus" size="sm"

@@ -138,6 +138,27 @@ class PaymentsTest extends TestCase
         Mail::assertNothingSent();
     }
 
+    public function test_the_billing_tab_says_what_is_still_owed_by_the_client_and_on_bills_of_cost(): void
+    {
+        // R 10 000 statement with R 4 000 paid, a R 5 000 bill of cost, and a draft and a void bill that owe nothing.
+        Payment::factory()->for($this->bill)->create(['amount_cents' => 400000]);
+        $this->bill->update(['paid_cents' => 400000]);
+        Bill::factory()->for($this->matter)->issued('INV/2026/0008')->create(['kind' => BillKind::BillOfCost, 'total_cents' => 500000]);
+        Bill::factory()->for($this->matter)->create(['total_cents' => 900000]);
+        Bill::factory()->for($this->matter)->void()->create(['total_cents' => 700000]);
+
+        $this->actingAs($this->director)->get(route('matter.show', [$this->matter, 'tab' => 'billing']))
+            ->assertOk()
+            ->assertSee('R 6 000.00 owed by the client · R 5 000.00 owed on bills of cost');
+
+        $this->bill->update(['paid_cents' => 1000000]);
+
+        $this->actingAs($this->director)->get(route('matter.show', [$this->matter, 'tab' => 'billing']))
+            ->assertOk()
+            ->assertDontSee('owed by the client')
+            ->assertSee('R 5 000.00 owed on bills of cost');
+    }
+
     public function test_a_payment_needs_its_proof_and_cannot_be_more_than_is_owed(): void
     {
         $this->actingAs($this->director)->post(route('bill.payments.store', $this->bill), $this->payment(['proof' => null]))
