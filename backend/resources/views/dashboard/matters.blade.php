@@ -65,8 +65,14 @@
                     <tbody>
                         @forelse ($mattersNeedingAttention as $row)
                             <tr>
-                                <td class="text-meta">{{ $row['matter']->reference }}</td>
-                                <td>{{ $row['matter']->client?->full_name ?? '—' }}</td>
+                                <td class="text-meta"><a href="{{ route('matter.show', $row['matter']) }}">{{ $row['matter']->reference }}</a></td>
+                                <td>
+                                    @if ($row['matter']->client && auth()->user()->can('view', $row['matter']->client))
+                                        <a href="{{ route('client.show', $row['matter']->client) }}" class="text-reset">{{ $row['matter']->client->full_name }}</a>
+                                    @else
+                                        {{ $row['matter']->client?->full_name ?? '—' }}
+                                    @endif
+                                </td>
                                 <td><x-ui.stage-badge :tone="$row['tone']">{{ $row['label'] }}</x-ui.stage-badge></td>
                                 <td>{{ $row['nextDate']?->format('d M') ?? '—' }}</td>
                             </tr>
