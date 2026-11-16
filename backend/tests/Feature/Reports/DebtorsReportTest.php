@@ -79,6 +79,23 @@ class DebtorsReportTest extends TestCase
             ->assertDontSee('A draft');
     }
 
+    public function test_a_bill_opened_from_the_report_leads_back_to_the_report(): void
+    {
+        $bill = $this->issued('INV/2026/0001', '2026-11-06', 1000000);
+
+        $this->actingAs($this->director)->get(route('reports'))
+            ->assertSee(route('bill.show', [$bill, 'from' => 'debtors']));
+
+        $this->actingAs($this->director)->get(route('bill.show', [$bill, 'from' => 'debtors']))
+            ->assertOk()
+            ->assertSee('← Debtors report');
+
+        $this->actingAs($this->director)->get(route('bill.show', $bill))
+            ->assertOk()
+            ->assertDontSee('Debtors report')
+            ->assertSee("← {$bill->matter->reference}");
+    }
+
     public function test_an_empty_report_says_nothing_is_owed(): void
     {
         $this->actingAs($this->director)->get(route('reports', ['tab' => 'debtors']))
