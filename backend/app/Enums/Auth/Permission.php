@@ -73,4 +73,35 @@ enum Permission: string
     case ViewBillingReports = 'view_billing_reports';
     case ViewAuditLog = 'view_audit_log';
     case ExportAuditLog = 'export_audit_log';
+
+    /** The heading a permission is listed under in role management. */
+    public function group(): string
+    {
+        return match ($this) {
+            self::ViewAllMatters, self::CreateMatters, self::EditMatters, self::EditMatterDetails, self::CloseMatters,
+            self::ReopenMatters, self::ArchiveMatters, self::AssignMatters, self::TransferMatters => 'Matters',
+            self::ViewClients, self::CreateClients, self::EditClients, self::DeleteClients, self::MergeClients,
+            self::ViewClientContacts, self::ViewUnmaskedClientData, self::ViewPopiaConsents, self::RecordPopiaConsent,
+            self::WithdrawPopiaConsent, self::ExportClientData => 'Clients and personal information',
+            self::EditAnyNarrations, self::DeleteNarrations, self::DeleteDocuments, self::AmendLedgerEntries => 'Work on the file',
+            self::AccessAllBilling, self::ViewBills, self::ManageFeeAgreements, self::DraftBills, self::IssueBills,
+            self::VoidBills, self::RecordPayments, self::ReversePayments, self::ViewBillingReports => 'Billing',
+            self::ViewUsers, self::EditUsers, self::InviteUsers, self::DeactivateUsers, self::AssignRoles, self::ManageRoles => 'Users and roles',
+            self::ManageMatterTypes, self::ManageActivityTypes, self::ManageCourts, self::ManageTariffs,
+            self::ManageBillingSettings, self::ManageFirmSettings => 'Firm setup',
+            self::ViewAuditLog, self::ExportAuditLog => 'Audit',
+        };
+    }
+
+    /** @return array<string, list<self>> every permission under its heading */
+    public static function grouped(): array
+    {
+        $groups = array_fill_keys(['Matters', 'Clients and personal information', 'Work on the file', 'Billing', 'Users and roles', 'Firm setup', 'Audit'], []);
+
+        foreach (self::cases() as $permission) {
+            $groups[$permission->group()][] = $permission;
+        }
+
+        return $groups;
+    }
 }
