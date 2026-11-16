@@ -1,31 +1,38 @@
-import React, { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
 import ChipSelect from '@/components/ChipSelect';
-import { createCase } from '@/api/endpoint/cases.api';
+import { createCase, fetchCaseById, updateCase } from '@/api/endpoint/cases.api';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import { canSeeCase } from '@/utils/caseAccess';
 import { getApiErrorMessage } from '@/api/errors';
 import { useAppSelector } from '@/hooks/useAppDispatch';
 import { useAssignableUsers } from '@/hooks/useAssignableUsers';
 import { canEditRecords } from '@/constants/roles';
 import { isValidIsoDate } from '@/utils/validators';
 import { colors, spacing, typography } from '@/theme/index';
-import { CasePriority } from '@/models/index';
+import { CasePriority, CaseStatus } from '@/models/index';
+import { notifyError } from '@/utils/notify';
 
 const PRIORITIES: CasePriority[] = ['Low', 'Medium', 'High', 'Urgent'];
+const STATUSES: CaseStatus[] = ['Open', 'In Progress', 'On Hold', 'Closed', 'Archived'];
 
 interface CustomField {
   key: string;
   value: string;
 }
 
+/** Creates a case, or edits one when the route carries a `caseId` (More → Edit case). */
 export default function NewCaseScreen() {
   const router = useRouter();
+  const { caseId: editId, clientName: presetClient } = useLocalSearchParams<{ caseId?: string; clientName?: string }>();
+  const editing = Boolean(editId);
   const me = useAppSelector(state => state.auth.user);
   const users = useAssignableUsers();
 
-  const [clientName, setClientName] = useState('');
+  const [clientName, setClientName] = useState(presetClient ?? '');
   const [matterType, setMatterType] = useState('');
   const [practiceArea, setPracticeArea] = useState('');
   const [issueDescription, setIssueDescription] = useState('');
@@ -40,12 +47,65 @@ export default function NewCaseScreen() {
   const [priority, setPriority] = useState<CasePriority[]>(['Medium']);
   const [assignedUserIds, setAssignedUserIds] = useState<string[]>(me ? [me.id] : []);
   const [customFields, setCustomFields] = useState<CustomField[]>([]);
+  const [status, setStatus] = useState<CaseStatus[]>(['Open']);
   const [loading, setLoading] = useState(false);
+  const [loaded, setLoaded] = useState(!editing);
+  const [missing, setMissing] = useState(false);
+
+  // Edit mode: fill the form from the saved case (network first, on-device copy when offline).
+  useEffect(() => {
+    if (!editId) {
+      return;
+    }
+    let active = true;
+    fetchCaseById(editId)
+      .then(c => {
+        if (!active) {
+          return;
+        }
+        if (!canSeeCase(c, me)) {
+          setMissing(true);
+          return;
+        }
+        setClientName(c.clientName ?? '');
+        setMatterType(c.matterType ?? '');
+        setPracticeArea(c.practiceArea ?? '');
+        setIssueDescription(c.issueDescription ?? '');
+        setCourtCaseNumber(c.courtCaseNumber ?? '');
+        setJurisdiction(c.jurisdiction ?? '');
+        setOpposingParty(c.opposingParty ?? '');
+        setOpposingAttorney(c.opposingAttorney ?? '');
+        setOpenedDate((c.openedDate ?? '').slice(0, 10));
+        setNextCourtDate((c.nextCourtDate ?? '').slice(0, 10));
+        setEstimatedValue(c.estimatedValue !== undefined && c.estimatedValue !== null ? String(c.estimatedValue) : '');
+        setNotes(c.notes ?? '');
+        setPriority([c.priority ?? 'Medium']);
+        setStatus([c.status ?? 'Open']);
+        setAssignedUserIds(c.assignedUserIds ?? []);
+        setCustomFields(Object.entries(c.customFields ?? {}).map(([key, value]) => ({ key, value })));
+      })
+      .catch(() => active && setMissing(true))
+      .finally(() => active && setLoaded(true));
+    return () => {
+      active = false;
+    };
+  }, [editId, me]);
+
+  if (!loaded) {
+    return <LoadingSpinner />;
+  }
+  if (missing) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.note}>This case is not available to edit.</Text>
+      </View>
+    );
+  }
 
   if (me && !canEditRecords(me.role)) {
     return (
       <View style={styles.container}>
-        <Text style={styles.note}>Your role can view cases but not create them.</Text>
+        <Text style={styles.note}>Your role can view cases but not create or edit them.</Text>
       </View>
     );
   }
@@ -55,16 +115,16 @@ export default function NewCaseScreen() {
 
   const submit = async () => {
     if (!clientName.trim() || !matterType.trim() || !issueDescription.trim()) {
-      Alert.alert('Missing info', 'Client name, matter type and a description of the issue are required.');
+      notifyError('Missing info', 'Client name, matter type and a description of the issue are required.');
       return;
     }
     if (!isValidIsoDate(openedDate) || (nextCourtDate && !isValidIsoDate(nextCourtDate))) {
-      Alert.alert('Invalid date', 'Use the format YYYY-MM-DD (e.g. 2026-11-05).');
+      notifyError('Invalid date', 'Use the format YYYY-MM-DD (e.g. 2026-11-05).');
       return;
     }
     const value = estimatedValue ? Number(estimatedValue.replace(/[\s,]/g, '')) : undefined;
     if (value !== undefined && Number.isNaN(value)) {
-      Alert.alert('Invalid amount', 'Estimated value must be a number.');
+      notifyError('Invalid amount', 'Estimated value must be a number.');
       return;
     }
 
@@ -73,6 +133,29 @@ export default function NewCaseScreen() {
       const custom = Object.fromEntries(
         customFields.filter(f => f.key.trim() && f.value.trim()).map(f => [f.key.trim(), f.value.trim()]),
       );
+      if (editId) {
+        const changes: Record<string, unknown> = {
+          clientName: clientName.trim(),
+          matterType: matterType.trim(),
+          practiceArea: practiceArea.trim() || null,
+          issueDescription: issueDescription.trim() || null,
+          courtCaseNumber: courtCaseNumber.trim() || null,
+          jurisdiction: jurisdiction.trim() || null,
+          opposingParty: opposingParty.trim() || null,
+          opposingAttorney: opposingAttorney.trim() || null,
+          openedDate,
+          nextCourtDate: nextCourtDate || null,
+          estimatedValue: value ?? null,
+          notes: notes.trim() || null,
+          priority: priority[0] ?? 'Medium',
+          status: status[0] ?? 'Open',
+          assignedUserIds,
+          customFields: custom,
+        };
+        await updateCase(editId, changes as Partial<import('@/models/index').Case>);
+        router.back();
+        return;
+      }
       const created = await createCase({
         clientName: clientName.trim(),
         matterType: matterType.trim(),
@@ -93,7 +176,7 @@ export default function NewCaseScreen() {
       });
       router.replace({ pathname: '/cases/[caseId]', params: { caseId: created.id } });
     } catch (e) {
-      Alert.alert('Could not create case', getApiErrorMessage(e, 'Please try again.'));
+      notifyError(editing ? 'Could not save changes' : 'Could not create case', getApiErrorMessage(e, 'Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -114,6 +197,7 @@ export default function NewCaseScreen() {
         style={styles.multiline}
       />
       <ChipSelect label="Priority" options={PRIORITIES.map(p => ({ value: p, label: p }))} selected={priority} onChange={setPriority} />
+      {editing ? <ChipSelect label="Status" options={STATUSES.map(v => ({ value: v, label: v }))} selected={status} onChange={setStatus} /> : null}
 
       <Text style={styles.section}>Court & parties</Text>
       <Input label="Court case number" value={courtCaseNumber} onChangeText={setCourtCaseNumber} />
@@ -137,7 +221,7 @@ export default function NewCaseScreen() {
 
       <Text style={styles.section}>Custom fields</Text>
       {customFields.map((field, index) => (
-        <View key={field.key} style={styles.customRow}>
+        <View key={index} style={styles.customRow}>
           <View style={styles.customCol}>
             <Input label="Name" value={field.key} onChangeText={v => updateCustom(index, { key: v })} />
           </View>
@@ -154,7 +238,7 @@ export default function NewCaseScreen() {
       />
 
       <Input label="Notes" value={notes} onChangeText={setNotes} multiline numberOfLines={3} style={styles.multiline} />
-      <Button label="Create case" onPress={submit} loading={loading} />
+      <Button label={editing ? 'Save changes' : 'Create case'} onPress={submit} loading={loading} />
     </ScrollView>
   );
 }
