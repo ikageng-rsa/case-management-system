@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Billing;
 
 use App\Enums\Billing\BillKind;
+use App\Enums\Billing\FirmAccount;
+use App\Enums\Billing\PaymentMethod;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Billing\StoreBillRequest;
 use App\Models\Billing\Bill;
@@ -47,12 +49,14 @@ class BillsController extends Controller
     {
         Gate::authorize('viewBills', $bill->matter);
 
-        $bill->load(['matter.client', 'lines.user', 'lines.overriddenBy', 'draftedBy', 'issuedBy', 'voidedBy']);
+        $bill->load(['matter.client', 'lines.user', 'lines.overriddenBy', 'draftedBy', 'issuedBy', 'voidedBy', 'payments.recordedBy', 'payments.reversedBy', 'payments.media']);
 
         return view('bill', [
             'bill' => $bill,
             // What a draft can still take: the matter's work and costs not yet billed on a bill of its kind.
             'unbilled' => $bill->isDraft() ? $unbilled->for($bill->matter, $bill->kind) : null,
+            'paymentMethods' => PaymentMethod::cases(),
+            'firmAccounts' => FirmAccount::cases(),
         ]);
     }
 

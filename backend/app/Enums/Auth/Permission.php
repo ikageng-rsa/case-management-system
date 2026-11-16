@@ -62,6 +62,8 @@ enum Permission: string
     case DraftBills = 'draft_bills';
     case IssueBills = 'issue_bills';
     case VoidBills = 'void_bills';
+    // Recording money received on an issued bill, and reversing a payment recorded in error.
+    case RecordPayments = 'record_payments';
     case ViewAuditLog = 'view_audit_log';
     case ExportAuditLog = 'export_audit_log';
 }

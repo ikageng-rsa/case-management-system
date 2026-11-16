@@ -105,6 +105,7 @@
 
 @php
     $billTones = ['draft' => 'accent', 'issued' => 'success', 'void' => 'neutral'];
+    $paymentTones = ['unpaid' => 'neutral', 'part_paid' => 'accent', 'settled' => 'success'];
 @endphp
 
 <div class="card mb-3">
@@ -128,10 +129,18 @@
                             {{ $bill->number ?? 'Draft' }}
                         @endcan
                         <x-ui.stage-badge :tone="$billTones[$bill->status->value]" class="ms-2">{{ $bill->status->label() }}</x-ui.stage-badge>
+                        @if ($bill->paymentState())
+                            <x-ui.stage-badge :tone="$paymentTones[$bill->paymentState()->value]" class="ms-1">{{ $bill->paymentState()->label() }}</x-ui.stage-badge>
+                        @endif
                     </div>
                     <div class="text-meta">{{ $bill->kind->label() }} · {{ $bill->addressee }} · {{ ($bill->issued_at ?? $bill->created_at)->format('j M Y') }}</div>
                 </div>
-                <span class="text-nowrap">{{ $rand($bill->total_cents) }}</span>
+                <div class="text-end text-nowrap">
+                    <div>{{ $rand($bill->total_cents) }}</div>
+                    @if ($bill->paymentState() && $bill->paid_cents > 0 && $bill->balanceCents() > 0)
+                        <div class="text-meta">{{ $rand($bill->balanceCents()) }} still owed</div>
+                    @endif
+                </div>
             </div>
         @empty
             <p class="text-secondary mb-0">No bills on this matter yet.</p>
