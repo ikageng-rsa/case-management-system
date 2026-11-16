@@ -24,7 +24,7 @@ class ClientContactFactory extends Factory
         return [
             'client_id' => Client::factory(),
             'kind' => ContactKind::Email,
-            'value' => fake()->unique()->safeEmail(),
+            'value' => $this->faker->unique()->safeEmail(),
             'is_primary' => false,
         ];
     }
@@ -33,7 +33,7 @@ class ClientContactFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'kind' => ContactKind::Mobile,
-            'value' => fake()->unique()->numerify('0#########'),
+            'value' => $this->faker->unique()->numerify('0#########'),
         ]);
     }
 

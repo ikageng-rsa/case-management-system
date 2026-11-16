@@ -22,7 +22,7 @@ class MatterFactory extends Factory
      */
     public function definition(): array
     {
-        $sequence = fake()->unique()->numberBetween(1, 99999);
+        $sequence = $this->faker->unique()->numberBetween(1, 99999);
 
         return [
             'client_id' => Client::factory(),
@@ -31,7 +31,7 @@ class MatterFactory extends Factory
             'reference' => "CIV/{$sequence}/".now()->year,
             'sequence_number' => $sequence,
             'opened_year' => now()->year,
-            'title' => fake()->sentence(4),
+            'title' => $this->faker->sentence(4),
             'instructed_at' => now(),
             'prescribes_at' => now()->addMonths(36),
         ];

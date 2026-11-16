@@ -22,10 +22,10 @@ class ClientContactPersonFactory extends Factory
     {
         return [
             'client_id' => Client::factory()->entity(),
-            'name' => fake()->name(),
-            'role' => fake()->jobTitle(),
-            'mobile' => fake()->unique()->numerify('0#########'),
-            'email' => fake()->unique()->safeEmail(),
+            'name' => $this->faker->name(),
+            'role' => $this->faker->jobTitle(),
+            'mobile' => $this->faker->unique()->numerify('0#########'),
+            'email' => $this->faker->unique()->safeEmail(),
             'is_primary' => false,
         ];
     }
