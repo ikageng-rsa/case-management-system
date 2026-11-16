@@ -49,6 +49,7 @@ use App\Http\Controllers\Reference\CourtController;
 use App\Http\Controllers\Reference\MatterTypeController;
 use App\Http\Controllers\Reference\ReferenceDataController;
 use App\Http\Controllers\ReportsController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\Settings\FirmSettingsController;
 use App\Http\Controllers\Settings\InvoiceSettingsController;
 use App\Http\Controllers\Settings\SettingsController;
@@ -209,6 +210,8 @@ Route::middleware('auth')->group(function () {
         Route::delete('/activity-types/{activityType}', [ActivityTypeController::class, 'destroy'])->name('activity-type.destroy');
         Route::post('/activity-types/{activityType}/restore', [ActivityTypeController::class, 'restore'])->withTrashed()->name('activity-type.restore');
     });
+
+    Route::get('/search', SearchController::class)->name('search');
 
     // What is owed to the firm, on the matters a person may see.
     Route::get('/reports', [ReportsController::class, 'show'])->name('reports');
