@@ -261,6 +261,16 @@
                     hint="PDF or image, up to 5 MB."
                     :error="$paymentErrors->first('proof')" />
 
+                @unless ($bill->kind === \App\Enums\Billing\BillKind::BillOfCost)
+                    <div class="form-check">
+                        <input type="hidden" name="email_client" value="0">
+                        <input class="form-check-input" type="checkbox" id="payment_email_client" name="email_client" value="1"
+                            @checked($paymentErrors->any() ? old('email_client') : true)>
+                        <label class="form-check-label" for="payment_email_client">Email the client</label>
+                        <div class="form-hint">Tells them the amount received and what is still owed, at their email address on file.</div>
+                    </div>
+                @endunless
+
                 <x-slot:footer>
                     <div class="d-flex align-items-center justify-content-between">
                         <x-ui.button variant="outline-secondary" size="sm" x-on:click="close()">Cancel</x-ui.button>

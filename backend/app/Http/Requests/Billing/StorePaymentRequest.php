@@ -37,6 +37,7 @@ class StorePaymentRequest extends FormRequest
             'reference' => ['nullable', 'string', 'max:255'],
             // A bank confirmation or a slip, so far below the limit for documents filed on a matter.
             'proof' => ['required', 'file', 'max:5120', new AllowedDocument],
+            'email_client' => ['nullable', 'boolean'],
         ];
     }
 
@@ -56,6 +57,11 @@ class StorePaymentRequest extends FormRequest
             'account' => FirmAccount::from($this->validated('account')),
             'reference' => $this->validated('reference'),
         ];
+    }
+
+    public function emailClient(): bool
+    {
+        return $this->boolean('email_client');
     }
 
     public function proof(): UploadedFile
