@@ -24,6 +24,25 @@ export interface Darzation {
   overdue: boolean;
   reminderSentAt?: string; // when the overdue SMS/push reminder last fired, so we don't re-notify every poll
   visibleToRoles: UserRole[];
+  // --- from the v1 API (diary-entries) ---
+  /** What has to be done, as written on the entry. `title` and `nextAction` show the same words. */
+  body?: string;
+  /** The exact due moment (ISO). `dueDate` is its calendar day. */
+  dueAt?: string;
+  /** True once the due time has been reached (an entry can only be marked done from then on). */
+  isDue?: boolean;
+  assigneeId?: string;
+  assigneeName?: string;
+  /** Minutes before `dueAt` that the reminder goes out; null = no reminder. */
+  remindBeforeMinutes?: number | null;
+  reminderLabel?: string;
+  completedAt?: string | null;
+  completedById?: string | null;
+  completedByName?: string;
+  /** The narration (work done) this entry is linked to, if any. */
+  narrationId?: string | null;
+  matterReference?: string;
+  matterTitle?: string;
   /** Set only on records created/edited offline that the server hasn't confirmed yet (never sent to the API). */
   syncState?: 'pending' | 'failed';
 }

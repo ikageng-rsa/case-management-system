@@ -12,7 +12,15 @@ export interface ActivityType {
   /** Quantities are entered in multiples of this (e.g. 15 minutes). */
   increment: number;
   requiresCourt: boolean;
+  /**
+   * True when the time taken is recorded on top of the quantity (a kilometre or page count, say), so the API
+   * also wants `time_taken` and `time_unit` on the narration.
+   */
+  timeOnTop: boolean;
 }
+
+/** The unit the time taken is typed in. The server stores it in minutes. */
+export type TimeUnit = 'minutes' | 'hours';
 
 export interface Narration {
   id: string;
@@ -34,6 +42,8 @@ export interface Narration {
   billableUnits?: number;
   /** Minutes, when the activity is timed; 0 otherwise (used for time totals). */
   timeSpentMinutes: number;
+  /** Time taken in minutes, for activities that record time on top of their quantity. */
+  timeTakenMinutes?: number;
   billable: boolean;
   tariffCode?: string;
   // CaseDocument ids uploaded specifically to this narration (not just the parent case).
