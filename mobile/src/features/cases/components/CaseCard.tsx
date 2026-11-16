@@ -4,7 +4,7 @@ import Card from '@/components/Card';
 import CaseStatusBadge from './CaseStatusBadge';
 import PriorityBadge from '@/components/PriorityBadge';
 import SyncBadge from '@/components/SyncBadge';
-import { colors, spacing, typography } from '@/theme/index';
+import { colors, fontFamily, spacing, typography } from '@/theme/index';
 import { Case } from '@/models/index';
 
 interface CaseCardProps {
@@ -12,7 +12,7 @@ interface CaseCardProps {
   onPress: () => void;
 }
 
-export default function CaseCard({ item, onPress }:Readonly<CaseCardProps>) {
+export default function CaseCard({ item, onPress }: CaseCardProps) {
   return (
     <Pressable onPress={onPress}>
       <Card>
@@ -20,8 +20,8 @@ export default function CaseCard({ item, onPress }:Readonly<CaseCardProps>) {
           <Text style={styles.fileRef}>{item.fileReference}</Text>
           <CaseStatusBadge status={item.status} />
         </View>
-        <Text style={styles.client}>{item.clientName}</Text>
-        <Text style={styles.matterType}>{item.matterType}</Text>
+        <Text style={styles.client}>{item.title || item.clientName}</Text>
+        <Text style={styles.matterType}>{item.title ? `${item.clientName} · ${item.matterType}` : item.matterType}</Text>
         {item.priority ? <PriorityBadge priority={item.priority} /> : null}
         <SyncBadge state={item.syncState} />
       </Card>
@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
   fileRef: {
     ...typography.caption,
     color: colors.textSecondary,
-    fontWeight: '600',
+    fontFamily: fontFamily.sansSemibold,
   },
   client: {
     ...typography.h2,
