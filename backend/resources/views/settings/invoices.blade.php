@@ -1,4 +1,4 @@
-{{-- How bills look when printed, and how a statement asks to be paid. --}}
+{{-- How bills look when printed, and how a statement or fee bill asks to be paid. --}}
 @php
     $bag = 'invoice_settings';
     $value = fn (string $field, mixed $default) => $errors->getBag($bag)->any() ? old($field, $default) : $default;
@@ -10,7 +10,7 @@
     <div class="card-header d-flex align-items-center justify-content-between">
         <div>
             <h3 class="card-title mb-0">Invoices</h3>
-            <p class="text-meta mb-0">How bills look when printed. Statements to clients also say how to pay.</p>
+            <p class="text-meta mb-0">How bills look when printed. Statements and fee bills to clients also say how to pay.</p>
         </div>
 
         <x-ui.button variant="ghost-secondary" size="sm"
@@ -30,7 +30,7 @@
             </div>
         </div>
 
-        <h4 class="text-meta text-uppercase mb-2">Payment, on statements</h4>
+        <h4 class="text-meta text-uppercase mb-2">Payment, on statements and fee bills</h4>
 
         <div class="mb-3">
             <div class="mb-0">{{ $invoices->paymentTerms ?? '—' }}</div>
@@ -45,7 +45,7 @@
                     <div class="mb-0">Branch code {{ $invoices->branchCode }}</div>
                 @endif
             @else
-                <div class="mb-0 text-secondary">No account given, so statements do not say where to pay.</div>
+                <div class="mb-0 text-secondary">No account given, so statements and fee bills do not say where to pay.</div>
             @endif
             <div class="text-meta">Account to pay to</div>
         </div>
@@ -89,7 +89,7 @@
         </div>
     </div>
 
-    <h4 class="text-meta text-uppercase mt-4 mb-2">Payment, printed on statements</h4>
+    <h4 class="text-meta text-uppercase mt-4 mb-2">Payment, printed on statements and fee bills</h4>
 
     <div class="mb-3">
         <label class="form-label form-label-mono" for="invoice_terms">Terms</label>

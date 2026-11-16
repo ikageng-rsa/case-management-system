@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 #[Fillable([
     'kind', 'position', 'occurred_on', 'item', 'description', 'units', 'rate_cents', 'fee_cents', 'disbursement_cents',
-    'narration_id', 'disbursement_id', 'user_id', 'original_amount_cents', 'claim',
+    'narration_id', 'disbursement_id', 'fee_agreement_id', 'user_id', 'original_amount_cents', 'claim',
 ])]
 class BillLine extends Model
 {
@@ -75,6 +75,12 @@ class BillLine extends Model
     public function disbursement(): BelongsTo
     {
         return $this->belongsTo(Disbursement::class);
+    }
+
+    /** The finalised agreement a fee bill's line charges the share of. */
+    public function feeAgreement(): BelongsTo
+    {
+        return $this->belongsTo(FeeAgreement::class);
     }
 
     /** Whose time a time-on-top line charges for. */

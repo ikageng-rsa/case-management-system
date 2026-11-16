@@ -86,7 +86,7 @@ class SettingsTest extends TestCase
         $this->actingAs($user)->get(route('settings', ['tab' => 'invoices']))
             ->assertOk()
             ->assertSee('Classic')->assertSee('Modern')->assertSee('Minimal')
-            ->assertSee('No account given, so statements do not say where to pay.');
+            ->assertSee('No account given, so statements and fee bills do not say where to pay.');
 
         $this->actingAs($user)->put(route('settings.invoices.update'), [
             'theme' => 'modern',

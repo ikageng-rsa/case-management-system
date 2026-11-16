@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\UploadedFile;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -60,6 +61,17 @@ class FeeAgreement extends Model implements HasMedia
     public function recordedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'recorded_by')->withTrashed();
+    }
+
+    /** The lines of the fee bills drawn from the agreement, voided ones included. */
+    public function billLines(): HasMany
+    {
+        return $this->hasMany(BillLine::class);
+    }
+
+    public function isFinalised(): bool
+    {
+        return $this->status === FeeAgreementStatus::Finalised;
     }
 
     public function registerMediaCollections(): void

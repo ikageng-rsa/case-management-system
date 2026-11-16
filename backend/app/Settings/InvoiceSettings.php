@@ -9,7 +9,8 @@ use Spatie\LaravelSettings\Settings;
 
 /*
  * How the firm's bills look when printed, and how a client is asked to pay a
- * statement: the terms and the account to pay into, quoting the bill's number.
+ * statement or a fee bill: the terms and the account to pay into, quoting the
+ * bill's number.
  */
 class InvoiceSettings extends Settings
 {

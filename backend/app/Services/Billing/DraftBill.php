@@ -8,7 +8,6 @@ use App\Enums\Billing\BillKind;
 use App\Enums\Billing\BillStatus;
 use App\Enums\Billing\FeeAgreementKind;
 use App\Enums\Billing\TariffScale;
-use App\Enums\Client\ContactKind;
 use App\Models\Billing\Bill;
 use App\Models\Matter\Matter;
 use App\Models\User\User;
@@ -94,9 +93,8 @@ class DraftBill
     /** @param  list<array<string, mixed>>  $lines */
     /*
      * A statement goes to the client, so without an address given it is sent to
-     * the one on file: the postal address, or else the physical one, primary
-     * first. Read here rather than shown on the form, so drawing a bill does not
-     * reveal an address to someone who may only see it masked.
+     * the one on file. Read here as well as offered on the form, because the
+     * form shows it only to someone cleared to see client data unmasked.
      */
     protected function clientAddress(Matter $matter, BillKind $kind): ?string
     {
@@ -104,11 +102,7 @@ class DraftBill
             return null;
         }
 
-        return $matter->client->contacts()
-            ->whereIn('kind', [ContactKind::Postal, ContactKind::Physical])
-            ->get()
-            ->sortBy(fn ($contact) => [$contact->kind === ContactKind::Postal ? 0 : 1, $contact->is_primary ? 0 : 1])
-            ->first()?->value;
+        return $matter->client->addressOnFile();
     }
 
     protected function save(Matter $matter, BillKind $kind, string $addressee, ?string $address, User $draftedBy, ?TariffScale $scale, ?CarbonInterface $from, ?CarbonInterface $to, array $lines): Bill

@@ -6,6 +6,7 @@
     @php
         $rand = fn (int $cents) => 'R '.number_format($cents / 100, 2, '.', ' ');
         $editable = $bill->isDraft() && auth()->user()->can('draftBills', $bill->matter);
+        $isFeeBill = $bill->kind === \App\Enums\Billing\BillKind::AgreementFee;
         $percent = rtrim(rtrim(number_format($bill->drawing_fee_percent_hundredths / 100, 2, '.', ''), '0'), '.');
         $tones = ['draft' => 'accent', 'issued' => 'success', 'void' => 'neutral'];
         $units = fn ($line) => rtrim(rtrim((string) $line->units, '0'), '.');
@@ -34,11 +35,13 @@
 
             @if ($bill->isDraft())
                 @can('draftBills', $bill->matter)
-                    <x-ui.button variant="outline-secondary" icon="plus" size="sm"
-                        x-data x-on:click="$dispatch('sheet-open', 'add-work')">Add work</x-ui.button>
+                    @unless ($isFeeBill)
+                        <x-ui.button variant="outline-secondary" icon="plus" size="sm"
+                            x-data x-on:click="$dispatch('sheet-open', 'add-work')">Add work</x-ui.button>
+                    @endunless
 
                     <form method="POST" action="{{ route('bill.destroy', $bill) }}"
-                        data-confirm="Delete this draft? The work and disbursements on it become free to bill again."
+                        data-confirm="{{ $isFeeBill ? 'Delete this draft? The fee can be billed again from the agreement.' : 'Delete this draft? The work and disbursements on it become free to bill again.' }}"
                         data-confirm-title="Delete draft" data-confirm-action="Delete" data-confirm-tone="danger" data-confirm-icon="trash">
                         @csrf
                         @method('DELETE')
@@ -117,13 +120,15 @@
                                 <td class="text-end text-nowrap">
                                     <x-ui.button variant="ghost-secondary" size="sm" icon="pencil" aria-label="Change the amount" title="Change the amount"
                                         x-data x-on:click="$dispatch('sheet-open', 'edit-line-{{ $line->getKey() }}')" />
-                                    <form method="POST" action="{{ route('bill.lines.destroy', [$bill, $line]) }}" class="d-inline"
-                                        data-confirm="Take “{{ Str::limit($line->description, 60) }}” off this draft? Its work stays unbilled for a later bill."
-                                        data-confirm-title="Remove line" data-confirm-action="Remove" data-confirm-tone="danger" data-confirm-icon="trash">
-                                        @csrf
-                                        @method('DELETE')
-                                        <x-ui.button type="submit" variant="ghost-danger" size="sm" icon="trash" aria-label="Remove the line" title="Remove the line" />
-                                    </form>
+                                    @unless ($isFeeBill)
+                                        <form method="POST" action="{{ route('bill.lines.destroy', [$bill, $line]) }}" class="d-inline"
+                                            data-confirm="Take “{{ Str::limit($line->description, 60) }}” off this draft? Its work stays unbilled for a later bill."
+                                            data-confirm-title="Remove line" data-confirm-action="Remove" data-confirm-tone="danger" data-confirm-icon="trash">
+                                            @csrf
+                                            @method('DELETE')
+                                            <x-ui.button type="submit" variant="ghost-danger" size="sm" icon="trash" aria-label="Remove the line" title="Remove the line" />
+                                        </form>
+                                    @endunless
                                 </td>
                             @endif
                         </tr>
@@ -136,12 +141,14 @@
                         <td></td>
                         @if ($editable) <td></td> @endif
                     </tr>
-                    <tr>
-                        <td colspan="3" class="text-end">Drawing fee ({{ $percent }}%)</td>
-                        <td class="text-end text-nowrap">{{ $rand($bill->drawing_fee_cents) }}</td>
-                        <td></td>
-                        @if ($editable) <td></td> @endif
-                    </tr>
+                    @unless ($isFeeBill)
+                        <tr>
+                            <td colspan="3" class="text-end">Drawing fee ({{ $percent }}%)</td>
+                            <td class="text-end text-nowrap">{{ $rand($bill->drawing_fee_cents) }}</td>
+                            <td></td>
+                            @if ($editable) <td></td> @endif
+                        </tr>
+                    @endunless
                     <tr>
                         <td colspan="3" class="text-end">Disbursements</td>
                         <td></td>
@@ -180,7 +187,7 @@
         @endforeach
     @endif
 
-    @if ($editable)
+    @if ($editable && ! $isFeeBill)
         @php
             $addErrors = $errors->getBag('bill_add');
             $ratesOnBill = $bill->lines->where('kind', \App\Enums\Billing\BillLineKind::TimeOnTop)->pluck('rate_cents', 'user_id');

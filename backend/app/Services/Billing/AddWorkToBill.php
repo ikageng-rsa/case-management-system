@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Billing;
 
+use App\Enums\Billing\BillKind;
 use App\Enums\Billing\BillLineKind;
 use App\Models\Billing\Bill;
 use App\Models\Billing\BillLine;
@@ -35,6 +36,10 @@ class AddWorkToBill
     {
         if (! $bill->isDraft()) {
             throw new BillRefused(['Only a draft can be changed.']);
+        }
+
+        if ($bill->kind === BillKind::AgreementFee) {
+            throw new BillRefused(['A fee bill charges the agreed share only. Work is billed by statement or bill of cost.']);
         }
 
         ['narrations' => $narrations, 'disbursements' => $disbursements] = $this->unbilled->for($bill->matter, $bill->kind);
