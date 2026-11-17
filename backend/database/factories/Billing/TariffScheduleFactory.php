@@ -20,8 +20,8 @@ class TariffScheduleFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => 'Magistrates\' Courts tariff '.$this->faker->unique()->year(),
-            'effective_from' => $this->faker->unique()->dateTimeBetween('-5 years', '-1 day')->format('Y-m-d'),
+            'name' => 'Magistrates\' Courts tariff '.fake()->unique()->year(),
+            'effective_from' => fake()->unique()->dateTimeBetween('-5 years', '-1 day')->format('Y-m-d'),
             'published_at' => now(),
         ];
     }

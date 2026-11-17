@@ -23,10 +23,10 @@ class ClientFactory extends Factory
     {
         return [
             'type' => ClientType::Individual,
-            'first_name' => $this->faker->firstName(),
-            'last_name' => $this->faker->lastName(),
+            'first_name' => fake()->firstName(),
+            'last_name' => fake()->lastName(),
             'id_type' => IdentityType::SouthAfricanId,
-            'id_number' => $this->faker->unique()->numerify('#############'),
+            'id_number' => fake()->unique()->numerify('#############'),
         ];
     }
 
@@ -35,8 +35,8 @@ class ClientFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'id_type' => IdentityType::Passport,
-            'id_number' => $this->faker->unique()->bothify('??#######'),
-            'date_of_birth' => $this->faker->dateTimeBetween('-70 years', '-20 years'),
+            'id_number' => fake()->unique()->bothify('??#######'),
+            'date_of_birth' => fake()->dateTimeBetween('-70 years', '-20 years'),
         ]);
     }
 
@@ -46,10 +46,10 @@ class ClientFactory extends Factory
             'type' => ClientType::Entity,
             'first_name' => null,
             'last_name' => null,
-            'entity_name' => $this->faker->company(),
+            'entity_name' => fake()->company(),
             'id_type' => null,
             'id_number' => null,
-            'registration_number' => $this->faker->unique()->numerify('####/######/##'),
+            'registration_number' => fake()->unique()->numerify('####/######/##'),
         ]);
     }
 }

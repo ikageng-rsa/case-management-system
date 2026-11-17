@@ -21,8 +21,8 @@ class ActivityTypeFactory extends Factory
     public function definition(): array
     {
         return [
-            'code' => $this->faker->unique()->lexify('????'),
-            'name' => $this->faker->words(2, true),
+            'code' => fake()->unique()->lexify('????'),
+            'name' => fake()->words(2, true),
             'measure' => ActivityMeasure::Minutes,
             'increment' => 6,
             'default_billable' => true,

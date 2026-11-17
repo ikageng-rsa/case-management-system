@@ -26,7 +26,7 @@ class BillFactory extends Factory
             'matter_id' => Matter::factory(),
             'kind' => BillKind::Statement,
             'status' => BillStatus::Draft,
-            'addressee' => $this->faker->name(),
+            'addressee' => fake()->name(),
         ];
     }
 
