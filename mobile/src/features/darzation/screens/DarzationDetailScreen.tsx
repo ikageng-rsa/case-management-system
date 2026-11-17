@@ -1,26 +1,26 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { fetchDarzationById, toggleDarzationStep, updateDarzation } from '@/api/endpoint/darzations.api';
-import { fetchNarrationsForDarzation } from '@/api/endpoint/narrations.api';
+import React, { useCallback, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { completeDarzation, fetchDarzationById, updateDiaryReminder } from '@/api/endpoint/darzations.api';
+import { fetchNarrationsForCase } from '@/api/endpoint/narrations.api';
+import { getApiErrorMessage } from '@/api/errors';
 import Card from '@/components/Card';
 import Button from '@/components/Button';
 import ChipSelect from '@/components/ChipSelect';
 import DetailRow from '@/components/DetailRow';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import PriorityBadge from '@/components/PriorityBadge';
 import SectionHeader from '@/components/SectionHeader';
 import SyncBadge from '@/components/SyncBadge';
+import { StageBadge } from '@/ui';
+import { REMINDER_OPTIONS, reminderValueFor } from '@/features/darzation/reminderOptions';
 import { useOnSynced } from '@/hooks/useSyncStatus';
-import { getApiErrorMessage } from '@/api/errors';
 import { useAppSelector } from '@/hooks/useAppDispatch';
 import { useAssignableUsers } from '@/hooks/useAssignableUsers';
 import { canEditRecords } from '@/constants/roles';
-import { computeOverdue } from '@/models/Darzation';
-import { colors, spacing, typography } from '@/theme/index';
-import { Darzation, DarzationStatus, Narration } from '@/models/index';
-
-const STATUSES: DarzationStatus[] = ['Pending', 'In Progress', 'Done'];
+import { formatDue } from '@/utils/dueAt';
+import { notifyError, notifySuccess, notifyWarning } from '@/utils/notify';
+import { colors, fontFamily, spacing, typography } from '@/theme/index';
+import { Darzation, Narration } from '@/models/index';
 
 export default function DarzationDetailScreen() {
     const router = useRouter();
@@ -28,14 +28,20 @@ export default function DarzationDetailScreen() {
     const me = useAppSelector(state => state.auth.user);
     const users = useAssignableUsers();
     const [item, setItem] = useState<Darzation | null>(null);
-    const [narrations, setNarrations] = useState<Narration[]>([]);
+    const [linked, setLinked] = useState<Narration | null>(null);
     const [loading, setLoading] = useState(true);
+    const [busy, setBusy] = useState(false);
 
     const load = useCallback(async () => {
         try {
             const d = await fetchDarzationById(darzationId);
             setItem(d);
-            setNarrations(await fetchNarrationsForDarzation(d.caseId, d.id).catch(() => []));
+            if (d.narrationId) {
+                const all = await fetchNarrationsForCase(d.caseId).catch(() => [] as Narration[]);
+                setLinked(all.find(n => n.id === d.narrationId) ?? null);
+            } else {
+                setLinked(null);
+            }
         } catch {
             setItem(null);
         } finally {
@@ -43,11 +49,12 @@ export default function DarzationDetailScreen() {
         }
     }, [darzationId]);
 
-    // Fetch-on-mount: setState runs after awaited network I/O, not synchronously.
-    useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        load();
-    }, [load]);
+    // Reload whenever the screen is shown again (e.g. back from the edit form), not only on first mount.
+    useFocusEffect(
+        useCallback(() => {
+            load();
+        }, [load]),
+    );
     useOnSynced(load);
 
     if (loading) {
@@ -56,100 +63,104 @@ export default function DarzationDetailScreen() {
     if (!item) {
         return (
             <View style={styles.container}>
-                <Text style={styles.note}>This diary item is not available.</Text>
+                <Text style={styles.note}>This diary entry is not available.</Text>
             </View>
         );
     }
 
+    const done = item.status === 'Done';
     const canEdit = me ? canEditRecords(me.role) : false;
-    const due = item.dueDate || item.nextActionDate;
-    const overdue = computeOverdue(due, item.status ?? 'Pending');
-    const nameOf = (id: string) => users.find(u => u.id === id)?.fullName ?? id;
+    const mine = Boolean(me && item.assigneeId === me.id);
+    const nameOf = (id?: string) => (id ? (users.find(u => u.id === id)?.fullName ?? item.assigneeName ?? id) : undefined);
+    const savedOnServer = !item.id.startsWith('tmp_');
 
-    const toggleStep = async (stepId: string, done: boolean) => {
-        // Optimistic: flip locally, roll back if the API rejects it.
-        const previous = item;
-        setItem({ ...item, steps: item.steps.map(s => (s.id === stepId ? { ...s, done } : s)) });
+    const run = async (task: () => Promise<unknown>, success?: string) => {
+        setBusy(true);
         try {
-            setItem(await toggleDarzationStep(item.id, stepId, done));
+            await task();
+            if (success) {
+                notifySuccess(success);
+            }
+            await load();
         } catch (e) {
-            setItem(previous);
-            Alert.alert('Could not update step', getApiErrorMessage(e, 'Please try again.'));
+            // 409 explains itself ("not due until …", "this entry is done"), 403 says it is not the user's entry.
+            notifyWarning('Not done', getApiErrorMessage(e, 'Please try again.'));
+        } finally {
+            setBusy(false);
         }
     };
 
-    const setStatus = async (status: DarzationStatus) => {
-        try {
-            setItem(await updateDarzation(item.id, { status }));
-        } catch (e) {
-            Alert.alert('Could not update status', getApiErrorMessage(e, 'Please try again.'));
+    const markDone = () => run(() => completeDarzation(item), 'Marked as done');
+
+    const setReminder = (values: string[]) => {
+        const option = REMINDER_OPTIONS.find(o => o.value === values[0]);
+        if (!option) {
+            notifyError('Could not change the reminder', 'Choose one of the options.');
+            return;
         }
+        run(() => updateDiaryReminder(item, option.minutes), 'Reminder changed');
     };
 
     return (
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-            <Text style={styles.title}>{item.title || item.nextAction}</Text>
+            <Text style={styles.title}>{item.body || item.title}</Text>
             <View style={styles.badges}>
-                {item.priority ? <PriorityBadge priority={item.priority} /> : null}
-                {overdue ? <Text style={styles.overdueTag}>OVERDUE</Text> : null}
+                {item.overdue ? <StageBadge tone="danger">Overdue</StageBadge> : null}
+                {!item.overdue && item.isDue && !done ? <StageBadge tone="accent">Due now</StageBadge> : null}
+                {done ? <StageBadge tone="success">Done</StageBadge> : null}
                 <SyncBadge state={item.syncState} />
             </View>
 
             <Card style={styles.card}>
-                <DetailRow label="Next action" value={item.nextAction} />
-                <DetailRow label="Due" value={due} />
-                <DetailRow label="Status" value={item.status ?? 'Pending'} />
-                <DetailRow label="Owner" value={item.ownerId ? nameOf(item.ownerId) : undefined} />
-                <DetailRow label="Assigned to" value={item.assignedUserIds?.map(nameOf).join(', ')} />
-                <Pressable onPress={() => router.push({ pathname: '/cases/[caseId]', params: { caseId: item.caseId } })}>
-                    <Text style={styles.link}>Open case →</Text>
+                <DetailRow label="Due" value={formatDue(item.dueAt) || item.dueDate} />
+                <DetailRow label="Assigned to" value={nameOf(item.assigneeId)} />
+                <DetailRow label="Matter" value={[item.matterReference, item.matterTitle].filter(Boolean).join(' · ') || undefined} />
+                <DetailRow label="Reminder" value={item.reminderLabel ?? (item.remindBeforeMinutes === null ? 'None' : undefined)} />
+                {done ? <DetailRow label="Done" value={`${formatDue(item.completedAt ?? undefined)}${item.completedByName ? ` · ${item.completedByName}` : ''}`} /> : null}
+                <Pressable onPress={() => router.push({ pathname: '/cases/[caseId]', params: { caseId: item.caseId } })} accessibilityRole="link">
+                    <Text style={styles.link}>Open matter →</Text>
                 </Pressable>
             </Card>
 
-            {canEdit ? (
-                <ChipSelect
-                    label="Update status"
-                    options={STATUSES.map(s => ({ value: s, label: s }))}
-                    selected={[item.status ?? 'Pending']}
-                    onChange={([s]:any) => s && setStatus(s)}
-                />
+            {!done && savedOnServer ? (
+                <>
+                    {!item.isDue ? <Text style={styles.note}>It can be marked done from {formatDue(item.dueAt) || item.dueDate}.</Text> : null}
+                    <Button label="Mark as done" onPress={markDone} loading={busy} disabled={!item.isDue || busy} />
+                    {canEdit ? (
+                        <Button
+                            label="Edit entry"
+                            variant="secondary"
+                            onPress={() => router.push({ pathname: '/diary/edit', params: { darzationId: item.id } })}
+                            style={styles.action}
+                        />
+                    ) : null}
+                    {mine ? (
+                        <View style={styles.reminder}>
+                            <ChipSelect label="Remind me" options={REMINDER_OPTIONS.map(o => ({ value: o.value, label: o.label }))} selected={reminderValueFor(item.remindBeforeMinutes)} onChange={setReminder} />
+                        </View>
+                    ) : null}
+                </>
             ) : null}
 
-            <SectionHeader title="Steps" />
-            {item.steps?.length ? (
-                <Card>
-                    {item.steps.map(step => (
-                        <View key={step.id} style={styles.stepRow}>
-                            <Text style={[styles.stepLabel, step.done && styles.stepDone]}>{step.label}</Text>
-                            <Switch value={step.done} disabled={!canEdit} onValueChange={v => toggleStep(step.id, v)} />
-                        </View>
-                    ))}
-                </Card>
-            ) : (
-                <Text style={styles.note}>No steps defined.</Text>
-            )}
-
-            <SectionHeader title="Narrations" />
-            {narrations.length === 0 ? <Text style={styles.note}>No work logged against this item yet.</Text> : null}
-            {narrations.map(n => (
+            <SectionHeader title="Work logged" />
+            {linked ? (
                 <Pressable
-                    key={n.id}
-                    onPress={() =>
-                        router.push({ pathname: '/cases/[caseId]/narrations/[narrationId]', params: { caseId: n.caseId, narrationId: n.id } })
-                    }
+                    onPress={() => router.push({ pathname: '/cases/[caseId]/narrations/[narrationId]', params: { caseId: linked.caseId, narrationId: linked.id } })}
                 >
                     <Card>
-                        <Text style={styles.stepLabel}>{n.title || n.activityType}</Text>
-                        <Text style={styles.note}>{n.timeSpentMinutes ?? 0} min · {n.description}</Text>
+                        <Text style={styles.stepLabel}>{linked.activityName || linked.activityType}</Text>
+                        <Text style={styles.note}>{linked.description}</Text>
                     </Card>
                 </Pressable>
-            ))}
+            ) : (
+                <Text style={styles.note}>No work is linked to this entry.</Text>
+            )}
             {canEdit ? (
                 <Button
-                    label="+ Log work on this item"
-                    onPress={() =>
-                        router.push({ pathname: '/cases/[caseId]/add-activity', params: { caseId: item.caseId, darzationId: item.id } })
-                    }
+                    label="+ Log work on this matter"
+                    variant="secondary"
+                    onPress={() => router.push({ pathname: '/cases/[caseId]/add-activity', params: { caseId: item.caseId } })}
+                    style={styles.action}
                 />
             ) : null}
         </ScrollView>
@@ -159,13 +170,12 @@ export default function DarzationDetailScreen() {
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
     content: { padding: spacing.md, paddingBottom: spacing.xl * 2 },
-    title: { ...typography.h1, color: colors.navy },
+    title: { ...typography.h2, color: colors.navy },
     badges: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center', marginVertical: spacing.sm },
-    overdueTag: { ...typography.caption, color: colors.red, fontWeight: '700' },
     card: { marginTop: spacing.sm },
-    link: { ...typography.body, color: colors.navy, fontWeight: '600', marginTop: spacing.sm },
-    stepRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: spacing.xs },
-    stepLabel: { ...typography.body, color: colors.textPrimary, flex: 1, fontWeight: '600' },
-    stepDone: { textDecorationLine: 'line-through', color: colors.textMuted },
+    action: { marginTop: spacing.sm },
+    reminder: { marginTop: spacing.md },
+    link: { ...typography.body, color: colors.navy, fontFamily: fontFamily.sansSemibold, marginTop: spacing.sm },
+    stepLabel: { ...typography.body, color: colors.textPrimary, fontFamily: fontFamily.sansSemibold },
     note: { ...typography.body, color: colors.textSecondary, paddingVertical: spacing.xs },
 });
