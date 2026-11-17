@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Button from '@/components/Button';
 import Card from '@/components/Card';
 import { useNetInfo } from '@/hooks/useNetInfo';
@@ -12,7 +12,8 @@ import { listOutbox, subscribeOutbox } from '@/offline/outbox';
 import { prefetchAll } from '@/offline/prefetch';
 import { discardEntry, flushOutbox, retryEntry } from '@/offline/syncEngine';
 import { OutboxEntry } from '@/offline/types';
-import { colors, radius, spacing, typography } from '@/theme/index';
+import { colors, fontFamily, radius, spacing, typography } from '@/theme/index';
+import { confirmAction } from '@/ui';
 
 const STATUS_LABEL: Record<OutboxEntry['status'], string> = {
     pending: 'Waiting to sync',
@@ -54,41 +55,38 @@ export default function SyncCenterScreen() {
         }
     };
 
-    const confirmDiscard = (entry: OutboxEntry) =>
-        Alert.alert(
-            'Discard this change?',
-            `"${entry.label}" has not been saved to the server and will be lost${entry.op === 'create' ? ', along with anything you added to it' : ''}.`,
-            [
-                { text: 'Keep', style: 'cancel' },
-                { text: 'Discard', style: 'destructive', onPress: () => run(() => discardEntry(entry.id)) },
-            ],
-        );
-const changeLabel = entries.length === 1 ? '' : 's';
+    const confirmDiscard = async (entry: OutboxEntry) => {
+        const ok = await confirmAction({
+            title: 'Discard this change?',
+            message: `"${entry.label}" has not been saved to the server and will be lost${entry.op === 'create' ? ', along with anything you added to it' : ''}.`,
+            actionLabel: 'Discard',
+            cancelLabel: 'Keep',
+            icon: 'trash-2',
+        });
+        if (ok) {
+            run(() => discardEntry(entry.id));
+        }
+    };
 
-const alertMessage =
-    entries.length > 0
-        ? `This deletes the offline copy AND ${entries.length} unsynced change${changeLabel} from this device. Sync first if you can.`
-        : 'This deletes the offline copy of your cases, diary and narrations from this device. It is downloaded again the next time you are online.';
-
-    const confirmClear = () =>
-        Alert.alert(
-            'Remove offline data?',
-            alertMessage,
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Remove',
-                    style: 'destructive',
-                    onPress: () =>
-                        run(async () => {
-                            await clearOfflineData(user?.id);
-                            if (isOnline) {
-                                await prefetchAll(true);
-                            }
-                        }),
-                },
-            ],
-        );
+    const confirmClear = async () => {
+        const ok = await confirmAction({
+            title: 'Remove offline data?',
+            message:
+                entries.length > 0
+                    ? `This deletes the offline copy AND ${entries.length} unsynced change${entries.length === 1 ? '' : 's'} from this device. Sync first if you can.`
+                    : 'This deletes the offline copy of your cases, diary and narrations from this device. It is downloaded again the next time you are online.',
+            actionLabel: 'Remove',
+            icon: 'alert-triangle',
+        });
+        if (ok) {
+            run(async () => {
+                await clearOfflineData(user?.id);
+                if (isOnline) {
+                    await prefetchAll(true);
+                }
+            });
+        }
+    };
 
     return (
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -155,8 +153,8 @@ const styles = StyleSheet.create({
     note: { ...typography.caption, color: colors.textMuted, marginTop: spacing.sm },
     warn: { ...typography.caption, color: colors.red, marginTop: spacing.xs },
     actions: { marginTop: spacing.md },
-    section: { ...typography.body, fontWeight: '700', color: colors.navy, marginTop: spacing.lg, marginBottom: spacing.sm },
-    entryLabel: { ...typography.body, fontWeight: '700', color: colors.textPrimary },
+    section: { ...typography.body, fontFamily: fontFamily.sansSemibold, color: colors.navy, marginTop: spacing.lg, marginBottom: spacing.sm },
+    entryLabel: { ...typography.body, fontFamily: fontFamily.sansSemibold, color: colors.textPrimary },
     entryStatus: { ...typography.caption, color: colors.textSecondary, marginTop: 2 },
     rowButtons: { flexDirection: 'row', marginTop: spacing.sm },
     rowButton: { flex: 1, marginRight: spacing.sm, borderRadius: radius.sm },
