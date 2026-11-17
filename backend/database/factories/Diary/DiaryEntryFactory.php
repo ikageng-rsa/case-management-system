@@ -24,7 +24,7 @@ class DiaryEntryFactory extends Factory
         return [
             'matter_id' => Matter::factory(),
             'assigned_to' => User::factory(),
-            'body' => $this->faker->sentence(),
+            'body' => fake()->sentence(),
             'due_at' => now()->addWeek(),
         ];
     }

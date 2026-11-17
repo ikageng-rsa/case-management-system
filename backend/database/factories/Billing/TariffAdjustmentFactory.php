@@ -24,7 +24,7 @@ class TariffAdjustmentFactory extends Factory
     {
         return [
             'tariff_schedule_id' => TariffSchedule::factory(),
-            'role_id' => fn () => Role::findOrCreate($this->faker->unique()->word())->getKey(),
+            'role_id' => fn () => Role::findOrCreate(fake()->unique()->word())->getKey(),
             'kind' => TariffAdjustmentKind::Percent,
             'value' => 0,
         ];

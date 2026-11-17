@@ -26,7 +26,7 @@ class NarrationFactory extends Factory
             'matter_id' => Matter::factory(),
             'activity_type_id' => ActivityType::factory(),
             'author_id' => User::factory(),
-            'body' => $this->faker->sentence(),
+            'body' => fake()->sentence(),
             'quantity' => 30,
             'occurred_at' => now(),
         ];
