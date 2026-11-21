@@ -14,12 +14,18 @@ class VoidBill
     /**
      * Cancel a bill issued in error. It keeps its number and stays on record
      * with the reason, nothing is owed on it any more, and the work and costs
-     * on it are free to be billed again. A draft is deleted instead.
+     * on it are free to be billed again. A draft is deleted instead. A bill
+     * that has been paid on is not voided until those payments are reversed,
+     * so money received is never left sitting on a bill that says nothing is owed.
      */
     public function void(Bill $bill, User $by, string $reason): Bill
     {
         if (! $bill->isIssued()) {
             throw new BillRefused(['Only an issued bill can be voided. A draft is deleted instead.']);
+        }
+
+        if ($bill->payments()->live()->exists()) {
+            throw new BillRefused(['Payments have been recorded on this bill. Reverse them before voiding it.']);
         }
 
         return DB::transaction(function () use ($bill, $by, $reason): Bill {

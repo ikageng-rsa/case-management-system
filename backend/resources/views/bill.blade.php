@@ -9,6 +9,9 @@
         $isFeeBill = $bill->kind === \App\Enums\Billing\BillKind::AgreementFee;
         $percent = rtrim(rtrim(number_format($bill->drawing_fee_percent_hundredths / 100, 2, '.', ''), '0'), '.');
         $tones = ['draft' => 'accent', 'issued' => 'success', 'void' => 'neutral'];
+        $paymentTones = ['unpaid' => 'neutral', 'part_paid' => 'accent', 'settled' => 'success'];
+        $paymentState = $bill->paymentState();
+        $canRecordPayments = auth()->user()->can('recordPayments', $bill->matter);
         $units = fn ($line) => rtrim(rtrim((string) $line->units, '0'), '.');
     @endphp
 
@@ -18,6 +21,9 @@
             <h1 class="mb-1">
                 {{ $bill->kind->label() }} {{ $bill->number }}
                 <x-ui.stage-badge :tone="$tones[$bill->status->value]" class="ms-2">{{ $bill->status->label() }}</x-ui.stage-badge>
+                @if ($paymentState)
+                    <x-ui.stage-badge :tone="$paymentTones[$paymentState->value]" class="ms-1">{{ $paymentState->label() }}</x-ui.stage-badge>
+                @endif
             </h1>
             <p class="text-secondary mb-0">
                 To {{ $bill->addressee }}{{ $bill->addressee_address ? ', '.Str::of($bill->addressee_address)->replaceMatches('/\R+/', ', ') : '' }}
@@ -60,6 +66,11 @@
             @endif
 
             @if ($bill->isIssued())
+                @if ($canRecordPayments && $bill->balanceCents() > 0)
+                    <x-ui.button variant="primary" icon="plus" size="sm"
+                        x-data x-on:click="$dispatch('sheet-open', 'record-payment')">Record payment</x-ui.button>
+                @endif
+
                 @can('voidBills', $bill->matter)
                     <x-ui.button variant="outline-danger" size="sm"
                         x-data x-on:click="$dispatch('sheet-open', 'void-bill')">Void</x-ui.button>
@@ -160,10 +171,141 @@
                         <td colspan="2" class="text-end text-nowrap"><strong>{{ $rand($bill->total_cents) }}</strong></td>
                         @if ($editable) <td></td> @endif
                     </tr>
+                    @if ($paymentState && $bill->paid_cents > 0)
+                        <tr>
+                            <td colspan="3" class="text-end">Paid</td>
+                            <td colspan="2" class="text-end text-nowrap">{{ $rand($bill->paid_cents) }}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="3" class="text-end"><strong>Balance</strong></td>
+                            <td colspan="2" class="text-end text-nowrap"><strong>{{ $rand($bill->balanceCents()) }}</strong></td>
+                        </tr>
+                    @endif
                 </tfoot>
             </table>
         </div>
     </div>
+
+    @if ($bill->payments->isNotEmpty())
+        <div class="card mt-3">
+            <div class="card-body">
+                <h3 class="card-title text-meta text-uppercase mb-3">Payments</h3>
+
+                @foreach ($bill->payments as $payment)
+                    <div @class(['d-flex align-items-center justify-content-between gap-2', 'mb-3' => ! $loop->last])>
+                        <div>
+                            <div class="mb-0">
+                                {{ $payment->received_on->format('j M Y') }} · {{ $payment->method->label() }} into the {{ strtolower($payment->account->label()) }}
+                                @if ($payment->isReversed())
+                                    <x-ui.stage-badge tone="neutral" class="ms-2">Reversed</x-ui.stage-badge>
+                                @endif
+                            </div>
+                            <div class="text-meta">
+                                @if ($payment->reference) Ref {{ $payment->reference }} · @endif
+                                recorded {{ $payment->created_at->format('j M Y') }}{{ $payment->recordedBy ? ' by '.$payment->recordedBy->name : '' }}
+                                @if ($payment->proof())
+                                    · <a href="{{ route('payment.proof', $payment) }}">Proof of payment</a>
+                                @endif
+                            </div>
+                            @if ($payment->isReversed())
+                                <div class="text-meta">Reversed {{ $payment->reversed_at->format('j M Y') }}{{ $payment->reversedBy ? ' by '.$payment->reversedBy->name : '' }}: {{ $payment->reverse_reason }}</div>
+                            @endif
+                        </div>
+
+                        <div class="text-nowrap">
+                            <span @class(['me-2', 'text-decoration-line-through text-secondary' => $payment->isReversed()])>{{ $rand($payment->amount_cents) }}</span>
+                            @if ($canRecordPayments && ! $payment->isReversed())
+                                <x-ui.button variant="ghost-danger" size="sm"
+                                    x-data x-on:click="$dispatch('sheet-open', 'reverse-payment-{{ $payment->getKey() }}')">Reverse</x-ui.button>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
+    @if ($canRecordPayments)
+        @if ($bill->isIssued() && $bill->balanceCents() > 0)
+            @php
+                $paymentErrors = $errors->getBag('payment');
+            @endphp
+
+            <x-ui.sheet name="record-payment" title="Record a payment" lede="Money received on {{ $bill->number }}. {{ $rand($bill->balanceCents()) }} is still owed."
+                bag="payment" :action="route('bill.payments.store', $bill)" enctype="multipart/form-data">
+                <x-ui.input label="Amount (R)" name="amount" id="payment_amount" type="number" step="0.01" min="0.01"
+                    :value="old('amount', number_format($bill->balanceCents() / 100, 2, '.', ''))"
+                    hint="Starts on what is still owed. Change it for a part payment."
+                    :error="$paymentErrors->first('amount')" />
+
+                <x-ui.input label="Received on" name="received_on" id="payment_received_on" type="date" :value="old('received_on', now()->toDateString())"
+                    :error="$paymentErrors->first('received_on')" />
+
+                <x-ui.select label="Paid by" name="method" id="payment_method" :error="$paymentErrors->first('method')">
+                    @foreach ($paymentMethods as $method)
+                        <option value="{{ $method->value }}" @selected(old('method', 'eft') === $method->value)>{{ $method->label() }}</option>
+                    @endforeach
+                </x-ui.select>
+
+                <x-ui.select label="Paid into" name="account" id="payment_account" :error="$paymentErrors->first('account')">
+                    @foreach ($firmAccounts as $account)
+                        <option value="{{ $account->value }}" @selected(old('account', 'business') === $account->value)>{{ $account->label() }}</option>
+                    @endforeach
+                </x-ui.select>
+
+                <x-ui.input label="Reference" name="reference" id="payment_reference" :value="old('reference')"
+                    hint="As it shows on the bank statement or slip, if there is one."
+                    :error="$paymentErrors->first('reference')" />
+
+                <x-ui.input label="Proof of payment" name="proof" id="payment_proof" type="file"
+                    hint="PDF or image, up to 5 MB."
+                    :error="$paymentErrors->first('proof')" />
+
+                @unless ($bill->kind === \App\Enums\Billing\BillKind::BillOfCost)
+                    <div class="form-check">
+                        <input type="hidden" name="email_client" value="0">
+                        <input class="form-check-input" type="checkbox" id="payment_email_client" name="email_client" value="1"
+                            @checked($paymentErrors->any() ? old('email_client') : true)>
+                        <label class="form-check-label" for="payment_email_client">Email the client</label>
+                        <div class="form-hint">Tells them the amount received and what is still owed, at their email address on file.</div>
+                    </div>
+                @endunless
+
+                <x-slot:footer>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <x-ui.button variant="outline-secondary" size="sm" x-on:click="close()">Cancel</x-ui.button>
+                        <x-ui.button type="submit" variant="primary" size="sm">Record payment</x-ui.button>
+                    </div>
+                </x-slot:footer>
+            </x-ui.sheet>
+        @endif
+
+        @foreach ($bill->payments->reject->isReversed() as $payment)
+            @php
+                $reverseBag = \App\Http\Requests\Billing\ReversePaymentRequest::bagFor($payment->getKey());
+                $reverseErrors = $errors->getBag($reverseBag);
+            @endphp
+
+            <x-ui.sheet name="reverse-payment-{{ $payment->getKey() }}" title="Reverse the payment" icon="x"
+                lede="{{ $rand($payment->amount_cents) }} received {{ $payment->received_on->format('j M Y') }}. For a payment recorded in error. It stays on record with the reason and no longer counts towards the bill."
+                :bag="$reverseBag" :action="route('payment.reverse', $payment)">
+                <div class="mb-3">
+                    <label class="form-label form-label-mono" for="reverse_reason_{{ $payment->getKey() }}">Reason</label>
+                    <textarea @class(['form-control', 'is-invalid' => $reverseErrors->has('reason')]) id="reverse_reason_{{ $payment->getKey() }}" name="reason" rows="3">{{ $reverseErrors->any() ? old('reason') : '' }}</textarea>
+                    @if ($reverseErrors->has('reason'))
+                        <div class="invalid-feedback">{{ $reverseErrors->first('reason') }}</div>
+                    @endif
+                </div>
+
+                <x-slot:footer>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <x-ui.button variant="outline-secondary" size="sm" x-on:click="close()">Cancel</x-ui.button>
+                        <x-ui.button type="submit" variant="danger" size="sm">Reverse the payment</x-ui.button>
+                    </div>
+                </x-slot:footer>
+            </x-ui.sheet>
+        @endforeach
+    @endif
 
     @if ($editable)
         @foreach ($bill->lines as $line)

@@ -7,6 +7,7 @@ namespace App\Models\Billing;
 use App\Concerns\RecordsActivity;
 use App\Enums\Billing\BillKind;
 use App\Enums\Billing\BillStatus;
+use App\Enums\Billing\PaymentState;
 use App\Enums\Billing\TariffScale;
 use App\Models\Matter\Matter;
 use App\Models\User\User;
@@ -27,7 +28,7 @@ use Illuminate\Support\Str;
  */
 #[Fillable([
     'kind', 'status', 'number', 'addressee', 'addressee_address', 'scale', 'period_from', 'period_to',
-    'fees_cents', 'drawing_fee_percent_hundredths', 'drawing_fee_cents', 'disbursements_cents', 'total_cents',
+    'fees_cents', 'drawing_fee_percent_hundredths', 'drawing_fee_cents', 'disbursements_cents', 'total_cents', 'paid_cents',
     'issued_at', 'voided_at', 'void_reason',
 ])]
 class Bill extends Model
@@ -56,6 +57,7 @@ class Bill extends Model
             'drawing_fee_cents' => 'integer',
             'disbursements_cents' => 'integer',
             'total_cents' => 'integer',
+            'paid_cents' => 'integer',
             'issued_at' => 'datetime',
             'voided_at' => 'datetime',
         ];
@@ -69,6 +71,12 @@ class Bill extends Model
     public function lines(): HasMany
     {
         return $this->hasMany(BillLine::class)->orderBy('position')->orderBy('id');
+    }
+
+    /** The money received on the bill, newest first, reversed payments included. */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class)->latest('received_on')->latest('id');
     }
 
     public function draftedBy(): BelongsTo
@@ -99,6 +107,26 @@ class Bill extends Model
     public function isVoid(): bool
     {
         return $this->status === BillStatus::Void;
+    }
+
+    /** What is still owed on the bill: its total less the payments that count. */
+    public function balanceCents(): int
+    {
+        return max(0, $this->total_cents - $this->paid_cents);
+    }
+
+    /** How far an issued bill has been paid; a draft or voided bill has nothing owed on it to pay. */
+    public function paymentState(): ?PaymentState
+    {
+        if (! $this->isIssued()) {
+            return null;
+        }
+
+        return match (true) {
+            $this->paid_cents <= 0 => PaymentState::Unpaid,
+            $this->balanceCents() > 0 => PaymentState::PartPaid,
+            default => PaymentState::Settled,
+        };
     }
 
     /** The running part of the bill's number, e.g. 0001 of INV/2026/0001, as it is quoted on the bill. */
