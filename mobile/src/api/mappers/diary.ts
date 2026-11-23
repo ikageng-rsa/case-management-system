@@ -1,51 +1,82 @@
-import { Case, Darzation } from '@/models/index';
-import { computeOverdue } from '@/models/Darzation';
+import { includedGet, Included, indexIncluded, relOne, Resource } from '@/api/jsonapi';
+import { Darzation, DarzationPriority } from '@/models/index';
 
-/**                                                                                                          
- * The v1 API has no diary resource, but every matter carries its dates: `next_due_at` (next deadline) and   
- * `prescribes_at` (the claim prescribes). The Diary tab is read from those, so deadlines are visible and the
- * on-device reminders work without extra endpoints. Items are read-only and ids are `due:<matterId>` /      
- * `prescribes:<matterId>`.                                                                                  
+const ALL_ROLES: Darzation['visibleToRoles'] = ['Admin', 'Director', 'CA', 'Secretary', 'Messenger'];
+
+const pad = (n: number) => String(n).padStart(2, '0');
+
+/** The calendar day of a moment on the phone's own clock ("2026-11-14"). */
+export function localDay(iso: string): string {
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? iso.slice(0, 10) : `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+/**
+ * The API has no priority on a diary entry. Urgency comes from where it stands: overdue → Urgent, due now → High,
+ * otherwise Medium; a finished entry is Low.
  */
+function priorityOf(isOverdue: boolean, isDue: boolean, done: boolean): DarzationPriority {
+    if (done) return 'Low';
+    if (isOverdue) return 'Urgent';
+    return isDue ? 'High' : 'Medium';
+}
 
-export const DUE_PREFIX = 'due:';
-export const PRESCRIBES_PREFIX = 'prescribes:';
+/**
+ * One diary entry → the app's Darzation.
+ * `caseId` is passed in for the per-matter routes (create, complete, edit, reminder), whose answers do not repeat the
+ * matter; the cross-matter list names it in `relationships.matter` instead.
+ */
+export function mapDiaryEntry(resource: Resource, included: Included, caseId?: string): Darzation {
+    const a = resource.attributes ?? {};
+    const matterRef = relOne(resource, 'matter');
+    const matter = includedGet(included, matterRef);
+    const assignee = relOne(resource, 'assignee');
+    const assigneeUser = includedGet(included, assignee);
+    const completedBy = relOne(resource, 'completedBy');
+    const completedByUser = includedGet(included, completedBy);
 
-const ALL_ROLES: Darzation['visibleToRoles'] = new Set(['Admin', 'Director', 'CA', 'Secretary', 'Messager']);
-
-function item(c: Case, kind: 'due' | 'prescribes', iso: string, now: Date): Darzation {
-    const dueDate = iso.slice(0, 10);
-    const label = c.title || c.clientName || c.fileReference;
-    const title = kind === 'due' ? `Deadline - ${label}` : `Prscription - ${label}`;
+    const body: string = a.body ?? '';
+    const dueAt: string = a.due_at ?? '';
+    const done = a.status === 'completed';
+    const overdue = Boolean(a.is_overdue);
+    const isDue = Boolean(a.is_due);
+    const day = dueAt ? localDay(dueAt) : '';
+    const assigneeId = assignee ? String(assignee.id) : '';
 
     return {
-        id: `${kind === 'due' ? DUE_PREFIX : PRESCRIBES_PREFIX}${c.id}`,
-        caseId: c.id,
-        ownerId: c.leadAttorneyId,
-        title,
-        nextAction: kind === 'due' ? `Next deadline on ${c.fileReference}` : `Claim prescribes on ${c.fileReference}`,
-        nextActionDate: dueDate,
-        dueDate,
-        priority: kind === 'prescribes'? 'Urgent':'Medium',
-        status: 'Pending',
+        id: String(resource.id),
+        caseId: matterRef ? String(matterRef.id) : (caseId ?? ''),
+        ownerId: assigneeId,
+        title: body,
+        nextAction: body,
+        nextActionDate: day,
+        dueDate: day,
+        priority: priorityOf(overdue, isDue, done),
+        status: done ? 'Done' : 'Pending',
         steps: [],
-        assignedUserIds: c.assignedUserIds ?? [],
-        overdue: computeOverdue(dueDate, 'Pending',now) && dueDate < now.toISOString().slice(0,10),
-        visibleToRoles: ALL_ROLES
-    }
+        assignedUserIds: assigneeId ? [assigneeId] : [],
+        overdue: !done && overdue,
+        visibleToRoles: ALL_ROLES,
+        body,
+        dueAt,
+        isDue,
+        assigneeId: assigneeId || undefined,
+        assigneeName: assigneeUser?.attributes?.name,
+        remindBeforeMinutes: typeof a.remind_before_minutes === 'number' ? a.remind_before_minutes : null,
+        reminderLabel: a.reminder_label ?? undefined,
+        completedAt: a.completed_at ?? null,
+        completedById: completedBy ? String(completedBy.id) : null,
+        completedByName: completedByUser?.attributes?.name,
+        narrationId: a.narration_id ? String(a.narration_id) : null,
+        matterReference: matter?.attributes?.reference,
+        matterTitle: matter?.attributes?.title,
+    };
 }
 
-//Open matters only: a closed matter has no deadlines to chase
-export function deriveDiary(cases: Case[],now = new Date()): Darzation[]{
-    const out: Darzation[] = [];
-    for(const c of cases){
-        if(c.status === 'Closed' || c.status === 'Archived' || c.closedDate){
-            continue;
-        }
-        if(c.nextDueAt) out.push(item(c,'due',c.nextDueAt, now));
-        if(c.prescribesAt) out.push(item(c, 'prescribes', c.prescribesAt, now));
-    }
-    return out.sort((a,b) => a.dueDate.localeCompare(b.dueDate));
+export function mapDiaryList(resources: Resource[], included: Resource[] | undefined, caseId?: string): Darzation[] {
+    const index = indexIncluded(included);
+    return resources.map(r => mapDiaryEntry(r, index, caseId));
 }
 
-export const isDerivedDiaryId = (id: string): boolean => id.startsWith(DUE_PREFIX) || id.startsWith(PRESCRIBES_PREFIX)
+/** An id the phone made up for an entry added offline; the server never knows it. */
+export const isLocalDiaryId = (id: string): boolean => id.startsWith('tmp_');

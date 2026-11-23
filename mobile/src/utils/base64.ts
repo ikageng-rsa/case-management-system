@@ -12,11 +12,7 @@ export function bytesToBase64(bytes: Uint8Array): string {
 }
 
 export function base64ToBytes(text: string): Uint8Array {
-    let clean = text;
-
-    while (clean.endsWith('=')) {
-        clean = clean.slice(0, -1);
-    } 
+    const clean = text.replace(/=+$/, '');
     const out = new Uint8Array(Math.floor((clean.length * 3) / 4));
     let o = 0;
     for (let i = 0; i < clean.length; i += 4) {

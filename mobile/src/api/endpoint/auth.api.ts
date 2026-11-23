@@ -37,6 +37,11 @@ export async function verifySignIn(challengeId: string, code: string): Promise<S
   return {token: String(token), user: mapUser(data.data)};
 }
 
+//Emails a fresh code for a pending sign-in (204). A 422 says the sign-in ran out or a code was just sent.
+export async function resendSignInCode(challengeId: string): Promise<void>{
+  await apiClient.post('/auth/sign-in/resend',{challenge_id: challengeId});
+}
+
 export async function fetchCurrentUser(): Promise<User>{
   const {data} = await apiClient.get<Document<Resource>>('/me');
   return mapUser(data.data);

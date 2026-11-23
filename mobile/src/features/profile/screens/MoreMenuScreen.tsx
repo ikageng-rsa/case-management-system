@@ -1,21 +1,21 @@
 import React from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Href, useRouter } from 'expo-router';
 import Card from '@/components/Card';
 import Button from '@/components/Button';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import { logout } from '@/features/auth/store/authSlice';
-import { canAdministerUsers } from '@/constants/roles';
+import { hasFeature } from '@/config/features';
 import { useSyncStatus } from '@/hooks/useSyncStatus';
 import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
-import { colors, spacing, typography } from '@/theme/index';
+import { colors, fontFamily, spacing, typography } from '@/theme/index';
+import { confirmAction } from '@/ui';
 
-const MENU_ITEMS: { label: string; href: Href; adminOnly?: boolean }[] = [
-  { label: 'Client Profile', href: '/more/profile' },
-  { label: 'User & Role Administration', href: '/more/users', adminOnly: true },
-  { label: 'Notifications', href: '/more/notifications' },
+const MENU_ITEMS: { label: string; href: Href; feature?: 'notifications' }[] = [
+  { label: 'Clients', href: '/more/profile' },
+  { label: 'Notifications', href: '/more/notifications', feature: 'notifications' },
   { label: 'Sync & Offline', href: '/more/sync' },
-  { label: 'Security (2FA)', href: '/more/security' },
+  { label: 'Security', href: '/more/security' },
   { label: 'Export Reports', href: '/more/reports' },
 ];
 
@@ -27,19 +27,21 @@ export default function MoreMenuScreen() {
   const unsynced = pending + failed + blocked;
   const unread = useUnreadNotifications();
 
-  const signOut = () => {
+  const signOut = async () => {
     if (unsynced === 0) {
       dispatch(logout());
       return;
     }
-    Alert.alert(
-      'Unsynced changes',
-      `${unsynced} change${unsynced === 1 ? ' hasn' : 's haven'}'t reached the server yet. They stay safely on this device and sync after you sign in again with a connection.`,
-      [
-        { text: 'Stay signed in', style: 'cancel' },
-        { text: 'Sign out', style: 'destructive', onPress: () => dispatch(logout()) },
-      ],
-    );
+    const ok = await confirmAction({
+      title: 'Unsynced changes',
+      message: `${unsynced} change${unsynced === 1 ? ' hasn' : 's haven'}'t reached the server yet. They stay safely on this device and sync after you sign in again with a connection.`,
+      actionLabel: 'Sign out',
+      cancelLabel: 'Stay signed in',
+      icon: 'log-out',
+    });
+    if (ok) {
+      dispatch(logout());
+    }
   };
 
   return (
@@ -47,11 +49,11 @@ export default function MoreMenuScreen() {
       {user ? (
         <Card style={styles.userCard}>
           <Text style={styles.userName}>{user.fullName}</Text>
-          <Text style={styles.userRole}>{user.role}</Text>
+          <Text style={styles.userRole}>{user.jobTitle || user.roles?.[0] || user.role}</Text>
         </Card>
       ) : null}
 
-      {MENU_ITEMS.filter(item => !item.adminOnly || (user ? canAdministerUsers(user.role) : false)).map(
+      {MENU_ITEMS.filter(item => !item.feature || hasFeature(item.feature)).map(
         item => (
           <Pressable key={item.label} onPress={() => router.push(item.href)}>
             <Card>
@@ -75,6 +77,6 @@ const styles = StyleSheet.create({
   userCard: { alignItems: 'center' },
   userName: { ...typography.h2, color: colors.navy },
   userRole: { ...typography.caption, color: colors.textSecondary, marginTop: spacing.xs },
-  menuLabel: { ...typography.body, color: colors.textPrimary, fontWeight: '600' },
+  menuLabel: { ...typography.body, color: colors.textPrimary, fontFamily: fontFamily.sansSemibold },
   logout: { marginTop: spacing.lg },
 });

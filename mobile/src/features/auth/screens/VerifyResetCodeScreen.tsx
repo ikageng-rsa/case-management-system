@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
-import { verifyPasswordResetCode } from '@/api/endpoint/auth.api';
+import { verifyPasswordResetCode } from '@/api/endpoint/passwordReset.api';
 import { setResetToken } from '@/features/auth/services/resetSession';
 import { colors, spacing, typography } from '@/theme/index';
+import { notifyError } from '@/utils/notify';
 
 /** Step 2 of 3: verify the code before any password field is shown. */
 export default function VerifyResetCodeScreen() {
@@ -16,7 +17,7 @@ export default function VerifyResetCodeScreen() {
 
     const submit = async () => {
         if (code.trim().length < 4) {
-            Alert.alert('Enter the code', 'Check the SMS/console for your 6-digit code.');
+            notifyError('Enter the code', 'Check the SMS/console for your 6-digit code.');
             return;
         }
         setLoading(true);
@@ -25,7 +26,7 @@ export default function VerifyResetCodeScreen() {
             setResetToken(result.resetToken);
             router.push({ pathname: '/set-new-password', params: { email } });
         } catch {
-            Alert.alert('Incorrect code', 'That code is wrong or has expired. Request a new one.');
+            notifyError('Incorrect code', 'That code is wrong or has expired. Request a new one.');
         } finally {
             setLoading(false);
         }

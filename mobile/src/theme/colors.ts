@@ -1,47 +1,53 @@
+import { mix } from '@/ui/theme/color';
+import { palette } from '@/ui/theme/tokens';
+
 /**
- * Palette intent: navy + gold reads as "chambers/letterhead" rather than
- * generic corporate blue; parchment background and hairline borders give
- * screens a paper-adjacent warmth instead of flat app-grey. Status colors
- * (green/gold/burgundy/red) double as the confidentiality and case-status
- * vocabulary used across Cases, Documents, and the Gantt-style reporting.
+ * Palette intent: ink + gold on warm paper reads as "chambers/letterhead".
+ * The values come from the shared UI kit (src/ui) so the app and the web
+ * product stay on one palette. The key names are the ones screens already use
+ * (navy, gold, burgundy, ...), so re-skinning does not touch every screen.
+ *
+ * Gold is a fill/border colour only. It is too light for text on paper, so
+ * text that used to be gold uses `goldText`.
  */
+const onPaper = (amount: number) => mix(palette.paper000, palette.ink900, amount);
+
 export const colors = {
   // Brand
-  navy: '#1F3B57',
-  navyDark: '#152A3F',
-  navyTint: '#E8EDF2', // navy at ~10% for selected/active backgrounds
-  gold: '#B8860B',
-  goldTint: '#F6EFDD',
-  burgundy: '#6E2233', // "privileged" / seal / emphasis accent
-  burgundyTint: '#F3E4E7',
+  navy: palette.ink900,
+  navyDark: mix(palette.ink900, palette.black, 0.35),
+  navyTint: onPaper(0.07), // ink at ~7% for selected/active backgrounds
+  gold: palette.gold500,
+  goldText: palette.gold800,
+  goldTint: mix(palette.paper000, palette.gold500, 0.2),
+  burgundy: palette.rust800, // "privileged" / seal / emphasis accent
+  burgundyTint: mix(palette.paper000, palette.rust800, 0.12),
 
   // Status (reused by CaseStatusBadge, confidentiality tags, diary alerts)
-  green: '#2E7D32',
-  greenTint: '#E7F2E8',
-  red: '#8B2E2E',
-  redTint: '#F5E6E6',
-  purple: '#5E35B1',
-  purpleTint: '#EDE7F8',
-  danger: '#B3261E',
+  green: palette.green700,
+  greenTint: mix(palette.paper000, palette.green700, 0.12),
+  red: palette.rust700,
+  redTint: mix(palette.paper000, palette.rust700, 0.12),
+  purple: palette.teal700, // "archived" / time totals; the key predates the kit palette
+  purpleTint: mix(palette.paper000, palette.teal700, 0.12),
+  danger: palette.rust700,
 
   // Surfaces
-  background: '#F7F5F0', // warm parchment, not flat grey
-  surface: '#FFFFFF',
-  surfaceRaised: '#FFFFFF',
-  border: '#E4DED2', // warm hairline
-  divider: '#D9D2C4',
+  background: palette.paper100,
+  surface: palette.paper000,
+  surfaceRaised: palette.paper000,
+  border: onPaper(0.1), // hairline
+  divider: onPaper(0.14),
 
   // Text
-  textPrimary: '#1A1F26',
-  textSecondary: '#5A6472',
-  textOnDark: '#FFFFFF',
-  textMuted: '#8A8F98',
+  textPrimary: palette.ink900,
+  textSecondary: onPaper(0.68),
+  textOnDark: palette.white,
+  textMuted: onPaper(0.55),
 
-  white: '#FFFFFF',
-  black: '#000000',
+  white: palette.white,
+  black: palette.black,
   transparent: 'transparent',
-
-  primary: '#1F3B57', // alias for navy
 };
 
 export type AppColors = typeof colors;

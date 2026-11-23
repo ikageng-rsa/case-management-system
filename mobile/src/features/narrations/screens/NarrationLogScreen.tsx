@@ -11,7 +11,8 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import { useAppSelector } from '@/hooks/useAppDispatch';
 import { canEditRecords } from '@/constants/roles';
 import { formatDuration } from '@/utils/formatDuration';
-import { colors, spacing, typography } from '@/theme/index';
+import { formatQuantity } from '@/api/mappers/narration';
+import { colors, fontFamily, spacing, typography } from '@/theme/index';
 import { Narration } from '@/models/index';
 
 export default function NarrationLogScreen() {
@@ -47,7 +48,7 @@ export default function NarrationLogScreen() {
         {me && canEditRecords(me.role) ? (
           <Button label="+ Log activity" onPress={() => router.push({ pathname: '/cases/[caseId]/add-activity', params: { caseId } })} />
         ) : null}
-        <Text style={styles.total}>Total time logged: {formatDuration(totalMinutes)}</Text>
+        <Text style={styles.total}>Time logged (timed activities): {formatDuration(totalMinutes)}</Text>
       </View>
       <FlatList
         data={items}
@@ -56,13 +57,13 @@ export default function NarrationLogScreen() {
         renderItem={({ item }) => (
           <Pressable
             onPress={() =>
-              router.push({ pathname: './cases/[caseId]/narrations/[narrationId]', params: { caseId, narrationId: item.id } })
+              router.push({ pathname: '/cases/[caseId]/narrations/[narrationId]', params: { caseId, narrationId: item.id } })
             }
           >
             <Card>
               <View style={styles.row}>
-                <Text style={styles.type}>{item.title || item.activityType}</Text>
-                <Text style={styles.time}>{formatDuration(item.timeSpentMinutes ?? 0)}</Text>
+                <Text style={styles.type}>{item.title || item.activityName || item.activityType}</Text>
+                <Text style={styles.time}>{item.measure ? formatQuantity(item.quantity ?? 0, item.measure) : formatDuration(item.timeSpentMinutes ?? 0)}</Text>
               </View>
               <Text style={styles.description} numberOfLines={2}>{item.description}</Text>
               {item.billable ? <Text style={styles.billable}>Billable</Text> : null}
@@ -82,8 +83,8 @@ const styles = StyleSheet.create({
   total: { ...typography.caption, color: colors.textSecondary },
   list: { padding: spacing.md },
   row: { flexDirection: 'row', justifyContent: 'space-between' },
-  type: { ...typography.caption, fontWeight: '700', color: colors.navy, flex: 1 },
+  type: { ...typography.caption, fontFamily: fontFamily.sansSemibold, color: colors.navy, flex: 1 },
   time: { ...typography.caption, color: colors.textSecondary },
-  billable: { ...typography.caption, color: colors.green, fontWeight: '600', marginTop: spacing.xs },
+  billable: { ...typography.caption, color: colors.green, fontFamily: fontFamily.sansSemibold, marginTop: spacing.xs },
   description: { ...typography.body, color: colors.textPrimary, marginTop: spacing.xs },
 });

@@ -1,18 +1,9 @@
-import { uploadDocument } from '@/api/endpoint/documents.api';
+import { uploadDocument, UploadFile } from '@/api/endpoint/documents.api';
 import { CaseDocument } from '@/models/index';
 
-export interface PickedFile {
-  uri: string;
-  name: string;
-  type: string;
-}
+export type PickedFile = UploadFile;
 
-export async function uploadCaseFile(
-  caseId: string,
-  file: PickedFile,
-  confidentiality: CaseDocument['confidentiality'] = 'Standard',
-): Promise<CaseDocument> {
-  // Swap in react-native-document-picker at the call site to obtain `file`;
-  // kept decoupled here so this function is trivially testable.
-  return uploadDocument(caseId, file, confidentiality);
+/** Kept apart from the screens so it is easy to test; `file` comes from the document picker at the call site. */
+export async function uploadCaseFile(caseId: string, file: PickedFile, kind: string, name?: string): Promise<CaseDocument> {
+  return uploadDocument(caseId, file, kind, name);
 }

@@ -5,7 +5,7 @@ import { secureDelete, secureGet, secureSet } from '@/utils/secureStorage';
 // EXPO_PUBLIC_* variables from .env are inlined at build time by Expo (restart with -c after editing .env).
 // `||` not `??`: a blank `EXPO_PUBLIC_API_BASE_URL=` must fall back too — an empty baseURL makes the web build
 // call its own dev server (http://localhost:8081/auth/login), which answers 404.
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://legalcms-dev.contoso.co.za/api';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://localhost:8000/api/v1';
 const API_TIMEOUT_MS = Number(process.env.EXPO_PUBLIC_API_TIMEOUT_MS ?? 15000);
 const AUTH_TOKEN_KEY = 'legalcms_auth_token';
 
@@ -89,7 +89,7 @@ apiClient.interceptors.response.use(
   response => response,
   async error => {
     // 401 from anywhere except the sign-in calls themselves means the server no longer accepts this session.
-    if (error.response?.status === 401 && !String(error.config?.url ?? '').startsWith('/auth/login')) {
+    if (error.response?.status === 401 && !String(error.config?.url ?? '').startsWith('/auth/sign-in')) {
       await clearAuthToken();
       onUnauthorized?.();
     }
