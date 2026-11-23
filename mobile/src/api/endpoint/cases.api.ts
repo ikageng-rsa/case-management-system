@@ -7,11 +7,32 @@ import { FeatureUnavailableError } from '@/config/features';
 import { fetchAllPage } from '../pagination';
 import { mapMatter, mapMatterList } from '../mappers/matter';
 import { Document, indexIncluded, Resource } from '../jsonapi';
+import { isDeviceOffline, OfflineNotAllowedError } from '@/offline';
 
-type CaseFilter = { status?: string; search?: string };
+//The server's matter filters: open (default), the user's own, nobody assigned yet, or closed
+export type MatterFilter = 'open' | 'mine' | 'unassigned' | 'closed';
+export type MatterSort = 'next_date' | 'opened' | 'reference';
+
+export interface CaseQuery{
+  status? : string;
+  search?: string;
+  filter?: string;
+  sort?: MatterSort;
+  matterTypeId? : number; 
+}
+
+//`meta.counts` on a matters page: how many matters sit under each filter.
+export interface MatterCounts{
+  open: number;
+  mine: number; 
+  unassigned: number;
+  closed: number;
+  closedThisYear: number;
+}
+
 
 /** The same filter the server applies, for answering a filtered list from the on-device copy. */
-function filterCases(rows: Case[], params?: CaseFilter): Case[] {
+function filterCases(rows: Case[], params?: CaseQuery): Case[] {
   const term = params?.search?.trim().toLowerCase() ?? '';
   return rows.filter(
     c =>
@@ -24,21 +45,51 @@ function filterCases(rows: Case[], params?: CaseFilter): Case[] {
 }
 
 //Matters the signed-in user can see (the server decides which). Follows every page
-export async function fetchCases(params?: CaseFilter): Promise<Case[]> {
+export async function fetchCases(params?: CaseQuery): Promise<Case[]> {
   const unfiltered = !params?.status && !params?.search;
+
+  const filter = params?.filter ?? 'open';
+  const closed = filter === 'closed';
+  if(filter === 'unassigned' && (await isDeviceOffline())){
+      throw new OfflineNotAllowedError('Listing unassigned matters');
+  }
+
+  const q = params?.search?.trim();
+  const plain = !params?.status && !q && !params?.sort && !params?.matterTypeId && (filter === 'open' || closed);
   return cachedList<Case>({
-    name: CacheNames.cases,
+    name: closed ? CacheNames.casesClosed : CacheNames.cases,
     entity: 'case',
-    cacheable: unfiltered,
+    cacheable: plain,
     request: async () => {
-      const q = params?.search?.trim();
-      const {data,included} = await fetchAllPage('/matters', q ? {q}: {});
+      const {data,included} = await fetchAllPage('/matters', {
+        ...(filter !== 'open' ? {filter} : {}),
+        ...(q ? {q} : {}),
+        ...(params?.sort ? {sort: params.sort} : {}),
+        ...(params?.matterTypeId ? {matter_type_id: params.matterTypeId} : {}),
+      });
       return mapMatterList(data, included, getActiveUserId());
     },
-    filter: unfiltered ? undefined : rows => filterCases(rows, params),
+    filter: plain ? undefined : rows => filterCases(rows, params),
   });
 }
 
+//The numbers behind the filter chips (one cheap request). Null when offline or unavaliable.
+export async function fetchMatterCounts(): Promise<MatterCounts | null>{
+  try{
+      const {data:doc} = await apiClient.get<Document<Resource[]>>('/matters');
+      const c = doc.meta?.counts;
+      return c ? {
+        open: Number(c.open ?? 0),
+        mine: Number(c.mine ?? 0),
+        unassigned: Number(c.unassigned ?? 0),
+        closed: Number(c.closed ?? 0),
+        closedThisYear: Number(c.closed_this_year ?? 0),
+      }
+      :null;
+  }catch{
+    return null;
+  }
+}
 export async function fetchCaseById(id: string): Promise<Case> {
   return cachedRecord<Case>({
     id,

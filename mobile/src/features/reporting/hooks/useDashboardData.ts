@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { fetchCases } from '@/api/endpoint/cases.api';
 import { fetchDiary } from '@/api/endpoint/darzations.api';
 import { fetchNarrationsForCase } from '@/api/endpoint/narrations.api';
@@ -106,11 +107,12 @@ export function useDashboardData() {
     }
   }, [user]);
 
-  // Fetch-on-mount: setState runs after awaited network I/O, not synchronously.
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    load();
-  }, [load]);
+  // Refresh quietly every time the dashboard is shown (after creating or editing something elsewhere).
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load]),
+  );
 
   // Offline work that has just synced changes ids and totals.
   useOnSynced(load);

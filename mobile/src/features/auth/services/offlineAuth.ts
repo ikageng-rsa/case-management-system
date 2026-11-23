@@ -58,7 +58,7 @@ function sameHex(a: string, b: string): boolean {
     }
     let diff = 0;
     for (let i = 0; i < a.length; i++) {
-        diff |= (a.codePointAt(i) ??0) ^ (b.codePointAt(i) ??0);
+        diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
     }
     return diff === 0;
 }

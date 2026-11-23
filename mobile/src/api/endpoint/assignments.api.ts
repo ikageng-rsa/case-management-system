@@ -41,9 +41,20 @@ export async function fetchCapacities(): Promise<AssignmentCapacity[]>{
     return (doc.data ?? []).map(r => ({
         id: String(r.id),
         name: r.attributes?.name ??'',
+        /*role: r.attributes?.role ??'',
+        roleLabel: r.attributes?.role_label ?? r.attributes?.role ?? '',
+        representative: r.attributes?.representative ?? null,*/
+        exclusive: false
+    }));
+}
+
+export async function fetchParties(matterId: string): Promise<MatterParty[]>{
+    const {data:doc} = await apiClient.get<Document<Resource[]>>(`/matters/${matterId}/parties`);
+    return (doc.data ?? []).map(r => ({
+        id: String(r.id),
+        name: r.attributes?.name ??'',
         role: r.attributes?.role ??'',
         roleLabel: r.attributes?.role_label ?? r.attributes?.role ?? '',
         representative: r.attributes?.representative ?? null,
-        exclusive: false
     }));
 }

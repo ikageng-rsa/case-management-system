@@ -1,202 +1,195 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
 import ChipSelect from '@/components/ChipSelect';
-import { createDarzation, fetchDarzationById, updateDarzation } from '@/api/endpoint/darzations.api';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { getApiErrorMessage } from '@/api/errors';
+import { createDarzation, fetchDarzationById, updateDarzation } from '@/api/endpoint/darzations.api';
 import { fetchCases } from '@/api/endpoint/cases.api';
+import { getApiErrorMessage, getFieldErrors } from '@/api/errors';
+import { REMINDER_OPTIONS } from '@/features/darzation/reminderOptions';
 import { useAppSelector } from '@/hooks/useAppDispatch';
 import { useAssignableUsers } from '@/hooks/useAssignableUsers';
 import { canEditRecords } from '@/constants/roles';
 import { visibleCasesFor } from '@/utils/caseAccess';
+import { buildDueAt, DEFAULT_DUE_TIME, isValidTime, splitDueAt } from '@/utils/dueAt';
 import { isValidIsoDate } from '@/utils/validators';
+import { notifyError } from '@/utils/notify';
 import { colors, spacing, typography } from '@/theme/index';
-import { Case, DarzationPriority, DarzationStatus } from '@/models/index';
+import { Case, Darzation } from '@/models/index';
 
-const PRIORITIES: DarzationPriority[] = ['Low', 'Medium', 'High', 'Urgent'];
-const STATUSES: DarzationStatus[] = ['Pending', 'In Progress', 'Done'];
+const USUAL = 'usual';
 
-/** Creates a diary item, or edits one when the route carries a `darzationId`. */
+/** Adds a diary entry to a matter, or edits one when the route carries a `darzationId`. */
 export default function NewDarzationScreen() {
-    const router = useRouter();
-    const params = useLocalSearchParams<{ caseId?: string; darzationId?: string }>();
-    const editId = params.darzationId;
-    const editing = Boolean(editId);
-    const me = useAppSelector(state => state.auth.user);
-    const users = useAssignableUsers();
+  const router = useRouter();
+  const params = useLocalSearchParams<{ caseId?: string; darzationId?: string }>();
+  const editId = params.darzationId;
+  const editing = Boolean(editId);
+  const me = useAppSelector(state => state.auth.user);
+  const users = useAssignableUsers();
 
-    const [cases, setCases] = useState<Case[]>([]);
-    const [caseId, setCaseId] = useState<string[]>(params.caseId ? [params.caseId] : []);
-    const [title, setTitle] = useState('');
-    const [nextAction, setNextAction] = useState('');
-    const [dueDate, setDueDate] = useState('');
-    const [priority, setPriority] = useState<DarzationPriority[]>(['Medium']);
-    const [assigned, setAssigned] = useState<string[]>(me ? [me.id] : []);
-    const [stepDraft, setStepDraft] = useState('');
-    const [steps, setSteps] = useState<string[]>([]);
-    const [existingSteps, setExistingSteps] = useState<{ id: string; label: string; done: boolean }[]>([]);
-    const [status, setStatus] = useState<DarzationStatus[]>(['Pending']);
-    const [loading, setLoading] = useState(false);
-    const [loaded, setLoaded] = useState(!editing);
-    const [missing, setMissing] = useState(false);
+  const [cases, setCases] = useState<Case[]>([]);
+  const [caseId, setCaseId] = useState<string[]>(params.caseId ? [params.caseId] : []);
+  const [original, setOriginal] = useState<Darzation | null>(null);
+  const [body, setBody] = useState('');
+  const [day, setDay] = useState('');
+  const [time, setTime] = useState(DEFAULT_DUE_TIME);
+  const [assigned, setAssigned] = useState<string[]>(me ? [me.id] : []);
+  const [reminder, setReminder] = useState<string[]>([USUAL]);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
+  const [loaded, setLoaded] = useState(!editing);
+  const [missing, setMissing] = useState(false);
 
-    // Edit mode: fill the form from the saved item (network first, on-device copy when offline).
-    useEffect(() => {
-        if (!editId) {
-            return;
+  // Edit mode: fill the form from the saved entry (network first, on-device copy when offline).
+  useEffect(() => {
+    if (!editId) {
+      return;
+    }
+    let active = true;
+    fetchDarzationById(editId)
+      .then(d => {
+        if (!active) {
+          return;
         }
-        let active = true;
-        fetchDarzationById(editId)
-            .then(d => {
-                if (!active) {
-                    return;
-                }
-                setCaseId([d.caseId]);
-                setTitle(d.title ?? '');
-                setNextAction(d.nextAction ?? '');
-                setDueDate((d.dueDate || d.nextActionDate || '').slice(0, 10));
-                setPriority([d.priority ?? 'Medium']);
-                setStatus([d.status ?? 'Pending']);
-                setAssigned(d.assignedUserIds ?? []);
-                setExistingSteps(d.steps ?? []);
-            })
-            .catch(() => active && setMissing(true))
-            .finally(() => active && setLoaded(true));
-        return () => {
-            active = false;
-        };
-    }, [editId]);
-
-    useEffect(() => {
-        fetchCases()
-            .then(all => setCases(visibleCasesFor(all, me)))
-            .catch(() => setCases([]));
-    }, [me]);
-
-    if (!loaded) {
-        return <LoadingSpinner />;
-    }
-    if (missing) {
-        return (
-            <View style={styles.container}>
-                <Text style={styles.note}>This diary item is not available to edit.</Text>
-            </View>
-        );
-    }
-    if (me && !canEditRecords(me.role)) {
-        return (
-            <View style={styles.container}>
-                <Text style={styles.note}>Your role can view the diary but not create or edit items.</Text>
-            </View>
-        );
-    }
-
-    const addStep = () => {
-        if (stepDraft.trim()) {
-            setSteps(s => [...s, stepDraft.trim()]);
-            setStepDraft('');
-        }
+        setOriginal(d);
+        setCaseId([d.caseId]);
+        setBody(d.body ?? d.title ?? '');
+        const parts = d.dueAt ? splitDueAt(d.dueAt) : { day: d.dueDate, time: DEFAULT_DUE_TIME };
+        setDay(parts.day);
+        setTime(parts.time);
+        setAssigned(d.assigneeId ? [d.assigneeId] : (d.assignedUserIds ?? []));
+      })
+      .catch(() => active && setMissing(true))
+      .finally(() => active && setLoaded(true));
+    return () => {
+      active = false;
     };
+  }, [editId]);
 
-    const submit = async () => {
-        if (!caseId[0] || !title.trim() || !nextAction.trim()) {
-            Alert.alert('Missing info', 'Choose a case and enter a title and the next action.');
-            return;
-        }
-        if (!isValidIsoDate(dueDate)) {
-            Alert.alert('Invalid due date', 'Use the format YYYY-MM-DD (e.g. 2026-11-05).');
-            return;
-        }
-        setLoading(true);
-        try {
-            if (editId) {
-                await updateDarzation(editId, {
-                    title: title.trim(),
-                    nextAction: nextAction.trim(),
-                    nextActionDate: dueDate,
-                    dueDate,
-                    priority: priority[0] ?? 'Medium',
-                    status: status[0] ?? 'Pending',
-                    assignedUserIds: assigned,
-                    // Existing steps keep their ids and ticks; new ones are appended.
-                    steps: [...existingSteps, ...steps.map((label, i) => ({ id: `new-${i + 1}`, label, done: false }))],
-                });
-                router.back();
-                return;
-            }
-            const created = await createDarzation({
-                caseId: caseId[0],
-                ownerId: me?.id ?? '',
-                title: title.trim(),
-                nextAction: nextAction.trim(),
-                nextActionDate: dueDate,
-                dueDate,
-                priority: priority[0] ?? 'Medium',
-                status: 'Pending',
-                steps: steps.map((label, i) => ({ id: `step-${i + 1}`, label, done: false })),
-                assignedUserIds: assigned,
-                visibleToRoles: ['Admin', 'Director', 'CA', 'Secretary'],
-            });
-            router.replace({ pathname: '/diary/[darzationId]', params: { darzationId: created.id } });
-        } catch (e) {
-            Alert.alert('Could not save', getApiErrorMessage(e, 'Please try again.'));
-        } finally {
-            setLoading(false);
-        }
-    };
+  useEffect(() => {
+    fetchCases()
+      .then(all => setCases(visibleCasesFor(all, me)))
+      .catch(() => setCases([]));
+  }, [me]);
 
+  if (!loaded) {
+    return <LoadingSpinner />;
+  }
+  if (missing || (editing && original?.status === 'Done')) {
     return (
-        <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-            {editing ? null : (
-                <ChipSelect
-                    label="Case *"
-                    options={cases.map(c => ({ value: c.id, label: `${c.fileReference} · ${c.clientName}` }))}
-                    selected={caseId}
-                    onChange={setCaseId}
-                />
-            )}
-            <Input label="Title *" value={title} onChangeText={setTitle} />
-            <Input label="Next action *" value={nextAction} onChangeText={setNextAction} multiline style={styles.multiline} />
-            <Input label="Due date * (YYYY-MM-DD)" value={dueDate} onChangeText={setDueDate} autoCapitalize="none" />
-            <ChipSelect label="Priority" options={PRIORITIES.map(p => ({ value: p, label: p }))} selected={priority} onChange={setPriority} />
-            {editing ? <ChipSelect label="Status" options={STATUSES.map(v => ({ value: v, label: v }))} selected={status} onChange={setStatus} /> : null}
-            <ChipSelect
-                label="Assigned users"
-                multiple
-                options={users.map(u => ({ value: u.id, label: u.fullName }))}
-                selected={assigned}
-                onChange={setAssigned}
-            />
-
-            <Text style={styles.section}>Steps</Text>
-            {existingSteps.map((s, i) => (
-                <Text key={s.id} style={styles.step}>
-                    {i + 1}. {s.label}
-                    {s.done ? ' ✓' : ''}
-                </Text>
-            ))}
-            {steps.map((s, i) => (
-                <Text key={s.substring(i.toString().length,-1)} style={styles.step}>
-                    {existingSteps.length + i + 1}. {s}
-                </Text>
-            ))}
-            <Input label="Add a step" value={stepDraft} onChangeText={setStepDraft} onSubmitEditing={addStep} returnKeyType="done" />
-            <Button label="+ Add step" variant="secondary" onPress={addStep} style={styles.addStep} />
-
-            <Button label={editing ? 'Save changes' : 'Save diary item'} onPress={submit} loading={loading} />
-        </ScrollView>
+      <View style={styles.container}>
+        <Text style={styles.note}>{missing ? 'This diary entry is not available to edit.' : 'This entry is done, so it can no longer be changed.'}</Text>
+      </View>
     );
+  }
+  if (me && !canEditRecords(me.role)) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.note}>Your role can view the diary but not add or edit entries.</Text>
+      </View>
+    );
+  }
+
+  const submit = async () => {
+    const next: Record<string, string> = {};
+    if (!editing && !caseId[0]) next.matter = 'Choose the matter this is for.';
+    if (!body.trim()) next.body = 'Write what has to be done.';
+    if (!isValidIsoDate(day)) next.due_at = 'Use the date format YYYY-MM-DD (e.g. 2026-11-05).';
+    else if (!isValidTime(time)) next.due_at = 'Use the 24-hour time format HH:MM (e.g. 09:00).';
+    setErrors(next);
+    if (Object.keys(next).length > 0) {
+      return;
+    }
+    const dueAt = buildDueAt(day, time);
+    if (!dueAt) {
+      setErrors({ due_at: 'That date and time do not exist.' });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      if (original) {
+        await updateDarzation(original, {
+          body: body.trim(),
+          dueAt,
+          assignedTo: assigned[0] ?? original.assigneeId ?? me?.id ?? '',
+          narrationId: original.narrationId ?? null,
+        });
+        router.back();
+        return;
+      }
+      const assignee = assigned[0];
+      const choice = REMINDER_OPTIONS.find(o => o.value === reminder[0]);
+      const created = await createDarzation({
+        caseId: caseId[0],
+        body: body.trim(),
+        dueAt,
+        // Left out when it is the person themself: the server then defaults to whoever is diarising.
+        assignedTo: assignee && assignee !== me?.id ? assignee : undefined,
+        // Left out = the user's usual reminder; a chosen option (or "none") is sent as is.
+        remindBeforeMinutes: reminder[0] === USUAL ? undefined : (choice?.minutes ?? undefined),
+        ownerId: me?.id ?? '',
+        assigneeName: users.find(u => u.id === assignee)?.fullName,
+      });
+      router.replace({ pathname: '/diary/[darzationId]', params: { darzationId: created.id } });
+    } catch (e) {
+      // 422 names the field at fault; show it beside that field, and anything else as a message.
+      const fields = getFieldErrors(e);
+      if (Object.keys(fields).length > 0) {
+        setErrors({ ...fields, ...(fields.assigned_to ? { assigned_to: fields.assigned_to } : {}) });
+      } else {
+        notifyError('Could not save', getApiErrorMessage(e, 'Please try again.'));
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      {editing ? null : (
+        <>
+          <ChipSelect
+            label="Matter *"
+            options={cases.map(c => ({ value: c.id, label: `${c.fileReference} · ${c.clientName}` }))}
+            selected={caseId}
+            onChange={setCaseId}
+          />
+          {errors.matter ? <Text style={styles.error}>{errors.matter}</Text> : null}
+        </>
+      )}
+      <Input label="What has to be done *" value={body} onChangeText={setBody} multiline style={styles.multiline} error={errors.body} />
+      <Input label="Due date * (YYYY-MM-DD)" value={day} onChangeText={setDay} autoCapitalize="none" keyboardType="numbers-and-punctuation" />
+      <Input label="Due time * (24-hour HH:MM)" value={time} onChangeText={setTime} autoCapitalize="none" keyboardType="numbers-and-punctuation" error={errors.due_at} />
+      <ChipSelect
+        label="Assigned to"
+        options={users.map(u => ({ value: u.id, label: u.fullName }))}
+        selected={assigned}
+        onChange={setAssigned}
+      />
+      {errors.assigned_to ? <Text style={styles.error}>{errors.assigned_to}</Text> : null}
+      {editing ? null : (
+        <ChipSelect
+          label="Reminder"
+          options={[{ value: USUAL, label: 'My usual reminder' }, ...REMINDER_OPTIONS.map(o => ({ value: o.value, label: o.label }))]}
+          selected={reminder}
+          onChange={setReminder}
+        />
+      )}
+      {errors.remind_before_minutes ? <Text style={styles.error}>{errors.remind_before_minutes}</Text> : null}
+
+      <Button label={editing ? 'Save changes' : 'Add to diary'} onPress={submit} loading={loading} />
+    </ScrollView>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    content: { padding: spacing.lg, paddingBottom: spacing.xl * 2 },
-    section: { ...typography.h3, color: colors.navy, marginBottom: spacing.sm },
-    step: { ...typography.body, color: colors.textPrimary, marginBottom: spacing.xs },
-    addStep: { marginBottom: spacing.lg },
-    multiline: { minHeight: 70, textAlignVertical: 'top' },
-    note: { ...typography.body, color: colors.textSecondary, padding: spacing.lg },
+  container: { flex: 1, backgroundColor: colors.background },
+  content: { padding: spacing.lg, paddingBottom: spacing.xl * 2 },
+  multiline: { minHeight: 80, textAlignVertical: 'top' },
+  error: { ...typography.caption, color: colors.danger, marginBottom: spacing.md },
+  note: { ...typography.body, color: colors.textSecondary, padding: spacing.lg },
 });

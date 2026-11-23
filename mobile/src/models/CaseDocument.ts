@@ -1,27 +1,26 @@
-export type DocumentConfidentiality = 'Standard' | 'Restricted' | 'Privileged';
-
-// local-only: saved to on-device storage, never reached the backend (offline capture,
-//   or no narration/document endpoint is wired up server-side yet).
-// pending-sync: queued to upload next time the backend is reachable.
-// synced: confirmed stored on the server.
-// sync-failed: the last upload attempt errored; still safe on-device.
+/** Where a document stands: the file is only on this phone, queued to upload, uploaded, or the last upload failed. */
 export type DocumentSyncStatus = 'local-only' | 'pending-sync' | 'synced' | 'sync-failed';
+
+/** One entry of GET /document-kinds: mandate, evidence, court_order… */
+export interface DocumentKind {
+  id: string;
+  name: string;
+}
 
 export interface CaseDocument {
   id: string;
   caseId: string;
-  // When set, this document is linked to a specific narration entry rather
-  // than just the case in general.
+  /** Set when the file was attached while logging a narration. The server has no such link, so it is kept on this device. */
   narrationId?: string;
+  /** How the document is listed. */
+  name: string;
   fileName: string;
-  version: number;
-  confidentiality: DocumentConfidentiality;
-  uploadedById: string;
+  /** A document kind id, see DocumentKind. */
+  kind: string;
   uploadedAt: string;
-  uri: string; // remote URI once synced (signed URL / storage path)
-  localUri?: string; // on-device copy under expo-file-system's documentDirectory
+  /** Local copy under the app's own storage, for files attached on this phone. */
+  localUri?: string;
   mimeType?: string;
   sizeBytes?: number;
   syncStatus: DocumentSyncStatus;
-  cachedOffline?: boolean;
 }

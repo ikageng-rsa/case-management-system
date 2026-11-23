@@ -1,90 +1,218 @@
 import { apiClient } from '@/api/client';
+import { Document, indexIncluded, Resource } from '@/api/jsonapi';
+import { isLocalDiaryId, mapDiaryEntry, mapDiaryList } from '@/api/mappers/diary';
+import { fetchAllPage } from '@/api/pagination';
 import { Darzation } from '@/models/index';
-import {computeOverdue} from '@/models/Darzation';
-import {CacheNames} from '@/offline/cache';
-import {getActiveUserId} from '@/offline/context';
-import {cachedList, cachedRecord, submitCreate,submitUpdate} from '@/offline/repository';
+import { CacheNames, cacheUpsert } from '@/offline/cache';
+import { isDeviceOffline, isTransientError } from '@/offline/connectivity';
+import { OfflineNotAllowedError } from '@/offline/policy';
+import { cachedList, submitCreate, submitUpdate } from '@/offline/repository';
 
-//Server semantics: overdue = not done and due before today. Recomputed so cached rows don't go stale
+/** `remind_before_minutes` limits from the guide: 5 minutes to 30 days; null = no reminder; left out = the user's usual. */
+export const REMINDER_MIN_MINUTES = 5;
+export const REMINDER_MAX_MINUTES = 43_200;
 
-const withLiveOverdue = (rows: Darzation[]): Darzation[] =>{
-  const today = new Date().toISOString().slice(0,10);
-  return rows.map(d => ({...d, overdue: (d.status ?? 'Pending') !== 'Done' && (d.dueDate || d.nextActionDate).slice(0,10) < today}));
-};
+const entryUrl = (matterId: string, entryId?: string, suffix = '') =>
+  `/matters/${matterId}/diary-entries${entryId ? `/${entryId}` : ''}${suffix}`;
 
-
-export async function fetchDiary(ownerId?: string): Promise<Darzation[]> {
+/**
+ * The signed-in user's open diary: what is pending plus what is overdue, soonest first (the server keeps to the
+ * user's own entries on matters they can still see). Kept on the phone so the diary reads offline.
+ */
+export async function fetchDiary(): Promise<Darzation[]> {
   return cachedList<Darzation>({
     name: CacheNames.diary,
     entity: 'darzation',
-    cacheable: !ownerId,
-    request: async () => (await apiClient.get<Darzation[]>('/darzations', {params: {ownerId}})).data,
-    filter: (rows: Darzation[]) => withLiveOverdue(ownerId ? rows.filter(d => d.ownerId === ownerId) : rows)
-  })
+    request: async () => {
+      const [pending, overdue] = await Promise.all([
+        fetchAllPage('/diary-entries', { show: 'pending' }),
+        fetchAllPage('/diary-entries', { show: 'overdue' }),
+      ]);
+      const seen = new Set<string>();
+      const rows: Darzation[] = [];
+      for (const d of [...mapDiaryList(pending.data, pending.included), ...mapDiaryList(overdue.data, overdue.included)]) {
+        if (!seen.has(d.id)) {
+          seen.add(d.id);
+          rows.push(d);
+        }
+      }
+      return rows.sort((a, b) => (a.dueAt ?? a.dueDate).localeCompare(b.dueAt ?? b.dueDate));
+    },
+  });
 }
 
-export async function fetchDarzationById(id: string): Promise<Darzation>{
-    return cachedRecord<Darzation>({
-      id,
-      listName: CacheNames.diary,
-      entity: 'darzation',
-      request: async () => (await apiClient.get<Darzation>(`/darzations/${id}`)).data
-    })
+/** What was done lately: the newest page of completed entries (most recently done first). */
+export async function fetchCompletedDiary(): Promise<Darzation[]> {
+  return cachedList<Darzation>({
+    name: CacheNames.diaryCompleted,
+    request: async () => {
+      const { data, included } = await fetchAllPage('/diary-entries', { show: 'completed' }, 1);
+      return mapDiaryList(data, included);
+    },
+  });
+}
+
+/** Entries for one day ("My day"): `from` and `to` are the same calendar date, e.g. 2026-11-11. */
+export async function fetchDiaryForDay(day: string): Promise<Darzation[]> {
+  const { data, included } = await fetchAllPage('/diary-entries', { show: 'pending', from: day, to: day });
+  return mapDiaryList(data, included);
+}
+
+/**
+ * Everyone's entries on one matter. `show` is pending, completed, overdue or mine (the user's own pending); `open`
+ * is pending plus overdue. Online it asks the server; with no connection it falls back to the user's own entries
+ * from the on-device diary.
+ */
+export async function fetchMatterDiary(
+  matterId: string,
+  show: 'open' | 'pending' | 'completed' | 'overdue' | 'mine' = 'open',
+): Promise<Darzation[]> {
+  if (!isLocalDiaryId(matterId) && !(await isDeviceOffline())) {
+    try {
+      const shows = show === 'open' ? ['pending', 'overdue'] : [show];
+      const pages = await Promise.all(shows.map(s => fetchAllPage(entryUrl(matterId), { show: s })));
+      const seen = new Set<string>();
+      return pages
+        .flatMap(p => mapDiaryList(p.data, p.included, matterId))
+        .filter(d => !seen.has(d.id) && seen.add(d.id))
+        .sort((x, y) => (x.dueAt ?? x.dueDate).localeCompare(y.dueAt ?? y.dueDate));
+    } catch (error) {
+      if (!isTransientError(error)) {
+        throw error;
+      }
+    }
+  }
+  return (await fetchDiary()).filter(d => d.caseId === matterId);
+}
+
+/** v1 has no single-entry route, so the entry is found in the open diary, then in the recently completed list. */
+export async function fetchDarzationById(id: string): Promise<Darzation> {
+  const open = (await fetchDiary()).find(d => d.id === id);
+  if (open) {
+    return open;
+  }
+  const done = (await fetchCompletedDiary().catch(() => [] as Darzation[])).find(d => d.id === id);
+  if (done) {
+    return done;
+  }
+  throw new Error('Diary entry not found.');
 }
 
 export async function fetchOverdueDarzations(): Promise<Darzation[]> {
-  return cachedList<Darzation>({
-    name: CacheNames.diary,
-    entity: 'darzation',
-    cacheable: false,
-    request: async () => (await apiClient.get<Darzation[]>('/darzations/overdue')).data,
-    //Offline the list is worked out on the devices from the cached diary
-    filter: (rows:Darzation[]) => withLiveOverdue(rows).filter(d => d.overdue)
-  })
+  return (await fetchDiary()).filter(d => d.overdue);
 }
 
-export async function createDarzation(payload: Omit<Darzation, 'id' | 'overdue'>): Promise<Darzation> {
-  const me = getActiveUserId() ?? '';
+export interface NewDiaryEntry {
+  caseId: string;
+  body: string;
+  /** ISO moment with its offset, e.g. 2026-11-14T09:00:00+02:00. */
+  dueAt: string;
+  /** Defaults to the person diarising. */
+  assignedTo?: string;
+  /** undefined = the user's usual reminder, null = none. */
+  remindBeforeMinutes?: number | null;
+  /** For the on-device copy shown until the server confirms. */
+  ownerId: string;
+  assigneeName?: string;
+}
+
+/** Adds an entry to a matter's diary. Works offline: it is queued and sent when the phone is back online. */
+export async function createDarzation(input: NewDiaryEntry): Promise<Darzation> {
+  const assignee = input.assignedTo ?? input.ownerId;
   return submitCreate<Darzation>({
     entity: 'darzation',
-    label: `New diary item - ${payload.title}`,
-    url: '/diary',
-    body: payload as Record<string, unknown>,
-    optimistic: id =>({
-      ...payload,
+    label: `New diary entry — ${input.body.slice(0, 40)}`,
+    url: entryUrl(input.caseId),
+    body: {
+      body: input.body,
+      due_at: input.dueAt,
+      ...(input.assignedTo ? { assigned_to: input.assignedTo } : {}),
+      ...(input.remindBeforeMinutes !== undefined ? { remind_before_minutes: input.remindBeforeMinutes } : {}),
+    },
+    optimistic: id => ({
       id,
-      ownerId: me,
-      assignedUserIds: [...new Set([me, ...(payload.assignedUserIds ?? [])])],
-      overdue: computeOverdue(payload.dueDate, payload.status ?? 'Pending'),
+      caseId: input.caseId,
+      ownerId: assignee,
+      title: input.body,
+      nextAction: input.body,
+      nextActionDate: input.dueAt.slice(0, 10),
+      dueDate: input.dueAt.slice(0, 10),
+      priority: 'Medium',
+      status: 'Pending',
+      steps: [],
+      assignedUserIds: assignee ? [assignee] : [],
+      overdue: false,
+      visibleToRoles: ['Admin', 'Director', 'CA', 'Secretary', 'Messenger'],
+      body: input.body,
+      dueAt: input.dueAt,
+      assigneeId: assignee,
+      assigneeName: input.assigneeName,
+      remindBeforeMinutes: input.remindBeforeMinutes ?? null,
+      narrationId: null,
     }),
     listName: () => CacheNames.diary,
-  })
+  });
 }
 
+export interface DiaryEntryChanges {
+  body: string;
+  dueAt: string;
+  assignedTo: string;
+  /** A narration on this matter, or null to remove the link. */
+  narrationId: string | null;
+}
 
-export async function updateDarzation(id: string, payload: Partial<Darzation>): Promise<Darzation> {
+/** Edits an entry. The API wants every field each time. Not possible offline, and not once the entry is done (409). */
+export async function updateDarzation(entry: Pick<Darzation, 'id' | 'caseId'>, changes: DiaryEntryChanges): Promise<Darzation> {
   return submitUpdate<Darzation>({
     entity: 'darzation',
-    entityId: id,
-    action: 'Editing a diary item',
-    label: 'Edit diary item',
-    url: `/diary/${id}`,
-    body: payload as Record<string, unknown>,
-    patch: { kind: 'merge', fields: payload as Record<string, unknown> },
+    entityId: entry.id,
+    action: 'Editing a diary entry',
+    label: `Edit diary entry — ${changes.body.slice(0, 40)}`,
+    url: entryUrl(entry.caseId, entry.id),
+    body: { body: changes.body, due_at: changes.dueAt, assigned_to: changes.assignedTo, narration_id: changes.narrationId },
+    patch: {
+      kind: 'merge',
+      fields: {
+        body: changes.body,
+        title: changes.body,
+        nextAction: changes.body,
+        dueAt: changes.dueAt,
+        dueDate: changes.dueAt.slice(0, 10),
+        nextActionDate: changes.dueAt.slice(0, 10),
+        assigneeId: changes.assignedTo,
+        assignedUserIds: [changes.assignedTo],
+        narrationId: changes.narrationId,
+      },
+    },
     listName: CacheNames.diary,
   });
 }
 
-export async function toggleDarzationStep(darzationId: string, stepId: string, done: boolean): Promise<Darzation> {
+/** Changes when the reminder goes out (null = none; 5 to 43 200 minutes). 403 unless the entry is the user's own. */
+export async function updateDiaryReminder(entry: Pick<Darzation, 'id' | 'caseId'>, minutes: number | null): Promise<Darzation> {
   return submitUpdate<Darzation>({
     entity: 'darzation',
-    entityId: darzationId,
-    action: 'Ticking a diary step',
-    label: `${done ? 'Complete' : 'Reopen'} a diary step`,
-    url: `/diary/${darzationId}/steps/${stepId}`,
-    body: { done },
-    patch: { kind: 'step', stepId, done },
+    entityId: entry.id,
+    action: 'Changing a reminder',
+    label: 'Change diary reminder',
+    url: entryUrl(entry.caseId, entry.id, '/reminder'),
+    body: { remind_before_minutes: minutes },
+    patch: { kind: 'merge', fields: { remindBeforeMinutes: minutes } },
     listName: CacheNames.diary,
   });
 }
 
+/**
+ * Marks an entry done. Only from its due time on (otherwise 409 with the reason), and only online. Completing an
+ * entry that is already done answers 200 and changes nothing.
+ */
+export async function completeDarzation(entry: Pick<Darzation, 'id' | 'caseId'>): Promise<Darzation> {
+  if (isLocalDiaryId(entry.id) || (await isDeviceOffline())) {
+    throw new OfflineNotAllowedError('Marking a diary entry done');
+  }
+  const { data: doc } = await apiClient.post<Document<Resource>>(entryUrl(entry.caseId, entry.id, '/complete'));
+  const done = mapDiaryEntry(doc.data as Resource, indexIncluded(doc.included), entry.caseId);
+  await cacheUpsert(CacheNames.diaryCompleted, done);
+  return done;
+}

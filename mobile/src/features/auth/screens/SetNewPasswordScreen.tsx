@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
-import { confirmPasswordReset } from '@/api/endpoint/auth.api';
+import { confirmPasswordReset } from '@/api/endpoint/passwordReset.api';
 import { checkPasswordStrength } from '@/utils/validators';
 import { forgetOfflineCredential } from '@/features/auth/services/offlineAuth';
-import { setResetToken, takeResetToken } from '@/features/auth/services/resetSession'
+import { setResetToken, takeResetToken } from '@/features/auth/services/resetSession';
 import { getApiErrorMessage } from '@/api/errors';
 import { colors, spacing, typography } from '@/theme/index';
+import { notifyError, notifySuccess, notifyWarning } from '@/utils/notify';
 
 /** Step 3 of 3: only reachable after a correct code was verified (see VerifyResetCodeScreen). */
 export default function SetNewPasswordScreen() {
@@ -22,33 +23,31 @@ export default function SetNewPasswordScreen() {
 
     const submit = async () => {
         if (!strength.meetsMinimum) {
-            Alert.alert('Password too weak', 'Use at least 8 characters with upper, lower case and a number.');
+            notifyError('Password too weak', 'Use at least 8 characters with upper, lower case and a number.');
             return;
         }
         if (password !== confirm) {
-            Alert.alert("Passwords don't match", 'Re-enter the same password in both fields.');
+            notifyError("Passwords don't match", 'Re-enter the same password in both fields.');
             return;
         }
         setLoading(true);
         try {
             const resetToken = takeResetToken();
             if (!resetToken) {
-                Alert.alert('Session expired', 'Please request a new verification code.', [{ text: 'OK', onPress: () => router.replace('/forgot-password') }]);
+                notifyWarning('Session expired', 'Please request a new verification code.');
+                router.replace('/forgot-password');
                 return;
             }
             await confirmPasswordReset(resetToken, password);
             setResetToken(null);
-            //The old password must stop working for offline sign-in too.
-            if(email){
-                await forgetOfflineCredential(email).catch(()=>{});
+            // The old password must stop working for offline sign-in too.
+            if (email) {
+                await forgetOfflineCredential(email).catch(() => { });
             }
-
-            Alert.alert('Password updated', 'You can now sign in with your new password',[
-                {text: 'OK', onPress: () => router.replace('/login')},
-            ]);
-
+            notifySuccess('Password updated', 'You can now sign in with your new password.');
+            router.replace('/login');
         } catch (e) {
-            Alert.alert('could not update password', getApiErrorMessage(e, 'Please try the reset flow again'));
+            notifyError('Could not update password', getApiErrorMessage(e, 'Please try the reset flow again.'));
         } finally {
             setLoading(false);
         }

@@ -14,9 +14,9 @@ export const readJson = <T>(key: string): Promise<T | null> => encGetJson<T>(key
 export const writeJson = (key: string, value: unknown): Promise<void> => encSetJson(key, value);
 
 export async function listUserKeys(userId: string): Promise<string[]> {
-    const all = await AsyncStorage.getAllKeys();
-    const prefix = userPrefix(userId);
-    return all.filter(k => k.startsWith(prefix));
+  const all = await AsyncStorage.getAllKeys();
+  const prefix = userPrefix(userId);
+  return all.filter(k => k.startsWith(prefix));
 }
 
 /**
@@ -25,7 +25,7 @@ export async function listUserKeys(userId: string): Promise<string[]> {
  */
 let chain: Promise<unknown> = Promise.resolve();
 export function serial<T>(task: () => Promise<T>): Promise<T> {
-    const run = chain.then(task, task);
-    chain = run.catch(() => undefined);
-    return run;
+  const run = chain.then(task, task);
+  chain = run.catch(() => undefined);
+  return run;
 }

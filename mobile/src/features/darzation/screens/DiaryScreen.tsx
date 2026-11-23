@@ -1,58 +1,68 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
-import { fetchDiary } from '@/api/endpoint/darzations.api';
-import { fetchCases } from '@/api/endpoint/cases.api';
-import Card from '@/components/Card';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { fetchCompletedDiary, fetchDiary } from '@/api/endpoint/darzations.api';
+import { getApiErrorMessage } from '@/api/errors';
 import Button from '@/components/Button';
+import Card from '@/components/Card';
 import ChipSelect from '@/components/ChipSelect';
 import EmptyState from '@/components/EmptyState';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import PriorityBadge from '@/components/PriorityBadge';
 import SyncBadge from '@/components/SyncBadge';
+import { StageBadge } from '@/ui';
+import { canEditRecords } from '@/constants/roles';
 import { useOnSynced } from '@/hooks/useSyncStatus';
 import { useAppSelector } from '@/hooks/useAppDispatch';
-import { canEditRecords } from '@/constants/roles';
-import { visibleDarzationsFor } from '@/utils/caseAccess';
-import { colors, spacing, typography } from '@/theme/index';
-import { Darzation, DarzationStatus } from '@/models/index';
+import { formatDue } from '@/utils/dueAt';
+import { colors, fontFamily, spacing, typography } from '@/theme/index';
+import { Darzation } from '@/models/index';
 
-type Filter = 'All' | DarzationStatus | 'Overdue';
-const FILTERS: Filter[] = ['All', 'Overdue', 'Pending', 'In Progress', 'Done'];
+type Filter = 'Pending' | 'Overdue' | 'Completed';
+const FILTERS: Filter[] = ['Pending', 'Overdue', 'Completed'];
 
 export default function DiaryScreen() {
   const router = useRouter();
   const me = useAppSelector(state => state.auth.user);
-  const [items, setItems] = useState<Darzation[]>([]);
+  const [open, setOpen] = useState<Darzation[]>([]);
+  const [completed, setCompleted] = useState<Darzation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<Filter[]>(['All']);
+  const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<Filter[]>(['Pending']);
+  const active = filter[0] ?? 'Pending';
 
   const load = useCallback(() => {
-    Promise.all([fetchDiary(), fetchCases().catch(() => [])])
-      .then(([diary, cases]) => setItems(visibleDarzationsFor(diary, cases, me)))
-      .catch((error) => {console.error('Failed to load diary items:',error)})
+    Promise.all([fetchDiary(), fetchCompletedDiary().catch(() => [] as Darzation[])])
+      .then(([openItems, doneItems]) => {
+        setOpen(openItems);
+        setCompleted(doneItems);
+        setError(null);
+      })
+      .catch(e => setError(getApiErrorMessage(e, 'The diary could not be loaded.')))
       .finally(() => setLoading(false));
-  }, [me]);
+  }, []);
 
   const refresh = useCallback(() => {
     setLoading(true);
     load();
   }, [load]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  // Reload every time the tab/screen is shown, so an entry just added, edited or completed is up to date.
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load]),
+  );
   useOnSynced(load);
 
   const shown = useMemo(() => {
-    const f = filter[0];
-    const sorted = [...items].sort((a, b) => (a.dueDate || a.nextActionDate).localeCompare(b.dueDate || b.nextActionDate));
-    if (f === 'All') return sorted;
-    if (f === 'Overdue') return sorted.filter(i => i.overdue);
-    return sorted.filter(i => i.status === f);
-  }, [items, filter]);
+    if (active === 'Completed') return completed;
+    if (active === 'Overdue') return open.filter(i => i.overdue);
+    return open.filter(i => !i.overdue);
+  }, [open, completed, active]);
 
-  if (loading && items.length === 0) {
+  const overdueCount = open.filter(i => i.overdue).length;
+
+  if (loading && open.length === 0 && completed.length === 0) {
     return <LoadingSpinner />;
   }
 
@@ -60,13 +70,15 @@ export default function DiaryScreen() {
     <View style={styles.container}>
       <View style={styles.headerRow}>
         <Text style={styles.title}>Diary</Text>
-        <Text style={styles.overdueLink} onPress={() => router.push('/diary/overdue')}>
-          View overdue →
-        </Text>
+        {me && canEditRecords(me.role) ? <Button label="+ New entry" onPress={() => router.push('/diary/new')} /> : null}
       </View>
       <View style={styles.filters}>
-        <ChipSelect label="Show" options={FILTERS.map(f => ({ value: f, label: f }))} selected={filter} onChange={setFilter} />
-        {me && canEditRecords(me.role) ? <Button label="+ New diary item" onPress={() => router.push('/diary/new')} /> : null}
+        <ChipSelect
+          label="Show"
+          options={FILTERS.map(f => ({ value: f, label: f === 'Overdue' && overdueCount ? `Overdue (${overdueCount})` : f }))}
+          selected={filter}
+          onChange={setFilter}
+        />
       </View>
       <FlatList
         data={shown}
@@ -75,19 +87,34 @@ export default function DiaryScreen() {
         refreshing={loading}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => (
-          <Pressable onPress={() => router.push({ pathname: '/diary/[darzationId]', params: { darzationId: item.id } })}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push({ pathname: '/diary/[darzationId]', params: { darzationId: item.id } })}
+          >
             <Card style={item.overdue ? styles.overdueCard : undefined}>
-              <Text style={styles.nextAction}>{item.title || item.nextAction}</Text>
-              <Text style={styles.date}>
-                Due {item.dueDate || item.nextActionDate} · {item.status ?? 'Pending'}
-                {item.steps?.length ? ` · ${item.steps.filter(s => s.done).length}/${item.steps.length} steps` : ''}
+              <Text style={styles.body} numberOfLines={3}>
+                {item.body || item.title}
               </Text>
-              {item.priority ? <PriorityBadge priority={item.priority} /> : null}
-              <SyncBadge state={item.syncState} />
+              <Text style={styles.date}>
+                {item.status === 'Done' ? `Done ${formatDue(item.completedAt ?? undefined)}` : `Due ${formatDue(item.dueAt) || item.dueDate}`}
+                {item.matterReference ? ` · ${item.matterReference}` : ''}
+              </Text>
+              <View style={styles.badges}>
+                {item.overdue ? <StageBadge tone="danger">Overdue</StageBadge> : null}
+                {!item.overdue && item.isDue && item.status !== 'Done' ? <StageBadge tone="accent">Due now</StageBadge> : null}
+                {item.status === 'Done' ? <StageBadge tone="success">Done</StageBadge> : null}
+                {item.reminderLabel && item.status !== 'Done' ? <StageBadge tone="neutral">{`Reminder: ${item.reminderLabel}`}</StageBadge> : null}
+                <SyncBadge state={item.syncState} />
+              </View>
             </Card>
           </Pressable>
         )}
-        ListEmptyComponent={<EmptyState title="Diary is clear" message="No matching actions." />}
+        ListEmptyComponent={
+          <EmptyState
+            title={error ? 'Could not load the diary' : 'Diary is clear'}
+            message={error ?? (active === 'Completed' ? 'Nothing has been marked done yet.' : 'No matching entries.')}
+          />
+        }
       />
     </View>
   );
@@ -104,9 +131,9 @@ const styles = StyleSheet.create({
   },
   filters: { paddingHorizontal: spacing.md, paddingTop: spacing.md },
   title: { ...typography.h1, color: colors.navy },
-  overdueLink: { ...typography.caption, color: colors.red, fontWeight: '600' },
   list: { padding: spacing.md },
   overdueCard: { borderColor: colors.red },
-  nextAction: { ...typography.body, color: colors.textPrimary, fontWeight: '600' },
+  body: { ...typography.body, color: colors.textPrimary, fontFamily: fontFamily.sansSemibold },
   date: { ...typography.caption, color: colors.textSecondary, marginVertical: spacing.xs },
+  badges: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, alignItems: 'center' },
 });

@@ -1,29 +1,29 @@
-import  NetInfo from "@react-native-community/netinfo";
-import { isAxiosError } from "axios";
+import NetInfo from '@react-native-community/netinfo';
+import { isAxiosError } from 'axios';
 
-//NetInfo says there is no network, or  a network with no internat behind it.
-export async function isDeviceOffline(): Promise<boolean>{
-    try{
+/** NetInfo says there is no network, or a network with no internet behind it. */
+export async function isDeviceOffline(): Promise<boolean> {
+    try {
         const state = await NetInfo.fetch();
         return state.isConnected === false || state.isInternetReachable === false;
-    }catch{
+    } catch {
         return false;
     }
 }
 
-//The request never got an answer (no signal, DNS dailure, timeout) - as opposed to the server saying no.
-export function isNetworkError(error: unknown): boolean{
+/** The request never got an answer (no signal, DNS failure, timeout) — as opposed to the server saying no. */
+export function isNetworkError(error: unknown): boolean {
     return isAxiosError(error) && !error.response;
 }
 
-//worth retrying later: no answer, or the server is overloaded/unavaliable
-export function isTransientError(error: unknown): boolean{
-    if(!isAxiosError(error)){
+/** Worth retrying later: no answer, or the server is overloaded/unavailable. */
+export function isTransientError(error: unknown): boolean {
+    if (!isAxiosError(error)) {
         return false;
     }
-    if(!error.response){
+    if (!error.response) {
         return true;
     }
     const status = error.response.status;
-    return status >= 500 || status === 400 || status === 420;
+    return status >= 500 || status === 408 || status === 429;
 }

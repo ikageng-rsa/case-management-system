@@ -1,21 +1,21 @@
 export type CaseStatus = 'Open' | 'In Progress' | 'On Hold' | 'Closed' | 'Archived';
-export type CasePriority = 'Low' | 'Medium' | 'High' | 'Urgent';
 
-
-//What the signed-in user do on one matter 
-export interface CaseAbilities{
+/** What the signed-in user may do on one matter (the backend's `meta.can`). */
+export interface CaseAbilities {
   work?: boolean;
   assign?: boolean;
-  view_audit?:boolean;
+  view_audit?: boolean;
 }
 
-export interface CaseAssignment{
+export interface CaseAssignment {
   id: string;
   userId: string;
   userName?: string;
   capacity: string;
   assignedAt?: string;
 }
+export type CasePriority = 'Low' | 'Medium' | 'High' | 'Urgent';
+
 export interface Case {
   id: string;
   fileReference: string; // initials+mattertype+seq+year
@@ -43,14 +43,14 @@ export interface Case {
   // Free-form metadata the firm wants tracked but that doesn't warrant its own
   // column yet (e.g. "Referral source": "Existing client").
   customFields?: Record<string, string>;
-  // from the v1 API(matters)
-  //Matter title, e.g "Claim against the Road Accident Fund"
+  // --- from the v1 API (matters) ---
+  /** Matter title, e.g. "Claim against the Road Accident Fund". */
   title?: string;
-  //The api's raw status word (e.g "Open")
+  /** The API's raw status word (e.g. "open"). */
   rawStatus?: string;
-  prescribesAt?: string; //ISO-the date the claim prescribes
-  nextDueAt?: string; //ISO - next deadline on the matter
-  //The signed-in user's capacities on this matter (responsible / supervising/assisting/messenger)
+  prescribesAt?: string; // ISO — the date the claim prescribes
+  nextDueAt?: string; // ISO — next deadline on the matter
+  /** The signed-in user's capacities on this matter (responsible / supervising / assisting / messenger). */
   myCapacities?: string[];
   documentsCount?: number;
   courtLabel?: string;
