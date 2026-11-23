@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 #[Appends(['unit_label'])]
-#[Fillable(['code', 'name', 'measure', 'increment', 'default_billable', 'requires_court'])]
+#[Fillable(['code', 'name', 'measure', 'increment', 'default_billable', 'requires_court', 'charges_time_on_top'])]
 #[RouteKey('code')]
 class ActivityType extends Model
 {
@@ -42,6 +42,7 @@ class ActivityType extends Model
             'increment' => 'integer',
             'default_billable' => 'boolean',
             'requires_court' => 'boolean',
+            'charges_time_on_top' => 'boolean',
         ];
     }
 
@@ -51,6 +52,16 @@ class ActivityType extends Model
     public function isSystem(): bool
     {
         return in_array($this->code, self::SYSTEM_CODES, true);
+    }
+
+    /**
+     * Whether a narration of this work also records the time it took, such as
+     * the time spent travelling with the kilometres. The time is rated when
+     * the bill is raised.
+     */
+    public function chargesTimeOnTop(): bool
+    {
+        return (bool) $this->charges_time_on_top;
     }
 
     public function narrations(): HasMany

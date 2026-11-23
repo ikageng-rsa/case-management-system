@@ -50,6 +50,7 @@ class SaveActivityType
             'increment' => $type->exists && ! isset($data['increment']) ? $type->increment : (int) $data['increment'],
             'default_billable' => (bool) ($data['default_billable'] ?? false),
             'requires_court' => (bool) ($data['requires_court'] ?? false),
+            'charges_time_on_top' => (bool) ($data['charges_time_on_top'] ?? $type->charges_time_on_top ?? false),
         ])->save();
 
         return $type;

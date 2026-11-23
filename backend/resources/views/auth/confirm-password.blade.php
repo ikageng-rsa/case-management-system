@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Confirm password — Example Firm')
+@section('title', 'Confirm password')
 
 @section('content')
     <h1 class="mb-1">Confirm your password</h1>

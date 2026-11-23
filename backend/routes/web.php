@@ -6,6 +6,27 @@ use App\Http\Controllers\Account\AccountController;
 use App\Http\Controllers\Account\NotificationController;
 use App\Http\Controllers\Account\SignInCodeController;
 use App\Http\Controllers\Audit\AuditLogController;
+use App\Http\Controllers\Billing\BillingSettingsController;
+use App\Http\Controllers\Billing\BillLinesController;
+use App\Http\Controllers\Billing\BillsController;
+use App\Http\Controllers\Billing\DisbursementsController;
+use App\Http\Controllers\Billing\DownloadBillPdfController;
+use App\Http\Controllers\Billing\DownloadDisbursementReceiptController;
+use App\Http\Controllers\Billing\DownloadFeeAgreementController;
+use App\Http\Controllers\Billing\DownloadPaymentProofController;
+use App\Http\Controllers\Billing\DownloadTariffSourceController;
+use App\Http\Controllers\Billing\DownloadTariffTemplateController;
+use App\Http\Controllers\Billing\DraftFeeBillController;
+use App\Http\Controllers\Billing\FeeAgreementsController;
+use App\Http\Controllers\Billing\FinaliseFeeAgreementController;
+use App\Http\Controllers\Billing\IssueBillController;
+use App\Http\Controllers\Billing\MarkFeeAgreementFailedController;
+use App\Http\Controllers\Billing\PaymentsController;
+use App\Http\Controllers\Billing\PublishTariffScheduleController;
+use App\Http\Controllers\Billing\ReversePaymentController;
+use App\Http\Controllers\Billing\TariffAdjustmentsController;
+use App\Http\Controllers\Billing\TariffScheduleController;
+use App\Http\Controllers\Billing\VoidBillController;
 use App\Http\Controllers\Client\ClientContactController;
 use App\Http\Controllers\Client\ClientController;
 use App\Http\Controllers\Client\ClientFicaDocumentController;
@@ -25,6 +46,9 @@ use App\Http\Controllers\Reference\ActivityTypeController;
 use App\Http\Controllers\Reference\CourtController;
 use App\Http\Controllers\Reference\MatterTypeController;
 use App\Http\Controllers\Reference\ReferenceDataController;
+use App\Http\Controllers\Settings\FirmSettingsController;
+use App\Http\Controllers\Settings\InvoiceSettingsController;
+use App\Http\Controllers\Settings\SettingsController;
 use App\Http\Controllers\User\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -66,6 +90,32 @@ Route::middleware('auth')->group(function () {
     Route::post('/matters/{matter}/assign', [MatterController::class, 'assign'])->name('matter.assign');
     Route::delete('/matters/{matter}/assign', [MatterController::class, 'unassign'])->name('matter.unassign');
     Route::patch('/matters/{matter}', [MatterController::class, 'update'])->name('matter.update');
+
+    // How the client is charged on a matter.
+    Route::post('/matters/{matter}/fee-agreements', [FeeAgreementsController::class, 'store'])->name('matter.fee-agreements.store');
+    Route::post('/fee-agreements/{feeAgreement}/finalise', FinaliseFeeAgreementController::class)->name('fee-agreement.finalise');
+    Route::post('/fee-agreements/{feeAgreement}/fail', MarkFeeAgreementFailedController::class)->name('fee-agreement.fail');
+    Route::post('/fee-agreements/{feeAgreement}/bill', DraftFeeBillController::class)->name('fee-agreement.bill');
+    Route::get('/fee-agreements/{feeAgreement}/signed-copy', DownloadFeeAgreementController::class)->name('fee-agreement.signed-copy');
+
+    // Money paid out on a matter for the client.
+    Route::post('/matters/{matter}/disbursements', [DisbursementsController::class, 'store'])->name('matter.disbursements.store');
+    Route::delete('/disbursements/{disbursement}', [DisbursementsController::class, 'destroy'])->name('disbursement.destroy');
+    Route::get('/disbursements/{disbursement}/receipt', DownloadDisbursementReceiptController::class)->name('disbursement.receipt');
+
+    // Statements of account and bills of cost on a matter.
+    Route::post('/matters/{matter}/bills', [BillsController::class, 'store'])->name('matter.bills.store');
+    Route::get('/bills/{bill}', [BillsController::class, 'show'])->name('bill.show');
+    Route::delete('/bills/{bill}', [BillsController::class, 'destroy'])->name('bill.destroy');
+    Route::get('/bills/{bill}/pdf', DownloadBillPdfController::class)->name('bill.pdf');
+    Route::post('/bills/{bill}/issue', IssueBillController::class)->name('bill.issue');
+    Route::post('/bills/{bill}/void', VoidBillController::class)->name('bill.void');
+    Route::post('/bills/{bill}/payments', [PaymentsController::class, 'store'])->name('bill.payments.store');
+    Route::post('/payments/{payment}/reverse', ReversePaymentController::class)->name('payment.reverse');
+    Route::get('/payments/{payment}/proof', DownloadPaymentProofController::class)->name('payment.proof');
+    Route::post('/bills/{bill}/lines', [BillLinesController::class, 'store'])->name('bill.lines.store');
+    Route::patch('/bills/{bill}/lines/{line}', [BillLinesController::class, 'update'])->scopeBindings()->name('bill.lines.update');
+    Route::delete('/bills/{bill}/lines/{line}', [BillLinesController::class, 'destroy'])->scopeBindings()->name('bill.lines.destroy');
     Route::get('/matters/{matter}', [MatterController::class, 'show'])->name('matter.show');
 
     Route::post('/matters/{matter}/parties', [MatterPartyController::class, 'store'])->name('matter.parties.store');
@@ -150,6 +200,32 @@ Route::middleware('auth')->group(function () {
         Route::patch('/activity-types/{activityType}', [ActivityTypeController::class, 'update'])->name('activity-type.update');
         Route::delete('/activity-types/{activityType}', [ActivityTypeController::class, 'destroy'])->name('activity-type.destroy');
         Route::post('/activity-types/{activityType}/restore', [ActivityTypeController::class, 'restore'])->withTrashed()->name('activity-type.restore');
+    });
+
+    // The firm's own settings, a tab per area, each under its own permission.
+    Route::get('/settings', [SettingsController::class, 'show'])->name('settings');
+    // The billing settings had a page of their own before they became a tab.
+    Route::redirect('/billing-settings', '/settings?tab=billing')->name('billing-settings');
+
+    // How the firm bills: the default percentages, the drawing fee and when statements are drawn.
+    Route::put('/billing-settings', [BillingSettingsController::class, 'update'])->middleware('can:manage_billing_settings')->name('billing-settings.update');
+
+    // The firm's name, address and contact details, as printed on its bills.
+    Route::put('/settings/firm', [FirmSettingsController::class, 'update'])->middleware('can:manage_firm_settings')->name('settings.firm.update');
+
+    // How bills look when printed, and how statements ask to be paid.
+    Route::put('/settings/invoices', [InvoiceSettingsController::class, 'update'])->middleware('can:manage_billing_settings')->name('settings.invoices.update');
+
+    // The court tariffs bills are priced from, one schedule per date it starts,
+    // with what each role charges against it.
+    Route::middleware('can:manage_tariffs')->group(function () {
+        Route::get('/tariffs/template', DownloadTariffTemplateController::class)->name('tariff-schedule.template');
+        Route::post('/tariffs', [TariffScheduleController::class, 'store'])->name('tariff-schedule.store');
+        Route::get('/tariffs/{tariffSchedule}', [TariffScheduleController::class, 'show'])->name('tariff-schedule.show');
+        Route::get('/tariffs/{tariffSchedule}/source', DownloadTariffSourceController::class)->name('tariff-schedule.source');
+        Route::put('/tariffs/{tariffSchedule}/adjustments', [TariffAdjustmentsController::class, 'update'])->name('tariff-adjustments.update');
+        Route::post('/tariffs/{tariffSchedule}/publish', PublishTariffScheduleController::class)->name('tariff-schedule.publish');
+        Route::delete('/tariffs/{tariffSchedule}', [TariffScheduleController::class, 'destroy'])->name('tariff-schedule.destroy');
     });
 
     Route::get('/audit-log', [AuditLogController::class, 'index'])->middleware('can:view_audit_log')->name('audit-log');

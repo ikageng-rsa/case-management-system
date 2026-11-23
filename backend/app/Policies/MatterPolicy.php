@@ -64,6 +64,43 @@ class MatterPolicy
         return $matter->isOpen() && $matter->isAssignedTo($user);
     }
 
+    /** How the client is charged: recording, finalising or failing a fee agreement, for those who may see the file. */
+    public function manageFees(User $user, Matter $matter): bool
+    {
+        return $user->can(Permission::ManageFeeAgreements->value) && $this->view($user, $matter);
+    }
+
+    /** Drawing a bill on the matter, and changing or deleting it while it is a draft. */
+    public function draftBills(User $user, Matter $matter): bool
+    {
+        return $user->can(Permission::DraftBills->value) && $this->view($user, $matter);
+    }
+
+    /** Issuing a checked draft, after which it is owed. */
+    public function issueBills(User $user, Matter $matter): bool
+    {
+        return $user->can(Permission::IssueBills->value) && $this->view($user, $matter);
+    }
+
+    /** Voiding a bill issued in error. */
+    public function voidBills(User $user, Matter $matter): bool
+    {
+        return $user->can(Permission::VoidBills->value) && $this->view($user, $matter);
+    }
+
+    /** Recording a payment on an issued bill, and reversing one recorded in error. */
+    public function recordPayments(User $user, Matter $matter): bool
+    {
+        return $user->can(Permission::RecordPayments->value) && $this->view($user, $matter);
+    }
+
+    /** Seeing the matter's bills, for anyone who drafts, issues or voids them or records payments on them. */
+    public function viewBills(User $user, Matter $matter): bool
+    {
+        return $this->draftBills($user, $matter) || $this->issueBills($user, $matter) || $this->voidBills($user, $matter)
+            || $this->recordPayments($user, $matter);
+    }
+
     public function deleteDocument(User $user, Matter $matter): bool
     {
         return $user->can(Permission::DeleteDocuments->value) && $this->view($user, $matter);

@@ -9,7 +9,7 @@ use App\Models\Reference\Court;
 use Illuminate\Support\Facades\DB;
 
 /*
- * Changes the particulars of a matter. Title, date and court are logged by the
+ * Changes the particulars of a matter. Title, date, court and tariff scale are logged by the
  * model as any change is. The prescription date feeds the warnings that a claim
  * is about to be lost, so its change is recorded as an event of its own with the
  * old date, the new one and the reason, and is saved quietly so that it is logged
@@ -25,9 +25,13 @@ class UpdateMatterDetails
         DB::transaction(function () use ($matter, $data, $reason): void {
             $matter->fill(collect($data)->only(['title', 'instructed_at'])->all());
 
-            // Matters that are not litigious are not before a court.
+            // Matters that are not litigious are not before a court, and are not billed on a tariff scale.
             if (array_key_exists('court_id', $data) && $matter->matterType->is_litigation) {
                 $matter->court()->associate($data['court_id'] === null ? null : Court::findOrFail($data['court_id']));
+            }
+
+            if (array_key_exists('tariff_scale', $data) && $matter->matterType->is_litigation) {
+                $matter->tariff_scale = $data['tariff_scale'];
             }
 
             $matter->save();

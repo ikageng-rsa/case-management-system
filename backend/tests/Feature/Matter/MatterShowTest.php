@@ -167,6 +167,22 @@ class MatterShowTest extends TestCase
         $this->assertFalse($matter->fresh()->load('assignments')->isAssignedTo($attorney));
     }
 
+    public function test_on_a_small_screen_the_side_column_is_hidden_and_assignments_take_its_add_button(): void
+    {
+        $matter = Matter::factory()->create();
+        $director = $this->userWithRole(RoleEnum::Director);
+
+        $html = $this->actingAs($director)->get(route('matter.show', [$matter, 'tab' => 'parties']))->assertOk()->getContent();
+
+        $this->assertStringContainsString('class="col-lg-4 d-none d-lg-block"', $html);
+        $this->assertMatchesRegularExpression('/<button[^>]*class="[^"]*d-lg-none[^"]*"[^>]*aria-label="Add team member"/', $html);
+
+        // Without the permission there is nothing to add with.
+        $attorney = $this->userWithRole(RoleEnum::CandidateAttorney);
+        MatterAssignment::factory()->for($matter)->for($attorney)->create();
+        $this->actingAs($attorney)->get(route('matter.show', [$matter, 'tab' => 'parties']))->assertDontSee('Add team member');
+    }
+
     public function test_assigning_requires_the_permission(): void
     {
         $matter = Matter::factory()->create();

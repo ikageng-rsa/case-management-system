@@ -25,6 +25,8 @@ class ActivityTypeResource extends ApiResource
             'measure' => $this->measure->value,
             'increment' => $this->increment,
             'requires_court' => $this->requires_court,
+            // When true, a narration of this work also takes `minutes`, the time it took.
+            'charges_time_on_top' => $this->chargesTimeOnTop(),
         ];
     }
 }

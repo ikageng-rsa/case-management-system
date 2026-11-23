@@ -27,6 +27,7 @@ class ActivityTypeFactory extends Factory
             'increment' => 6,
             'default_billable' => true,
             'requires_court' => false,
+            'charges_time_on_top' => false,
         ];
     }
 
