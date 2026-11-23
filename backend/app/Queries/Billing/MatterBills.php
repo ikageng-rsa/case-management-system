@@ -6,11 +6,14 @@ namespace App\Queries\Billing;
 
 use App\Enums\Billing\BillKind;
 use App\Enums\Billing\TariffScale;
+use App\Models\Billing\Bill;
 use App\Models\Matter\Matter;
 use App\Models\Narration\Narration;
 
 /*
- * A matter's bills for its billing tab, newest first, and what raising a new
+ * A matter's bills for its billing tab, newest first, what is still owed on the
+ * issued ones (by the client on statements and fee bills, and by the other side
+ * on bills of cost, kept apart because different people owe them), and what raising a new
  * one needs: who it can be addressed to, the scales, and the people whose time
  * on top is still unbilled, so a rate can be asked for each of them. The
  * client's address on file is given only for someone cleared to see client
@@ -30,8 +33,15 @@ class MatterBills
             ->filter(fn (Narration $narration) => $narration->minutes > 0)
             ->unique('id');
 
+        $bills = $matter->bills()->latest()->latest('id')->get();
+        $owed = fn (bool $byOtherSide) => (int) $bills
+            ->filter(fn (Bill $bill) => $bill->isIssued() && ($bill->kind === BillKind::BillOfCost) === $byOtherSide)
+            ->sum(fn (Bill $bill) => $bill->balanceCents());
+
         return [
-            'bills' => $matter->bills()->latest()->latest('id')->get(),
+            'bills' => $bills,
+            'owedByClientCents' => $owed(false),
+            'owedByOtherSideCents' => $owed(true),
             'billKinds' => $matter->matterType->is_litigation ? [BillKind::Statement, BillKind::BillOfCost] : [BillKind::Statement],
             'addressees' => collect([$matter->client->full_name])->merge($matter->parties()->pluck('name'))->unique()->values(),
             'clientAddress' => $withClientAddress ? $matter->client->addressOnFile() : null,

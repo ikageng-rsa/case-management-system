@@ -139,6 +139,18 @@ class Client extends Model implements HasMedia
             ->first()?->value;
     }
 
+    /** Where email to the client goes: the primary email address, or else any other on file. */
+    public function emailOnFile(): ?string
+    {
+        $address = $this->contacts()
+            ->where('kind', ContactKind::Email)
+            ->get()
+            ->sortBy(fn (ClientContact $contact) => $contact->is_primary ? 0 : 1)
+            ->first()?->value;
+
+        return filled($address) ? (string) $address : null;
+    }
+
     /** Individuals are named first/last; entities carry a single registered name. */
     protected function fullName(): Attribute
     {

@@ -88,10 +88,17 @@ class MatterPolicy
         return $user->can(Permission::VoidBills->value) && $this->view($user, $matter);
     }
 
-    /** Seeing the matter's bills, for anyone who drafts, issues or voids them. */
+    /** Recording a payment on an issued bill, and reversing one recorded in error. */
+    public function recordPayments(User $user, Matter $matter): bool
+    {
+        return $user->can(Permission::RecordPayments->value) && $this->view($user, $matter);
+    }
+
+    /** Seeing the matter's bills, for anyone who drafts, issues or voids them or records payments on them. */
     public function viewBills(User $user, Matter $matter): bool
     {
-        return $this->draftBills($user, $matter) || $this->issueBills($user, $matter) || $this->voidBills($user, $matter);
+        return $this->draftBills($user, $matter) || $this->issueBills($user, $matter) || $this->voidBills($user, $matter)
+            || $this->recordPayments($user, $matter);
     }
 
     public function deleteDocument(User $user, Matter $matter): bool
