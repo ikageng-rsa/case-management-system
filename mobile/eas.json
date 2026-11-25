@@ -17,6 +17,10 @@
         "buildType": "apk"
       }
     },
+    "release-ios": {
+      "distribution": "internal"
+    }
+    ,
     "production": {
       "autoIncrement": true
     }
