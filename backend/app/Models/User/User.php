@@ -6,6 +6,7 @@ namespace App\Models\User;
 
 use App\Casts\Client\EncryptedContact;
 use App\Concerns\RecordsActivity;
+use App\Enums\Auth\Permission;
 use App\Models\Diary\DiaryEntry;
 use App\Models\Matter\Matter;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -68,6 +69,14 @@ class User extends Authenticatable
     public function notificationPreferences(): HasMany
     {
         return $this->hasMany(NotificationPreference::class);
+    }
+
+    /** Whether the person browses matters, opens them, or is on one now. */
+    public function worksOnMatters(): bool
+    {
+        return $this->can(Permission::ViewAllMatters->value)
+            || $this->can(Permission::CreateMatters->value)
+            || $this->matterAssignments()->active()->exists();
     }
 
     public function matterAssignments(): HasMany

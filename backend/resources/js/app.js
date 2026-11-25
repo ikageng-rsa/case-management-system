@@ -502,6 +502,77 @@ Alpine.data('matterPicker', ({ url, scope = 'visible', selected = null } = {}) =
  * itself only has to know how many are unread; reading one or all is a request
  * that answers with the new count.
  */
+Alpine.data('siteSearch', ({ url } = {}) => ({
+    q: '',
+    groups: [],
+    open: false,
+    loading: false,
+    searched: false,
+    latest: 0,
+
+    async run() {
+        const term = this.q.trim();
+
+        if (term.length < 2) {
+            this.groups = [];
+            this.searched = false;
+            this.open = false;
+
+            return;
+        }
+
+        const request = ++this.latest;
+        this.loading = true;
+        this.open = true;
+
+        try {
+            const response = await fetch(`${url}?q=${encodeURIComponent(term)}`, { headers: { Accept: 'application/json' } });
+
+            // A slower, earlier search must not overwrite a later one.
+            if (request === this.latest && response.ok) {
+                this.groups = (await response.json()).groups;
+                this.searched = true;
+            }
+        } finally {
+            if (request === this.latest) {
+                this.loading = false;
+            }
+        }
+    },
+
+    links() {
+        return [...this.$root.querySelectorAll('a.dropdown-item')];
+    },
+
+    first() {
+        this.links()[0]?.click();
+    },
+
+    move(event, step) {
+        const links = this.links();
+        const next = links[links.indexOf(event.target) + step];
+
+        if (next) {
+            next.focus();
+        } else if (step < 0) {
+            this.$refs.input.focus();
+        }
+    },
+
+    close() {
+        this.open = false;
+        this.$refs.input.blur();
+    },
+
+    shortcut(event) {
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+            event.preventDefault();
+            this.$refs.input.focus();
+            this.$refs.input.select();
+        }
+    },
+}));
+
 Alpine.data('notificationMenu', ({ url, unread = 0 } = {}) => ({
     unread,
     items: [],

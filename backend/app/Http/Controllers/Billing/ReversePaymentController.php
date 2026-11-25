@@ -16,7 +16,7 @@ class ReversePaymentController extends Controller
 {
     public function __invoke(ReversePaymentRequest $request, Payment $payment, ReversePayment $reversePayment): RedirectResponse
     {
-        Gate::authorize('recordPayments', $payment->bill->matter);
+        Gate::authorize('reversePayments', $payment->bill->matter);
 
         $back = redirect()->route('bill.show', $payment->bill);
 

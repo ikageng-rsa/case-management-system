@@ -49,6 +49,8 @@ class EmailPaymentToClientTest extends TestCase
             $mail->assertSeeInText('R 4 000.00');
             $mail->assertSeeInText('16 November 2026');
             $mail->assertSeeInText('R 6 000.00 is still owed on this invoice.');
+            $mail->assertSeeInText('Your receipt is attached.');
+            $this->assertCount(1, $mail->attachments());
 
             return $mail->hasTo('client@example.com') && ! $mail->hasTo('other@example.com');
         });

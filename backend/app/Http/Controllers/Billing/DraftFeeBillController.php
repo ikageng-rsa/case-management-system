@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Billing;
 
+use App\Http\BillingHome;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Billing\DraftFeeBillRequest;
 use App\Models\Billing\FeeAgreement;
@@ -26,7 +27,7 @@ class DraftFeeBillController extends Controller
                 address: $request->validated('address'),
             );
         } catch (BillRefused $e) {
-            return redirect()->route('matter.show', [$feeAgreement->matter, 'tab' => 'billing'])
+            return redirect()->to(BillingHome::url($feeAgreement->matter))
                 ->withInput()->withErrors(['fee_bill' => $e->problems], DraftFeeBillRequest::bagFor($feeAgreement->getKey()));
         }
 

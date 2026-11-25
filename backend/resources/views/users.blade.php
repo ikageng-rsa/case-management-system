@@ -385,17 +385,22 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($permissions as $permission)
+                    @foreach ($permissionGroups as $group => $permissions)
                         <tr>
-                            <td>{{ $label($permission->value) }}</td>
-                            @foreach ($roles as $role)
-                                @if ($role->permissions->contains('name', $permission->value))
-                                    <td class="text-center">✓</td>
-                                @else
-                                    <td class="text-center text-secondary">—</td>
-                                @endif
-                            @endforeach
+                            <th scope="rowgroup" colspan="{{ $roles->count() + 1 }}" class="text-meta text-uppercase">{{ $group }}</th>
                         </tr>
+                        @foreach ($permissions as $permission)
+                            <tr>
+                                <td>{{ $label($permission->value) }}</td>
+                                @foreach ($roles as $role)
+                                    @if ($role->permissions->contains('name', $permission->value))
+                                        <td class="text-center">✓</td>
+                                    @else
+                                        <td class="text-center text-secondary">—</td>
+                                    @endif
+                                @endforeach
+                            </tr>
+                        @endforeach
                     @endforeach
                 </tbody>
             </table>
@@ -482,20 +487,23 @@
                 @endif
 
                 <div class="form-label form-label-mono">Permissions</div>
-                <div class="row">
-                    @php
-                        $checked = $input($form['bag'], 'permissions', $form['granted']);
-                    @endphp
-                    @foreach ($permissions as $permission)
-                        <div class="col-md-6">
-                            <label class="form-check mb-2">
-                                <input class="form-check-input" type="checkbox" name="permissions[]" value="{{ $permission->value }}"
-                                    @checked(in_array($permission->value, (array) $checked, true))>
-                                <span class="form-check-label">{{ $label($permission->value) }}</span>
-                            </label>
-                        </div>
-                    @endforeach
-                </div>
+                @php
+                    $checked = $input($form['bag'], 'permissions', $form['granted']);
+                @endphp
+                @foreach ($permissionGroups as $group => $permissions)
+                    <h4 class="text-meta text-uppercase mt-3 mb-2">{{ $group }}</h4>
+                    <div class="row">
+                        @foreach ($permissions as $permission)
+                            <div class="col-md-6">
+                                <label class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="permissions[]" value="{{ $permission->value }}"
+                                        @checked(in_array($permission->value, (array) $checked, true))>
+                                    <span class="form-check-label">{{ $label($permission->value) }}</span>
+                                </label>
+                            </div>
+                        @endforeach
+                    </div>
+                @endforeach
 
                 <x-slot:footer>
                     <div class="d-flex align-items-center justify-content-between">

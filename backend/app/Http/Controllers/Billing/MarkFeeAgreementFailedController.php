@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Billing;
 
+use App\Http\BillingHome;
 use App\Http\Controllers\Controller;
 use App\Models\Billing\FeeAgreement;
 use App\Services\Billing\FeeAgreementRefused;
@@ -17,7 +18,7 @@ class MarkFeeAgreementFailedController extends Controller
     {
         Gate::authorize('manageFees', $feeAgreement->matter);
 
-        $back = redirect()->route('matter.show', [$feeAgreement->matter, 'tab' => 'billing']);
+        $back = redirect()->to(BillingHome::url($feeAgreement->matter));
 
         try {
             $markFailed->fail($feeAgreement);

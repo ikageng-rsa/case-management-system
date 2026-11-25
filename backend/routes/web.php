@@ -14,6 +14,7 @@ use App\Http\Controllers\Billing\DownloadBillPdfController;
 use App\Http\Controllers\Billing\DownloadDisbursementReceiptController;
 use App\Http\Controllers\Billing\DownloadFeeAgreementController;
 use App\Http\Controllers\Billing\DownloadPaymentProofController;
+use App\Http\Controllers\Billing\DownloadPaymentReceiptController;
 use App\Http\Controllers\Billing\DownloadTariffSourceController;
 use App\Http\Controllers\Billing\DownloadTariffTemplateController;
 use App\Http\Controllers\Billing\DraftFeeBillController;
@@ -21,6 +22,7 @@ use App\Http\Controllers\Billing\FeeAgreementsController;
 use App\Http\Controllers\Billing\FinaliseFeeAgreementController;
 use App\Http\Controllers\Billing\IssueBillController;
 use App\Http\Controllers\Billing\MarkFeeAgreementFailedController;
+use App\Http\Controllers\Billing\MatterBillingController;
 use App\Http\Controllers\Billing\PaymentsController;
 use App\Http\Controllers\Billing\PublishTariffScheduleController;
 use App\Http\Controllers\Billing\ReversePaymentController;
@@ -46,6 +48,8 @@ use App\Http\Controllers\Reference\ActivityTypeController;
 use App\Http\Controllers\Reference\CourtController;
 use App\Http\Controllers\Reference\MatterTypeController;
 use App\Http\Controllers\Reference\ReferenceDataController;
+use App\Http\Controllers\ReportsController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\Settings\FirmSettingsController;
 use App\Http\Controllers\Settings\InvoiceSettingsController;
 use App\Http\Controllers\Settings\SettingsController;
@@ -104,6 +108,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/disbursements/{disbursement}/receipt', DownloadDisbursementReceiptController::class)->name('disbursement.receipt');
 
     // Statements of account and bills of cost on a matter.
+    Route::get('/bills', [BillsController::class, 'index'])->name('bills');
+    // A matter's billing by itself, for someone who works on the money without the file.
+    Route::get('/billing/matters/{matter}', [MatterBillingController::class, 'show'])->name('billing.matter');
     Route::post('/matters/{matter}/bills', [BillsController::class, 'store'])->name('matter.bills.store');
     Route::get('/bills/{bill}', [BillsController::class, 'show'])->name('bill.show');
     Route::delete('/bills/{bill}', [BillsController::class, 'destroy'])->name('bill.destroy');
@@ -111,8 +118,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/bills/{bill}/issue', IssueBillController::class)->name('bill.issue');
     Route::post('/bills/{bill}/void', VoidBillController::class)->name('bill.void');
     Route::post('/bills/{bill}/payments', [PaymentsController::class, 'store'])->name('bill.payments.store');
+    Route::get('/payments', [PaymentsController::class, 'index'])->name('payments');
     Route::post('/payments/{payment}/reverse', ReversePaymentController::class)->name('payment.reverse');
     Route::get('/payments/{payment}/proof', DownloadPaymentProofController::class)->name('payment.proof');
+    Route::get('/payments/{payment}/receipt', DownloadPaymentReceiptController::class)->name('payment.receipt');
     Route::post('/bills/{bill}/lines', [BillLinesController::class, 'store'])->name('bill.lines.store');
     Route::patch('/bills/{bill}/lines/{line}', [BillLinesController::class, 'update'])->scopeBindings()->name('bill.lines.update');
     Route::delete('/bills/{bill}/lines/{line}', [BillLinesController::class, 'destroy'])->scopeBindings()->name('bill.lines.destroy');
@@ -201,6 +210,11 @@ Route::middleware('auth')->group(function () {
         Route::delete('/activity-types/{activityType}', [ActivityTypeController::class, 'destroy'])->name('activity-type.destroy');
         Route::post('/activity-types/{activityType}/restore', [ActivityTypeController::class, 'restore'])->withTrashed()->name('activity-type.restore');
     });
+
+    Route::get('/search', SearchController::class)->name('search');
+
+    // What is owed to the firm, on the matters a person may see.
+    Route::get('/reports', [ReportsController::class, 'show'])->name('reports');
 
     // The firm's own settings, a tab per area, each under its own permission.
     Route::get('/settings', [SettingsController::class, 'show'])->name('settings');

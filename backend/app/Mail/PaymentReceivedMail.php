@@ -6,7 +6,9 @@ namespace App\Mail;
 
 use App\Models\Billing\Payment;
 use App\Settings\FirmSettings;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 
@@ -42,6 +44,17 @@ class PaymentReceivedMail extends Mailable
             'balance' => $this->rand($bill->balanceCents()),
             'settled' => $bill->balanceCents() === 0,
         ]);
+    }
+
+    /** @return list<Attachment> */
+    public function attachments(): array
+    {
+        return [
+            Attachment::fromData(
+                fn () => Pdf::loadView('pdf.receipt', ['payment' => $this->payment])->setPaper('a4')->output(),
+                "receipt-{$this->payment->receiptNumber()}.pdf",
+            )->withMime('application/pdf'),
+        ];
     }
 
     protected function rand(int $cents): string

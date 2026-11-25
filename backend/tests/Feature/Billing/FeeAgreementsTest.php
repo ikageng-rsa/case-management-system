@@ -70,7 +70,7 @@ class FeeAgreementsTest extends TestCase
         $this->assertSame(FeeAgreementKind::Mandate, $matter->feeAgreements()->active()->sole()->kind);
     }
 
-    public function test_a_finalised_claim_shows_what_was_received_and_the_fee(): void
+    public function test_a_finalised_claim_shows_what_was_received_and_the_fee_to_those_who_see_bills(): void
     {
         $attorney = $this->userWithRole(RoleEnum::Attorney);
         $matter = $this->rafMatter();
@@ -80,7 +80,12 @@ class FeeAgreementsTest extends TestCase
         $this->actingAs($attorney)->post(route('fee-agreement.finalise', $agreement), ['amount_received' => '480000.00'])
             ->assertSessionHasNoErrors();
 
+        // The attorney who finalised it sees that it is finalised, but amounts are for those who may see bills.
         $this->actingAs($attorney)->get(route('matter.show', [$matter, 'tab' => 'billing']))
+            ->assertSee('Finalised')
+            ->assertDontSee('R 480 000.00');
+
+        $this->actingAs($this->userWithRole(RoleEnum::Director))->get(route('matter.show', [$matter, 'tab' => 'billing']))
             ->assertSee('received R 480 000.00, fee R 120 000.00');
     }
 

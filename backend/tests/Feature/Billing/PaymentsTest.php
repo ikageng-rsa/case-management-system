@@ -159,6 +159,63 @@ class PaymentsTest extends TestCase
             ->assertSee('R 5 000.00 owed on bills of cost');
     }
 
+    public function test_the_pdf_of_a_bill_says_what_has_been_paid_and_what_is_left(): void
+    {
+        $pdf = fn () => view('pdf.bill', ['bill' => $this->bill->refresh()->load(['matter', 'lines'])])->render();
+
+        $unpaid = $pdf();
+        $this->assertStringNotContainsString('Balance', $unpaid);
+        $this->assertStringContainsString('<h2>Payment</h2>', $unpaid);
+
+        $this->actingAs($this->director)->post(route('bill.payments.store', $this->bill), $this->payment());
+        $reversed = Payment::factory()->for($this->bill)->reversed()->create(['amount_cents' => 100000]);
+
+        $partPaid = $pdf();
+        $this->assertStringContainsString('<td colspan="3" class="money">Paid</td><td colspan="2" class="money">R 4 000.00</td>', $partPaid);
+        $this->assertStringContainsString('<td colspan="3" class="money">Balance</td><td colspan="2" class="money">R 6 000.00</td>', $partPaid);
+        $this->assertStringContainsString('<h2>Payment</h2>', $partPaid);
+        $this->assertStringNotContainsString('PAID</div>', $partPaid);
+
+        $this->actingAs($this->director)->post(route('bill.payments.store', $this->bill), $this->payment(['amount' => '6000']));
+
+        $settled = $pdf();
+        $this->assertStringContainsString('<div class="stamp paid">PAID</div>', $settled);
+        $this->assertStringContainsString('<td colspan="3" class="money">Balance</td><td colspan="2" class="money">R 0.00</td>', $settled);
+        $this->assertStringNotContainsString('<h2>Payment</h2>', $settled);
+
+        $this->actingAs($this->director)->get(route('bill.pdf', $this->bill))->assertOk()->assertHeader('content-type', 'application/pdf');
+    }
+
+    public function test_a_payment_has_a_receipt_showing_the_balance_after_it(): void
+    {
+        $first = Payment::factory()->for($this->bill)->create(['amount_cents' => 400000, 'received_on' => '2026-11-10', 'reference' => 'INV 0007']);
+        $second = Payment::factory()->for($this->bill)->create(['amount_cents' => 600000, 'received_on' => '2026-11-12']);
+        $reversed = Payment::factory()->for($this->bill)->reversed()->create(['amount_cents' => 100000, 'received_on' => '2026-11-11']);
+
+        $this->assertSame(600000, $first->balanceAfterCents());
+        $this->assertSame(0, $second->balanceAfterCents());
+
+        $html = view('pdf.receipt', ['payment' => $first->load('bill.matter')])->render();
+        $this->assertStringContainsString($first->receiptNumber(), $html);
+        $this->assertStringContainsString($this->bill->addressee, $html);
+        $this->assertStringContainsString('10 November 2026', $html);
+        $this->assertStringContainsString('EFT, reference INV 0007', $html);
+        $this->assertStringContainsString('INV/2026/0007', $html);
+        $this->assertStringContainsString('R 4 000.00', $html);
+        $this->assertStringContainsString('R 6 000.00 is still owed on this invoice.', $html);
+
+        $this->assertStringContainsString('This invoice is settled.', view('pdf.receipt', ['payment' => $second->load('bill.matter')])->render());
+
+        $this->actingAs($this->director)->get(route('bill.show', $this->bill))->assertSee(route('payment.receipt', $first))->assertDontSee(route('payment.receipt', $reversed));
+        $this->actingAs($this->director)->get(route('payment.receipt', $first))
+            ->assertOk()->assertHeader('content-type', 'application/pdf')->assertDownload("receipt-{$first->receiptNumber()}.pdf");
+        $this->actingAs($this->director)->get(route('payment.receipt', $reversed))->assertNotFound();
+
+        $candidate = tap(User::factory()->create())->assignRole(RoleEnum::CandidateAttorney->value);
+        MatterAssignment::factory()->for($this->matter)->for($candidate)->create();
+        $this->actingAs($candidate)->get(route('payment.receipt', $first))->assertForbidden();
+    }
+
     public function test_a_payment_needs_its_proof_and_cannot_be_more_than_is_owed(): void
     {
         $this->actingAs($this->director)->post(route('bill.payments.store', $this->bill), $this->payment(['proof' => null]))
@@ -202,6 +259,30 @@ class PaymentsTest extends TestCase
             ->assertSessionHasErrorsIn('bill', ['bill' => 'Payments have been recorded on this bill. Reverse them before voiding it.']);
 
         $this->assertTrue($this->bill->refresh()->isIssued());
+    }
+
+    public function test_finance_records_a_payment_without_the_file_and_cannot_reverse_it(): void
+    {
+        $finance = tap(User::factory()->create(['name' => 'Fikile Nkosi']))->assignRole(RoleEnum::Finance->value);
+
+        $this->actingAs($finance)->get(route('matter.show', $this->matter))->assertForbidden();
+
+        $this->actingAs($finance)->get(route('bill.show', $this->bill))
+            ->assertOk()
+            ->assertSee('Record payment')
+            ->assertDontSee('Void');
+
+        $this->actingAs($finance)->post(route('bill.payments.store', $this->bill), $this->payment())
+            ->assertRedirect(route('bill.show', $this->bill));
+
+        $payment = Payment::sole();
+        $this->assertTrue($payment->recordedBy->is($finance));
+
+        $this->actingAs($finance)->get(route('bill.show', $this->bill))->assertOk()->assertDontSee('Reverse');
+        $this->actingAs($finance)->post(route('payment.reverse', $payment), ['reason' => 'Wrong bill'])->assertForbidden();
+        $this->actingAs($finance)->get(route('payment.proof', $payment))->assertOk();
+
+        $this->assertFalse($payment->fresh()->isReversed());
     }
 
     public function test_recording_and_reversing_payments_needs_the_permission_and_sight_of_the_matter(): void

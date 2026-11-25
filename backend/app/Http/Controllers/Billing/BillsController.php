@@ -4,23 +4,45 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Billing;
 
+use App\Enums\Auth\Permission;
 use App\Enums\Billing\BillKind;
 use App\Enums\Billing\FirmAccount;
 use App\Enums\Billing\PaymentMethod;
+use App\Http\BillingHome;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Billing\StoreBillRequest;
 use App\Models\Billing\Bill;
 use App\Models\Matter\Matter;
+use App\Models\User\User;
+use App\Queries\Billing\BillList;
 use App\Queries\Billing\UnbilledWork;
 use App\Services\Billing\BillRefused;
 use App\Services\Billing\DeleteDraftBill;
 use App\Services\Billing\DraftBill;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 class BillsController extends Controller
 {
+    public function index(Request $request, BillList $billList): View
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        abort_unless($user->can(Permission::ViewBills->value), 403);
+
+        $show = array_key_exists((string) $request->query('show'), BillList::SHOWING) ? (string) $request->query('show') : 'all';
+        $search = is_string($request->query('q')) ? trim($request->query('q')) : '';
+
+        return view('bills', [
+            'show' => $show,
+            'showing' => BillList::SHOWING,
+            'search' => $search,
+        ] + $billList->for($user, $show, $search));
+    }
+
     public function store(StoreBillRequest $request, Matter $matter, DraftBill $draftBill): RedirectResponse
     {
         Gate::authorize('draftBills', $matter);
@@ -38,7 +60,7 @@ class BillsController extends Controller
                 address: $request->validated('address'),
             );
         } catch (BillRefused $e) {
-            return redirect()->route('matter.show', [$matter, 'tab' => 'billing'])
+            return redirect()->to(BillingHome::url($matter))
                 ->withInput()->withErrors(['bill' => $e->problems], 'bill');
         }
 
@@ -70,7 +92,7 @@ class BillsController extends Controller
             return redirect()->route('bill.show', $bill)->withErrors(['bill' => $e->problems], 'bill');
         }
 
-        return redirect()->route('matter.show', [$bill->matter, 'tab' => 'billing'])->with('status', $bill->kind === BillKind::AgreementFee
+        return redirect()->to(BillingHome::url($bill->matter))->with('status', $bill->kind === BillKind::AgreementFee
             ? 'Draft deleted. The fee can be billed again from the agreement.'
             : 'Draft deleted. Its work is free to bill again.');
     }
