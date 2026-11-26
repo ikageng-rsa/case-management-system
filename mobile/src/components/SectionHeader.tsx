@@ -3,10 +3,10 @@ import { StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { colors, spacing, typography } from '@/theme/index';
 
 interface SectionHeaderProps {
-  readonly title: string;
-  readonly eyebrow?: string; // small tracked-out label above the title, e.g. "CASE FILE"
-  readonly trailing?: React.ReactNode; // optional right-aligned action, e.g. a "See all" link
-  readonly style?: ViewStyle;
+  title: string;
+  eyebrow?: string; // small tracked-out label above the title, e.g. "CASE FILE"
+  trailing?: React.ReactNode; // optional right-aligned action, e.g. a "See all" link
+  style?: ViewStyle;
 }
 
 export default function SectionHeader({ title, eyebrow, trailing, style }: SectionHeaderProps) {
@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
   },
   eyebrow: {
     ...typography.overline,
-    color: colors.gold,
+    color: colors.goldText,
     marginBottom: 2,
   },
   titleRow: {
@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   title: {
-    ...typography.h1,
+    ...typography.h2,
     color: colors.navy,
   },
   rule: {

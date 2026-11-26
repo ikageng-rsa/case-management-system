@@ -1,22 +1,17 @@
-import React, { PropsWithChildren} from 'react';
-import { StyleSheet,View,ViewStyle } from 'react-native';
-import {colors,radius,spacing} from '@/theme/index';
+import React, { PropsWithChildren } from 'react';
+import { StyleProp, StyleSheet, ViewStyle } from 'react-native';
+import { Card as UiCard } from '@/ui';
+import { spacing } from '@/theme/index';
 
-interface CardProps{
-    style?: ViewStyle
+interface CardProps {
+    style?: StyleProp<ViewStyle>;
 }
 
-export default function Card({children,style}: PropsWithChildren<CardProps>){
-    return <View style={[styles.card,style]}>{children}</View>;
+/** Cards stack in lists, so this adds the bottom margin the kit's bare Card leaves out. */
+export default function Card({ children, style }: PropsWithChildren<CardProps>) {
+    return <UiCard style={[styles.card, style]}>{children}</UiCard>;
 }
 
 const styles = StyleSheet.create({
-    card: {
-        backgroundColor: colors.surface,
-        borderRadius: radius.md,
-        borderWidth: 1,
-        borderColor: colors.border,
-        padding: spacing.md,
-        marginBottom: spacing.md
-    }
-})
+    card: { marginBottom: spacing.md },
+});

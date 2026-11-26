@@ -5,14 +5,13 @@ import { useSyncStatus } from '@/hooks/useSyncStatus';
 import { colors, spacing, typography } from '@/theme/index';
 
 /**
- * Sits above the navigator (mounted once in App.tsx) so any screen - most
- * importantly Narration/Darzartion entry forms used in the field - has a 
+ * Sits above the navigator (mounted once in app/_layout.tsx) so any screen — most
+ * importantly Narration/Darzation entry forms used in the field — has a
  * persistent, unmissable cue that submissions will queue rather than fail
- * silently. Renders nothing while online
+ * silently. Renders nothing while online.
  */
-
 export default function OfflineBanner() {
-    const { isOnline }: any = useNetInfo;
+    const { isOnline } = useNetInfo();
     const { pending } = useSyncStatus();
 
     if (isOnline) {
@@ -20,10 +19,10 @@ export default function OfflineBanner() {
     }
 
     return (
-        <View style={styles.banner} testID='offline-banner'>
+        <View style={styles.banner} testID="offline-banner">
             <Text style={styles.text}>
-                {"You're offline - entries will sync once you're back online."}
-                {pending > 0 ? `(${pending} waiting` : ''}
+                {"You're offline — you can still add cases, diary items and narrations; they sync when you're back online."}
+                {pending > 0 ? ` (${pending} waiting)` : ''}
             </Text>
         </View>
     );
@@ -33,11 +32,11 @@ const styles = StyleSheet.create({
     banner: {
         backgroundColor: colors.gold,
         paddingVertical: spacing.xs,
-        paddingHorizontal: spacing.md
+        paddingHorizontal: spacing.md,
     },
     text: {
         ...typography.captionBold,
         color: colors.navyDark,
-        textAlign: 'center'
-    }
-})
+        textAlign: 'center',
+    },
+});

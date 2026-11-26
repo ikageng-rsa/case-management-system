@@ -1,4 +1,4 @@
-import { Ref, useState } from 'react';
+import React, { Ref, useRef, useState } from 'react';
 import { StyleProp, StyleSheet, TextInput, TextInputProps, ViewStyle } from 'react-native';
 import { useTheme } from '../theme';
 import { Field, useFieldStyles } from './Field';
@@ -10,7 +10,7 @@ export interface InputProps extends TextInputProps {
     error?: string;
     tone?: 'dark';
     containerStyle?: StyleProp<ViewStyle>;
-    ref?: Ref<TextInput>;
+    ref?: Ref<React.ComponentRef<typeof TextInput>>;
 }
 
 export function Input({
@@ -31,7 +31,6 @@ export function Input({
     const field = useFieldStyles();
     const [focused, setFocused] = useState(false);
     const dark = tone === 'dark';
-
     return (
         <Field label={label} before={before} hint={hint} error={error} tone={tone} style={containerStyle}>
             <TextInput

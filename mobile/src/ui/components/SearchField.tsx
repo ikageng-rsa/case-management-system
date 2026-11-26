@@ -6,7 +6,7 @@ import { Icon } from './Icon';
 export interface SearchFieldProps extends TextInputProps {
     shortcut?: string;
     containerStyle?: StyleProp<ViewStyle>;
-    ref?: Ref<TextInput>;
+    ref?: Ref<React.ComponentRef<typeof TextInput>>;
 }
 
 export function SearchField({

@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { fetchNotifications, fetchUnreadCount } from '@/api/endpoint/notifications.api';
+import { hasFeature } from '@/config/features';
 import { getNotifications } from '@/services/notifications/notificationsModule';
 import { AppNotification } from '@/models/index';
 
@@ -29,7 +30,7 @@ export function countUnread(list: Pick<AppNotification, 'type' | 'readAt'>[], se
     return {
         total: Math.max(serverTotal ?? 0, unread.length),
         diary: unread.filter(n => n.type.startsWith('diary_')).length,
-        cases: unread.filter(n => n.type === 'case_assigned').length,
+        cases: unread.filter(n => n.type.startsWith('matter_')).length,
     };
 }
 
@@ -40,6 +41,9 @@ function updateAppIconBadge(total: number): void {
 
 /** Asks the backend what is unread. Offline or failing: keeps the last numbers. */
 export async function refreshUnreadCount(): Promise<void> {
+    if (!hasFeature('notifications')) {
+        return;
+    }
     try {
         const [total, list] = await Promise.all([fetchUnreadCount(), fetchNotifications().catch(() => [] as AppNotification[])]);
         const next = countUnread(list, total);

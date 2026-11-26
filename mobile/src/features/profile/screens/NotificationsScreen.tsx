@@ -74,7 +74,7 @@ export default function NotificationsScreen() {
                     </Pressable>
                 )}
                 ListEmptyComponent={
-                    loading ? null : <EmptyState title="No notifications" message="Diary alerts and matter assignments will appear here." />
+                    loading ? undefined : <EmptyState title="No notifications" message="Diary alerts and matter assignments will appear here." />
                 }
             />
         </View>
