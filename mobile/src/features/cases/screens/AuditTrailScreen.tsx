@@ -87,7 +87,7 @@ export default function AuditTrailScreen() {
                             setLoadingMore(true);
                             load(page + 1);
                         }} />
-                    ) : null
+                    ) : undefined
                 }
             />
         </View>

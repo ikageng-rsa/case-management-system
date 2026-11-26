@@ -1,50 +1,19 @@
 import React from 'react';
-import { StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native';
-import { colors, spacing, radius, typography } from '@/theme/index';
+import { Input as UiInput, InputProps as UiInputProps } from '@/ui';
 
-interface InputProps extends TextInputProps{
-    readonly label?: string;
-    readonly error?: string;
+interface InputProps extends Omit<UiInputProps, 'label' | 'error'> {
+    label: string;
+    error?: string;
 }
 
-export default function Input({label, error, style, ...rest}: InputProps){
-    return(
-        <View style={styles.container}>
-            <Text style={styles.label}>{label}</Text>
-            <TextInput
-                placeholderTextColor={colors.textSecondary}
-                style={[styles.input, error? styles.inputError : null, style]}
-                {...rest}
-            />
-            {error? <Text style={styles.errorText}>{error}</Text> : null}
-        </View>
+export default function Input({ label, error, ...rest }: InputProps) {
+    return (
+        <UiInput
+            label={label}
+            error={error}
+            // Secrets never go through autocorrect/predictive text (which can learn and leak them).
+            {...(rest.secureTextEntry ? { autoCorrect: false, spellCheck: false, autoCapitalize: 'none' as const } : {})}
+            {...rest}
+        />
     );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        marginBottom: spacing.md
-    },
-    label:{
-        ...typography.caption,
-        color: colors.textSecondary,
-        marginBottom: spacing.xs
-    },
-    input:{
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: radius.sm,
-        paddingHorizontal: spacing.sm + 2,
-        fontSize: 14,
-        color: colors.textPrimary,
-        backgroundColor: colors.surface
-    },
-    inputError:{
-        borderColor: colors.danger
-    },
-    errorText:{
-        ...typography.caption,
-        color: colors.danger,
-        marginTop: spacing.xs
-    }
-})

@@ -38,7 +38,7 @@ export default function SyncStatusBar() {
         // Claims the top safe-area inset only while visible (an empty SafeAreaView would push the app down).
         <SafeAreaView edges={['top']} style={[styles.safe, tone === 'warn' ? styles.warn : styles.info]}>
             <Pressable
-                onPress={() => router.push('./more/sync')}
+                onPress={() => router.push('/more/sync')}
                 style={styles.bar}
                 accessibilityRole="button"
                 testID="sync-status-bar"

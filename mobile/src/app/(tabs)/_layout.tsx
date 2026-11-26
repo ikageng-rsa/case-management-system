@@ -1,5 +1,4 @@
 import React, { ComponentProps } from 'react';
-import { ColorValue } from 'react-native';
 import { Tabs } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAppSelector } from '@/hooks/useAppDispatch';
@@ -12,8 +11,9 @@ type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 // Built once at module scope (not inline in screenOptions) so React doesn't
 // see a new component type on every TabsLayout render.
 function makeTabIcon(name: IconName) {
-  return function TabIcon({ color, size }: { color: ColorValue; size: number }) {
-    return <MaterialCommunityIcons name={name} color={color} size={size} />;
+  return function TabIcon({ color, size }: { color: unknown; size: number }) {
+    const IconColor = typeof color === "string" ? color : undefined;
+    return <MaterialCommunityIcons name={name} color={IconColor} size={size} />;
   };
 }
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radius, spacing, typography } from '@/theme/index';
+import { Field } from '@/ui';
+import { colors, fontFamily, radius, spacing, typography } from '@/theme/index';
 
 interface ChipSelectProps<T extends string> {
     label: string;
@@ -17,20 +18,17 @@ export default function ChipSelect<T extends string>({
     selected,
     onChange,
     multiple = false,
-}: Readonly<ChipSelectProps<T>>) {
-    const toggleSingle = (value: T) => {
-        onChange([value]);
-    }
-
-    const toggleMultiple = (value: T) =>{
-        const next = selected.includes(value)?selected.filter((v) => v !== value) : [...selected, value];
-        onChange(next);
-    }
-    const toggle = multiple ? toggleMultiple : toggleSingle;
+}: ChipSelectProps<T>) {
+    const toggle = (value: T) => {
+        if (multiple) {
+            onChange(selected.includes(value) ? selected.filter(v => v !== value) : [...selected, value]);
+        } else {
+            onChange([value]);
+        }
+    };
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.label}>{label}</Text>
+        <Field label={label}>
             <View style={styles.row}>
                 {options.map(option => {
                     const active = selected.includes(option.value);
@@ -47,23 +45,21 @@ export default function ChipSelect<T extends string>({
                     );
                 })}
             </View>
-        </View>
+        </Field>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { marginBottom: spacing.md },
-    label: { ...typography.caption, color: colors.textSecondary, marginBottom: spacing.xs },
-    row: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
+    row: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
     chip: {
-        paddingHorizontal: spacing.md,
-        paddingVertical: spacing.xs + 2,
+        paddingHorizontal: spacing.md - 2,
+        paddingVertical: spacing.sm - 1,
         borderRadius: radius.md,
         borderWidth: 1,
-        borderColor: colors.border,
+        borderColor: colors.divider,
         backgroundColor: colors.surface,
     },
     chipActive: { backgroundColor: colors.navy, borderColor: colors.navy },
     chipText: { ...typography.caption, color: colors.textPrimary },
-    chipTextActive: { color: colors.white, fontWeight: '600' },
+    chipTextActive: { color: colors.white, fontFamily: fontFamily.sansSemibold },
 });

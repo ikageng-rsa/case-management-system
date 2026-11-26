@@ -49,7 +49,7 @@ export function MatterPicker({
     const [focused, setFocused] = useState(false);
     const lookups = useRef(0);
     const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const input = useRef<TextInput>(null);
+    const input = useRef<React.ComponentRef<typeof TextInput>>(null);
     const invalid = Boolean(error);
 
     useEffect(
