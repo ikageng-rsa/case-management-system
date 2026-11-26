@@ -63,7 +63,7 @@ class UserController extends Controller
                 : collect(),
             'staff' => User::query()->orderBy('name')->get(['id', 'name', 'job_title']),
             'roles' => Role::query()->withCount('users')->with('permissions')->orderBy('name')->get(),
-            'permissions' => Permission::cases(),
+            'permissionGroups' => Permission::grouped(),
         ]);
     }
 

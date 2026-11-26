@@ -73,9 +73,11 @@
                         </div>
                         <div class="text-meta">
                             Closed {{ $agreement->closed_at?->format('j M Y') }}
-                            @if ($agreement->amount_received_cents !== null)
-                                · received {{ $rand($agreement->amount_received_cents) }}, fee {{ $rand($agreement->fee()) }}
-                            @endif
+                            @can('viewBills', $matter)
+                                @if ($agreement->amount_received_cents !== null)
+                                    · received {{ $rand($agreement->amount_received_cents) }}, fee {{ $rand($agreement->fee()) }}
+                                @endif
+                            @endcan
                         </div>
                     </div>
 
@@ -84,18 +86,16 @@
                             <a href="{{ route('fee-agreement.signed-copy', $agreement) }}" class="text-meta">Signed copy</a>
                         @endif
 
-                        @if ($feeBills->has($agreement->getKey()))
-                            @can('viewBills', $matter)
+                        @can('viewBills', $matter)
+                            @if ($feeBills->has($agreement->getKey()))
                                 <a href="{{ route('bill.show', $feeBills[$agreement->getKey()]) }}" class="text-meta">Fee bill {{ $feeBills[$agreement->getKey()]->number ?? '(draft)' }}</a>
-                            @else
-                                <span class="text-meta">Fee bill {{ $feeBills[$agreement->getKey()]->number ?? '(draft)' }}</span>
-                            @endcan
-                        @elseif ($agreement->isFinalised() && $agreement->fee())
-                            @can('draftBills', $matter)
-                                <x-ui.button variant="outline-secondary" size="sm"
-                                    x-data x-on:click="$dispatch('sheet-open', 'fee-bill-{{ $agreement->getKey() }}')">Raise fee bill</x-ui.button>
-                            @endcan
-                        @endif
+                            @elseif ($agreement->isFinalised() && $agreement->fee())
+                                @can('draftBills', $matter)
+                                    <x-ui.button variant="outline-secondary" size="sm"
+                                        x-data x-on:click="$dispatch('sheet-open', 'fee-bill-{{ $agreement->getKey() }}')">Raise fee bill</x-ui.button>
+                                @endcan
+                            @endif
+                        @endcan
                     </div>
                 </div>
             @endforeach
@@ -108,6 +108,7 @@
     $paymentTones = ['unpaid' => 'neutral', 'part_paid' => 'accent', 'settled' => 'success'];
 @endphp
 
+@can('viewBills', $matter)
 <div class="card mb-3">
     <div class="card-body">
         <div class="d-flex align-items-center justify-content-between mb-3">
@@ -186,6 +187,7 @@
         @endif
     </div>
 </div>
+@endcan
 
 <div class="card mb-3">
     <div class="card-body">
@@ -315,7 +317,7 @@
     </x-slot:footer>
 </x-ui.sheet>
 
-@can('draftBills', $matter)
+@if (auth()->user()->can('draftBills', $matter) && auth()->user()->can('viewBills', $matter))
     @php
         $billErrors = $errors->getBag('bill');
         $billKind = old('kind', $billKinds[0]->value);
@@ -465,4 +467,4 @@
             </x-slot:footer>
         </x-ui.sheet>
     @endforeach
-@endcan
+@endif

@@ -57,6 +57,10 @@ enum Permission: string
     case ManageTariffs = 'manage_tariffs';
     case ManageBillingSettings = 'manage_billing_settings';
     case ManageFirmSettings = 'manage_firm_settings';
+    // Billing on every matter, without the file.
+    case AccessAllBilling = 'access_all_billing';
+    // Seeing amounts: work value, bills, payments and balances.
+    case ViewBills = 'view_bills';
     case ManageFeeAgreements = 'manage_fee_agreements';
     // Billing a client or the other side: drawing a bill, issuing it, and voiding one issued in error.
     case DraftBills = 'draft_bills';
@@ -64,6 +68,42 @@ enum Permission: string
     case VoidBills = 'void_bills';
     // Recording money received on an issued bill, and reversing a payment recorded in error.
     case RecordPayments = 'record_payments';
+    case ReversePayments = 'reverse_payments';
+    // Seeing the list of payments received across bills.
+    case ViewPayments = 'view_payments';
+    // Seeing what is owed to the firm across the matters a person may see.
+    case ViewBillingReports = 'view_billing_reports';
     case ViewAuditLog = 'view_audit_log';
     case ExportAuditLog = 'export_audit_log';
+
+    /** The heading a permission is listed under in role management. */
+    public function group(): string
+    {
+        return match ($this) {
+            self::ViewAllMatters, self::CreateMatters, self::EditMatters, self::EditMatterDetails, self::CloseMatters,
+            self::ReopenMatters, self::ArchiveMatters, self::AssignMatters, self::TransferMatters => 'Matters',
+            self::ViewClients, self::CreateClients, self::EditClients, self::DeleteClients, self::MergeClients,
+            self::ViewClientContacts, self::ViewUnmaskedClientData, self::ViewPopiaConsents, self::RecordPopiaConsent,
+            self::WithdrawPopiaConsent, self::ExportClientData => 'Clients and personal information',
+            self::EditAnyNarrations, self::DeleteNarrations, self::DeleteDocuments, self::AmendLedgerEntries => 'Work on the file',
+            self::AccessAllBilling, self::ViewBills, self::ManageFeeAgreements, self::DraftBills, self::IssueBills,
+            self::VoidBills, self::RecordPayments, self::ReversePayments, self::ViewPayments, self::ViewBillingReports => 'Billing',
+            self::ViewUsers, self::EditUsers, self::InviteUsers, self::DeactivateUsers, self::AssignRoles, self::ManageRoles => 'Users and roles',
+            self::ManageMatterTypes, self::ManageActivityTypes, self::ManageCourts, self::ManageTariffs,
+            self::ManageBillingSettings, self::ManageFirmSettings => 'Firm setup',
+            self::ViewAuditLog, self::ExportAuditLog => 'Audit',
+        };
+    }
+
+    /** @return array<string, list<self>> every permission under its heading */
+    public static function grouped(): array
+    {
+        $groups = array_fill_keys(['Matters', 'Clients and personal information', 'Work on the file', 'Billing', 'Users and roles', 'Firm setup', 'Audit'], []);
+
+        foreach (self::cases() as $permission) {
+            $groups[$permission->group()][] = $permission;
+        }
+
+        return $groups;
+    }
 }

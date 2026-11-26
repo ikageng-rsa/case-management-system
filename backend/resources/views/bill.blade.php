@@ -12,12 +12,20 @@
         $paymentTones = ['unpaid' => 'neutral', 'part_paid' => 'accent', 'settled' => 'success'];
         $paymentState = $bill->paymentState();
         $canRecordPayments = auth()->user()->can('recordPayments', $bill->matter);
+        $canReversePayments = auth()->user()->can('reversePayments', $bill->matter);
         $units = fn ($line) => rtrim(rtrim((string) $line->units, '0'), '.');
     @endphp
 
     <div class="mb-3 d-flex align-items-start justify-content-between gap-3">
         <div>
-            <a href="{{ route('matter.show', [$bill->matter, 'tab' => 'billing']) }}" class="text-meta">← {{ $bill->matter->reference }}</a>
+            {{-- Opened from the debtors report, the way back is to the report; otherwise to the matter the bill is on. --}}
+            @if (request('from') === 'debtors' && auth()->user()->can('view_billing_reports'))
+                <a href="{{ route('reports', ['tab' => 'debtors']) }}" class="text-meta">← Debtors report</a>
+                <span class="text-meta">·</span>
+                <a href="{{ \App\Http\BillingHome::url($bill->matter) }}" class="text-meta">{{ $bill->matter->reference }}</a>
+            @else
+                <a href="{{ \App\Http\BillingHome::url($bill->matter) }}" class="text-meta">← {{ $bill->matter->reference }}</a>
+            @endif
             <h1 class="mb-1">
                 {{ $bill->kind->label() }} {{ $bill->number }}
                 <x-ui.stage-badge :tone="$tones[$bill->status->value]" class="ms-2">{{ $bill->status->label() }}</x-ui.stage-badge>
@@ -206,6 +214,9 @@
                                 @if ($payment->proof())
                                     · <a href="{{ route('payment.proof', $payment) }}">Proof of payment</a>
                                 @endif
+                                @unless ($payment->isReversed())
+                                    · <a href="{{ route('payment.receipt', $payment) }}">Receipt</a>
+                                @endunless
                             </div>
                             @if ($payment->isReversed())
                                 <div class="text-meta">Reversed {{ $payment->reversed_at->format('j M Y') }}{{ $payment->reversedBy ? ' by '.$payment->reversedBy->name : '' }}: {{ $payment->reverse_reason }}</div>
@@ -214,7 +225,7 @@
 
                         <div class="text-nowrap">
                             <span @class(['me-2', 'text-decoration-line-through text-secondary' => $payment->isReversed()])>{{ $rand($payment->amount_cents) }}</span>
-                            @if ($canRecordPayments && ! $payment->isReversed())
+                            @if ($canReversePayments && ! $payment->isReversed())
                                 <x-ui.button variant="ghost-danger" size="sm"
                                     x-data x-on:click="$dispatch('sheet-open', 'reverse-payment-{{ $payment->getKey() }}')">Reverse</x-ui.button>
                             @endif
@@ -279,7 +290,9 @@
                 </x-slot:footer>
             </x-ui.sheet>
         @endif
+    @endif
 
+    @if ($canReversePayments)
         @foreach ($bill->payments->reject->isReversed() as $payment)
             @php
                 $reverseBag = \App\Http\Requests\Billing\ReversePaymentRequest::bagFor($payment->getKey());

@@ -115,4 +115,30 @@ class DashboardControllerTest extends TestCase
             ->assertOk()
             ->assertSee('href="'.route('matters').'" class="ms-auto text-meta">view all', false);
     }
+
+    public function test_matter_rows_lead_to_the_matter_and_to_the_client_for_those_who_may_see_clients(): void
+    {
+        $matter = Matter::factory()->create();
+        DiaryEntry::factory()->for($matter)->overdue()->create();
+
+        $director = tap(User::factory()->create())->assignRole(RoleEnum::Director->value);
+
+        foreach ([route('dashboard'), route('matters')] as $page) {
+            $this->actingAs($director)->get($page)
+                ->assertOk()
+                ->assertSee(route('matter.show', $matter))
+                ->assertSee(route('client.show', $matter->client));
+        }
+
+        // A messenger works on the matter but may not open clients, so sees the name without a link.
+        $messenger = tap(User::factory()->create())->assignRole(RoleEnum::Messenger->value);
+        MatterAssignment::factory()->for($matter)->for($messenger)->create();
+
+        foreach ([route('dashboard'), route('matters')] as $page) {
+            $this->actingAs($messenger)->get($page)
+                ->assertOk()
+                ->assertSee($matter->client->full_name)
+                ->assertDontSee(route('client.show', $matter->client));
+        }
+    }
 }

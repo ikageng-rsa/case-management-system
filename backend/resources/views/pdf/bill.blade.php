@@ -7,6 +7,10 @@
     $isFeeBill = $bill->kind === \App\Enums\Billing\BillKind::AgreementFee;
     // A statement and a fee bill ask the client to pay; a bill of cost goes to the other side for taxation.
     $asksForPayment = $bill->kind !== \App\Enums\Billing\BillKind::BillOfCost;
+    // Once money has been received, the bill says so and what is left, so a copy printed later is not read as the full amount owed.
+    $paymentState = $bill->paymentState();
+    $hasPayments = $paymentState !== null && $bill->paid_cents > 0;
+    $isSettled = $paymentState === \App\Enums\Billing\PaymentState::Settled;
     $rand = fn (int $cents) => 'R '.number_format($cents / 100, 2, '.', ' ');
     $percent = rtrim(rtrim(number_format($bill->drawing_fee_percent_hundredths / 100, 2, '.', ''), '0'), '.');
 @endphp
@@ -31,6 +35,8 @@
         .totals td { border-bottom: none; padding: 3pt 4pt; }
         .grand td { border-top: 1px solid #1f2933; font-weight: bold; }
         .stamp { position: fixed; top: 40%; left: 15%; font-size: 72pt; color: #d64545; opacity: 0.15; transform: rotate(-30deg); }
+        .stamp.paid { color: #2f9e44; left: 28%; }
+        .balance td { font-weight: bold; }
         .letterhead { width: 100%; margin-bottom: 10pt; }
         .attention { font-weight: bold; text-transform: uppercase; }
         table.refs { width: 100%; border-collapse: collapse; }
@@ -86,28 +92,11 @@
         <div class="stamp">DRAFT</div>
     @elseif ($bill->isVoid())
         <div class="stamp">VOID</div>
+    @elseif ($isSettled)
+        <div class="stamp paid">PAID</div>
     @endif
 
-    @if ($letterhead)
-        {{-- The firm's own letterhead, in place of its details set as text. --}}
-        <img src="{{ $letterhead }}" alt="" class="letterhead">
-    @else
-        <div class="{{ $theme === 'modern' ? 'band' : '' }}">
-            <div class="firm">{{ $firm->name }}</div>
-            @foreach ($firm->addressLines as $line)
-                <div class="meta">{{ $line }}</div>
-            @endforeach
-            @if ($firm->phone || $firm->email)
-                <div class="meta">{{ collect([$firm->phone, $firm->email])->filter()->implode(' · ') }}</div>
-            @endif
-            @if ($firm->website)
-                <div class="meta">{{ $firm->website }}</div>
-            @endif
-            @if ($firm->registrationNumber)
-                <div class="meta">Company reg. {{ $firm->registrationNumber }}</div>
-            @endif
-        </div>
-    @endif
+    @include('pdf.letterhead')
 
     <table class="head" role="presentation">
         <tr>
@@ -157,9 +146,13 @@
             @endunless
             <tr><td colspan="3" class="money">Disbursements</td><td></td><td class="money">{{ $rand($bill->disbursements_cents) }}</td></tr>
             <tr class="grand"><td colspan="3" class="money">Total due</td><td colspan="2" class="money">{{ $rand($bill->total_cents) }}</td></tr>
+            @if ($hasPayments)
+                <tr><td colspan="3" class="money">Paid</td><td colspan="2" class="money">{{ $rand($bill->paid_cents) }}</td></tr>
+                <tr class="balance"><td colspan="3" class="money">Balance</td><td colspan="2" class="money">{{ $rand($bill->balanceCents()) }}</td></tr>
+            @endif
         </tbody>
     </table>
-    @if ($asksForPayment)
+    @if ($asksForPayment && ! $isSettled)
         <div class="payment">
             <h2>Payment</h2>
             @if ($invoices->paymentTerms)

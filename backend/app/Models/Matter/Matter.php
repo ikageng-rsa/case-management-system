@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models\Matter;
 
 use App\Concerns\RecordsActivity;
+use App\Enums\Auth\Permission;
 use App\Enums\Billing\TariffScale;
 use App\Enums\Document\DocumentKind;
 use App\Enums\Matter\Assignment;
@@ -312,6 +313,16 @@ class Matter extends Model implements HasMedia
             'assignments',
             fn (Builder $query) => $query->active()->where('user_id', $user->getKey()),
         );
+    }
+
+    /** The matters whose billing a person works on. */
+    public function scopeWithBillingReachedBy(Builder $query, User $user): void
+    {
+        if ($user->can(Permission::AccessAllBilling->value) || $user->can(Permission::ViewAllMatters->value)) {
+            return;
+        }
+
+        $query->assignedTo($user);
     }
 
     protected function userAssignedAs(Assignment $capacity): ?User

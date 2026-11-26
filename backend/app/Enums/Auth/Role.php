@@ -11,6 +11,7 @@ enum Role: string
     case CandidateAttorney = 'candidate_attorney';
     case Secretary = 'legal_secretary';
     case Manager = 'manager';
+    case Finance = 'finance';
     case Messenger = 'messenger';
 
     /**
@@ -72,6 +73,17 @@ enum Role: string
                 Permission::ManageTariffs,
                 Permission::ViewAuditLog,
                 Permission::ExportAuditLog,
+            ],
+            self::Finance => [
+                Permission::AccessAllBilling,
+                Permission::ViewBills,
+                Permission::ManageFeeAgreements,
+                Permission::DraftBills,
+                Permission::IssueBills,
+                Permission::RecordPayments,
+                Permission::ViewPayments,
+                Permission::ViewBillingReports,
+                Permission::ManageTariffs,
             ],
             self::Messenger => [],
         };

@@ -89,7 +89,13 @@
                         @endphp
                         <tr>
                             <td class="text-meta"><a href="{{ route('matter.show', $matter) }}">{{ $matter->reference }}</a></td>
-                            <td>{{ $matter->client->full_name }}</td>
+                            <td>
+                                @can('view', $matter->client)
+                                    <a href="{{ route('client.show', $matter->client) }}" class="text-reset">{{ $matter->client->full_name }}</a>
+                                @else
+                                    {{ $matter->client->full_name }}
+                                @endcan
+                            </td>
                             <td class="text-secondary">{{ $matter->matterType->name }}</td>
                             <td>
                                 @if ($matter->isClosed())

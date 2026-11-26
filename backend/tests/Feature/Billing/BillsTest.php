@@ -193,7 +193,7 @@ class BillsTest extends TestCase
     public function test_issuing_and_voiding_are_their_own_permissions(): void
     {
         $secretary = tap(User::factory()->create())->assignRole(RoleEnum::Secretary->value);
-        $secretary->givePermissionTo('draft_bills');
+        $secretary->givePermissionTo(['view_bills', 'draft_bills']);
         $draft = BillLine::factory()->for(Bill::factory()->for($this->matter))->create()->bill;
         $issued = Bill::factory()->for($this->matter)->issued()->create();
 
@@ -201,9 +201,9 @@ class BillsTest extends TestCase
         $this->actingAs($secretary)->post(route('bill.issue', $draft))->assertForbidden();
         $this->actingAs($secretary)->post(route('bill.void', $issued), ['reason' => 'Wrong'])->assertForbidden();
 
-        // Someone who only issues sees the bills and the issue button, but cannot change a draft.
+        // Someone who sees bills and issues them has the issue button, but cannot change a draft.
         $issuer = tap(User::factory()->create())->assignRole(RoleEnum::Secretary->value);
-        $issuer->givePermissionTo('issue_bills');
+        $issuer->givePermissionTo(['view_bills', 'issue_bills']);
         $this->actingAs($issuer)->get(route('bill.show', $draft))->assertOk()->assertDontSee('Add work');
         $this->actingAs($issuer)->delete(route('bill.destroy', $draft))->assertForbidden();
         $this->actingAs($issuer)->post(route('bill.issue', $draft))->assertRedirect();
@@ -314,8 +314,12 @@ class BillsTest extends TestCase
         $this->actingAs($this->attorney)->get(route('bill.show', $bill))->assertForbidden();
         $this->actingAs($this->attorney)->delete(route('bill.destroy', $bill))->assertForbidden();
 
-        // Given the permission in role management, the attorney can bill.
+        // Drawing bills does not by itself show them: seeing amounts is its own permission.
         $this->attorney->givePermissionTo('draft_bills');
+        $this->actingAs($this->attorney->fresh())->get(route('bill.show', $bill))->assertForbidden();
+
+        // Given both in role management, the attorney can bill.
+        $this->attorney->givePermissionTo('view_bills');
         $this->actingAs($this->attorney->fresh())->get(route('bill.show', $bill))->assertOk();
     }
 }

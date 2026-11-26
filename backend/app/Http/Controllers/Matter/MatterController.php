@@ -61,6 +61,8 @@ class MatterController extends Controller
         /** @var User $user */
         $user = $request->user();
 
+        abort_unless($user->worksOnMatters(), 403);
+
         $filter = $request->filter();
         $sort = $request->sort();
         $matterTypeId = $request->matterTypeId();
