@@ -175,7 +175,7 @@ export default function CaseDetailScreen() {
       <SectionHeader title="Diary" />
       {diary.length === 0 ? <Text style={styles.note}>Nothing in the diary for this matter.</Text> : null}
       {diary.map(d => (
-        <Pressable key={d.id} onPress={() => router.push({ pathname: '/diary/[darzationId]', params: { darzationId: d.id } })}>
+        <Pressable key={d.id} onPress={() => router.push({ pathname: '/diary/[darzationId]', params: { darzationId: d.id, caseId } })}>
           <Card style={d.overdue ? styles.overdue : undefined}>
             <Text style={styles.diaryTitle}>{d.body || d.title}</Text>
             <Text style={styles.diaryDate}>
