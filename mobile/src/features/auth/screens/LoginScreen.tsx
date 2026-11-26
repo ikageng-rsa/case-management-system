@@ -64,11 +64,11 @@ export default function LoginScreen() {
           loading={loading}
           disabled={loading || lockoutSeconds > 0}
         />
-        {hasFeature('passwordReset') ? (
+        
           <LinkButton variant="link" onPress={() => router.push('/forgot-password')} style={styles.forgot}>
             Forgot password?
           </LinkButton>
-        ) : null}
+        
       </ScrollView>
     </KeyboardAvoidingView>
   );

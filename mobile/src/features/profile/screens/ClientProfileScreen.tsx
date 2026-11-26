@@ -4,11 +4,13 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { fetchClient, revealClientField } from '@/api/endpoint/clients.api';
 import { fetchCases } from '@/api/endpoint/cases.api';
 import { getApiErrorMessage } from '@/api/errors';
+import Button from '@/components/Button';
 import Card from '@/components/Card';
 import DetailRow from '@/components/DetailRow';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import SectionHeader from '@/components/SectionHeader';
 import { useAppSelector } from '@/hooks/useAppDispatch';
+import { useGoBack } from '@/navigation/HeaderBack';
 import { deviceAuthAvailable, requireDeviceAuth } from '@/features/auth/services/deviceAuth';
 import { callLink, emailLink, smsLink, whatsAppLink } from '@/utils/contactLinks';
 import { visibleCasesFor } from '@/utils/caseAccess';
@@ -42,6 +44,7 @@ type RevealTarget = 'identifier' | `contact:${string}`;
 
 export default function ClientProfileScreen() {
   const router = useRouter();
+  const goBack = useGoBack('/more/profile');
   const { clientId } = useLocalSearchParams<{ clientId: string }>();
   const me = useAppSelector(state => state.auth.user);
   const [client, setClient] = useState<ClientProfile | null>(null);
@@ -116,6 +119,7 @@ export default function ClientProfileScreen() {
     return (
       <View style={styles.container}>
         <Text style={styles.note}>{failed ?? 'This client is not available.'}</Text>
+        <Button label="Back to clients" variant="secondary" onPress={goBack} />
       </View>
     );
   }
