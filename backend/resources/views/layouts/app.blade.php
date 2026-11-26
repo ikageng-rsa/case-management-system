@@ -26,14 +26,34 @@
                 :initials="Str::initials($user->name, capitalize: true)"
                 :account-href="route('account')"
             >
-                <x-ui.nav-section>Practice</x-ui.nav-section>
+                <x-ui.nav-section>Overview</x-ui.nav-section>
                 <x-ui.nav-item :href="route('dashboard')" label="Dashboard" icon="layout-dashboard" :active="request()->routeIs('dashboard')" />
-                <x-ui.nav-item :href="route('matters')" label="Matters" icon="briefcase" :active="request()->routeIs('matter*')" />
+
+                @if ($user->worksOnMatters() || $user->can('viewAny', \App\Models\Client\Client::class))
+                    <x-ui.nav-section>Practice</x-ui.nav-section>
+                @endif
+                @if ($user->worksOnMatters())
+                    <x-ui.nav-item :href="route('matters')" label="Matters" icon="briefcase" :active="request()->routeIs('matter*')" />
+                @endif
                 @can('viewAny', \App\Models\Client\Client::class)
                     <x-ui.nav-item :href="route('clients')" label="Clients" icon="users" :active="request()->routeIs('client*', 'clients')"/>
                 @endcan
-                <x-ui.nav-item :href="route('documents')" label="Documents" icon="file-text" :active="request()->routeIs('documents')"/>
-                <x-ui.nav-item href="#" label="Reports" icon="chart-bar"/>
+                @if ($user->worksOnMatters())
+                    <x-ui.nav-item :href="route('documents')" label="Documents" icon="file-text" :active="request()->routeIs('documents')"/>
+                @endif
+
+                @canany(['view_bills', 'view_payments', 'view_billing_reports'])
+                    <x-ui.nav-section>Billing</x-ui.nav-section>
+                @endcanany
+                @can('view_bills')
+                    <x-ui.nav-item :href="route('bills')" label="Bills" icon="receipt" :active="request()->routeIs('bills', 'bill.*', 'billing.*')"/>
+                @endcan
+                @can('view_payments')
+                    <x-ui.nav-item :href="route('payments')" label="Payments" icon="cash" :active="request()->routeIs('payments')"/>
+                @endcan
+                @can('view_billing_reports')
+                    <x-ui.nav-item :href="route('reports')" label="Reports" icon="chart-bar" :active="request()->routeIs('reports')"/>
+                @endcan
 
                 @canany(['view_users', 'view_audit_log', 'manage_courts', 'manage_matter_types', 'manage_activity_types', 'manage_tariffs', 'manage_billing_settings', 'manage_firm_settings'])
                     <x-ui.nav-section>Firm</x-ui.nav-section>
@@ -61,7 +81,8 @@
                 </x-slot:footerActions>
             </x-ui.sidebar>
 
-            <x-ui.header>
+            <x-ui.header :search="$user->worksOnMatters() || $user->can('view_clients') || $user->can('view_bills')"
+                :placeholder="$user->worksOnMatters() ? 'Search clients, references, narrations…' : 'Search…'">
                 {{-- What the system has told you. The list is fetched when the bell is opened. --}}
                 <div class="position-relative" x-data="notificationMenu({{ \Illuminate\Support\Js::from(['url' => url('/notifications'), 'unread' => $user->unreadNotifications()->count()]) }})"
                      x-on:click.outside="open = false" x-on:keydown.escape.window="open = false">

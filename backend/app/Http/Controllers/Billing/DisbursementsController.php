@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Billing;
 
+use App\Http\BillingHome;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Billing\StoreDisbursementRequest;
 use App\Models\Billing\Disbursement;
@@ -35,6 +36,6 @@ class DisbursementsController extends Controller
 
     private function back(Matter $matter): RedirectResponse
     {
-        return redirect()->route('matter.show', [$matter, 'tab' => 'billing']);
+        return redirect()->to(BillingHome::url($matter));
     }
 }
