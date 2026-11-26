@@ -11,12 +11,12 @@ export interface AllPages {
 }
 
 //follows  `?pages=` until the last page and merges 'data' and 'included'
-export async function fetchAllPage(url: string, params: Record<string, unknown> = {}): Promise<AllPages> {
+export async function fetchAllPage(url: string, params: Record<string, unknown> = {}, maxPages = MAX_PAGES): Promise<AllPages> {
     const data: Resource[] = [];
     const included: Resource[] = [];
     let meta: Record<string, any> = {};
 
-    for (let page = 1; page <= MAX_PAGES; page++) {
+    for (let page = 1; page <= maxPages; page++) {
         const { data: doc } =await apiClient.get<Document<Resource[]>>(url, { params: { ...params, page } });
         data.push(...(doc.data ?? []));
         included.push(...(doc.included ??[]));

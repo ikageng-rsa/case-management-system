@@ -8,3 +8,4 @@ Thumbs.db
 *.swp
 .claude/
 mobile/.env.example
+mobile/.env.example
