@@ -74,12 +74,12 @@ export async function downloadDocument(caseId: string, doc: CaseDocument): Promi
     headers: { Authorization: `Bearer ${token ?? ''}`, Accept: '*/*' },
   });
   if (result.status !== 200) {
-    await FileSystem.deleteAsync(target, { idempotent: true }).catch(() => {});
+    await FileSystem.deleteAsync(target, { idempotent: true }).catch(() => { });
     throw Object.assign(new Error('Download failed'), { response: { status: result.status } });
   }
   return result.uri;
 }
 
 export async function discardDownload(uri: string): Promise<void> {
-  await FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => {});
+  await FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => { });
 }

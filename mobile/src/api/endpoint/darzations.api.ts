@@ -85,8 +85,12 @@ export async function fetchMatterDiary(
   return (await fetchDiary()).filter(d => d.caseId === matterId);
 }
 
-/** v1 has no single-entry route, so the entry is found in the open diary, then in the recently completed list. */
-export async function fetchDarzationById(id: string): Promise<Darzation> {
+/**
+ * v1 has no single-entry route, so the entry is looked for in the user's open diary, then in the recently completed
+ * list. "My diary" only holds entries assigned to the user, so when the matter is known (an entry just added for a
+ * colleague, or one opened from the matter page) its own diary is searched last.
+ */
+export async function fetchDarzationById(id: string, matterId?: string): Promise<Darzation> {
   const open = (await fetchDiary()).find(d => d.id === id);
   if (open) {
     return open;
@@ -94,6 +98,14 @@ export async function fetchDarzationById(id: string): Promise<Darzation> {
   const done = (await fetchCompletedDiary().catch(() => [] as Darzation[])).find(d => d.id === id);
   if (done) {
     return done;
+  }
+  if (matterId) {
+    for (const show of ['open', 'completed'] as const) {
+      const found = (await fetchMatterDiary(matterId, show).catch(() => [] as Darzation[])).find(d => d.id === id);
+      if (found) {
+        return found;
+      }
+    }
   }
   throw new Error('Diary entry not found.');
 }
